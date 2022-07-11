@@ -1,0 +1,5 @@
+# depslib dependency file v1.0
+1652671370 source:c:\users\rizqi\desktop\c++\latihan 2\what is stl\main.cpp
+	<iostream>
+	<bits/stdc++.h>
+
