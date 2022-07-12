@@ -1,0 +1,1685 @@
+/*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+/********************************************************************************
+ *                                                                              *
+ * Test of the overlay used for moved pictures, test more closed to real life.  *
+ * Running trojan moose :) Coded by Mike Gorchak.                               *
+ *                                                                              *
+ ********************************************************************************/
+
+#include <stdlib.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL.h"
+
+#include "testyuv_cvt.h"
+
+#define MOOSEPIC_W 64
+#define MOOSEPIC_H 88
+
+#define MOOSEFRAME_SIZE (MOOSEPIC_W * MOOSEPIC_H)
+#define MOOSEFRAMES_COUNT 10
+
+SDL_Color MooseColors[84] = {
+    {49, 49, 49, SDL_ALPHA_OPAQUE}
+    , {66, 24, 0, SDL_ALPHA_OPAQUE}
+    , {66, 33, 0, SDL_ALPHA_OPAQUE}
+    , {66, 66, 66, SDL_ALPHA_OPAQUE}
+    ,
+    {66, 115, 49, SDL_ALPHA_OPAQUE}
+    , {74, 33, 0, SDL_ALPHA_OPAQUE}
+    , {74, 41, 16, SDL_ALPHA_OPAQUE}
+    , {82, 33, 8, SDL_ALPHA_OPAQUE}
+    ,
+    {82, 41, 8, SDL_ALPHA_OPAQUE}
+    , {82, 49, 16, SDL_ALPHA_OPAQUE}
+    , {82, 82, 82, SDL_ALPHA_OPAQUE}
+    , {90, 41, 8, SDL_ALPHA_OPAQUE}
+    ,
+    {90, 41, 16, SDL_ALPHA_OPAQUE}
+    , {90, 57, 24, SDL_ALPHA_OPAQUE}
+    , {99, 49, 16, SDL_ALPHA_OPAQUE}
+    , {99, 66, 24, SDL_ALPHA_OPAQUE}
+    ,
+    {99, 66, 33, SDL_ALPHA_OPAQUE}
+    , {99, 74, 33, SDL_ALPHA_OPAQUE}
+    , {107, 57, 24, SDL_ALPHA_OPAQUE}
+    , {107, 82, 41, SDL_ALPHA_OPAQUE}
+    ,
+    {115, 57, 33, SDL_ALPHA_OPAQUE}
+    , {115, 66, 33, SDL_ALPHA_OPAQUE}
+    , {115, 66, 41, SDL_ALPHA_OPAQUE}
+    , {115, 74, 0, SDL_ALPHA_OPAQUE}
+    ,
+    {115, 90, 49, SDL_ALPHA_OPAQUE}
+    , {115, 115, 115, SDL_ALPHA_OPAQUE}
+    , {123, 82, 0, SDL_ALPHA_OPAQUE}
+    , {123, 99, 57, SDL_ALPHA_OPAQUE}
+    ,
+    {132, 66, 41, SDL_ALPHA_OPAQUE}
+    , {132, 74, 41, SDL_ALPHA_OPAQUE}
+    , {132, 90, 8, SDL_ALPHA_OPAQUE}
+    , {132, 99, 33, SDL_ALPHA_OPAQUE}
+    ,
+    {132, 99, 66, SDL_ALPHA_OPAQUE}
+    , {132, 107, 66, SDL_ALPHA_OPAQUE}
+    , {140, 74, 49, SDL_ALPHA_OPAQUE}
+    , {140, 99, 16, SDL_ALPHA_OPAQUE}
+    ,
+    {140, 107, 74, SDL_ALPHA_OPAQUE}
+    , {140, 115, 74, SDL_ALPHA_OPAQUE}
+    , {148, 107, 24, SDL_ALPHA_OPAQUE}
+    , {148, 115, 82, SDL_ALPHA_OPAQUE}
+    ,
+    {148, 123, 74, SDL_ALPHA_OPAQUE}
+    , {148, 123, 90, SDL_ALPHA_OPAQUE}
+    , {156, 115, 33, SDL_ALPHA_OPAQUE}
+    , {156, 115, 90, SDL_ALPHA_OPAQUE}
+    ,
+    {156, 123, 82, SDL_ALPHA_OPAQUE}
+    , {156, 132, 82, SDL_ALPHA_OPAQUE}
+    , {156, 132, 99, SDL_ALPHA_OPAQUE}
+    , {156, 156, 156, SDL_ALPHA_OPAQUE}
+    ,
+    {165, 123, 49, SDL_ALPHA_OPAQUE}
+    , {165, 123, 90, SDL_ALPHA_OPAQUE}
+    , {165, 132, 82, SDL_ALPHA_OPAQUE}
+    , {165, 132, 90, SDL_ALPHA_OPAQUE}
+    ,
+    {165, 132, 99, SDL_ALPHA_OPAQUE}
+    , {165, 140, 90, SDL_ALPHA_OPAQUE}
+    , {173, 132, 57, SDL_ALPHA_OPAQUE}
+    , {173, 132, 99, SDL_ALPHA_OPAQUE}
+    ,
+    {173, 140, 107, SDL_ALPHA_OPAQUE}
+    , {173, 140, 115, SDL_ALPHA_OPAQUE}
+    , {173, 148, 99, SDL_ALPHA_OPAQUE}
+    , {173, 173, 173, SDL_ALPHA_OPAQUE}
+    ,
+    {181, 140, 74, SDL_ALPHA_OPAQUE}
+    , {181, 148, 115, SDL_ALPHA_OPAQUE}
+    , {181, 148, 123, SDL_ALPHA_OPAQUE}
+    , {181, 156, 107, SDL_ALPHA_OPAQUE}
+    ,
+    {189, 148, 123, SDL_ALPHA_OPAQUE}
+    , {189, 156, 82, SDL_ALPHA_OPAQUE}
+    , {189, 156, 123, SDL_ALPHA_OPAQUE}
+    , {189, 156, 132, SDL_ALPHA_OPAQUE}
+    ,
+    {189, 189, 189, SDL_ALPHA_OPAQUE}
+    , {198, 156, 123, SDL_ALPHA_OPAQUE}
+    , {198, 165, 132, SDL_ALPHA_OPAQUE}
+    , {206, 165, 99, SDL_ALPHA_OPAQUE}
+    ,
+    {206, 165, 132, SDL_ALPHA_OPAQUE}
+    , {206, 173, 140, SDL_ALPHA_OPAQUE}
+    , {206, 206, 206, SDL_ALPHA_OPAQUE}
+    , {214, 173, 115, SDL_ALPHA_OPAQUE}
+    ,
+    {214, 173, 140, SDL_ALPHA_OPAQUE}
+    , {222, 181, 148, SDL_ALPHA_OPAQUE}
+    , {222, 189, 132, SDL_ALPHA_OPAQUE}
+    , {222, 189, 156, SDL_ALPHA_OPAQUE}
+    ,
+    {222, 222, 222, SDL_ALPHA_OPAQUE}
+    , {231, 198, 165, SDL_ALPHA_OPAQUE}
+    , {231, 231, 231, SDL_ALPHA_OPAQUE}
+    , {239, 206, 173, SDL_ALPHA_OPAQUE}
+};
+
+Uint8 MooseFrame[MOOSEFRAMES_COUNT][MOOSEFRAME_SIZE*2];
+SDL_Texture *MooseTexture;
+SDL_Rect displayrect;
+int window_w;
+int window_h;
+SDL_Renderer *renderer;
+int paused = 0;
+int i;
+SDL_bool done = SDL_FALSE;
+static int fpsdelay;
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    SDL_Quit();
+    exit(rc);
+}
+
+static void
+PrintUsage(char *argv0)
+{
+    SDL_Log("Usage: %s [arg] [arg] [arg] ...\n", argv0);
+    SDL_Log("\n");
+    SDL_Log("Where 'arg' is any of the following options:\n");
+    SDL_Log("\n");
+    SDL_Log("    -fps <frames per second>\n");
+    SDL_Log("    -nodelay\n");
+    SDL_Log("    -format <fmt> (one of the: YV12, IYUV, YUY2, UYVY, YVYU)\n");
+    SDL_Log("    -scale <scale factor> (initial scale of the overlay)\n");
+    SDL_Log("    -help (shows this help)\n");
+    SDL_Log("\n");
+    SDL_Log("Press ESC to exit, or SPACE to freeze the movie while application running.\n");
+    SDL_Log("\n");
+}
+
+void
+loop()
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_WINDOWEVENT:
+            if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                SDL_RenderSetViewport(renderer, NULL);
+                displayrect.w = window_w = event.window.data1;
+                displayrect.h = window_h = event.window.data2;
+            }
+            break;
+        case SDL_MOUSEBUTTONDOWN:
+            displayrect.x = event.button.x - window_w / 2;
+            displayrect.y = event.button.y - window_h / 2;
+            break;
+        case SDL_MOUSEMOTION:
+            if (event.motion.state) {
+                displayrect.x = event.motion.x - window_w / 2;
+                displayrect.y = event.motion.y - window_h / 2;
+            }
+            break;
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym == SDLK_SPACE) {
+                paused = !paused;
+                break;
+            }
+            if (event.key.keysym.sym != SDLK_ESCAPE) {
+                break;
+            }
+        case SDL_QUIT:
+            done = SDL_TRUE;
+            break;
+        }
+    }
+
+#ifndef __EMSCRIPTEN__
+    SDL_Delay(fpsdelay);
+#endif
+
+    if (!paused) {
+        i = (i + 1) % MOOSEFRAMES_COUNT;
+
+        SDL_UpdateTexture(MooseTexture, NULL, MooseFrame[i], MOOSEPIC_W);
+    }
+    SDL_RenderClear(renderer);
+    SDL_RenderCopy(renderer, MooseTexture, NULL, &displayrect);
+    SDL_RenderPresent(renderer);
+
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char **argv)
+{
+    Uint8 *RawMooseData;
+    SDL_RWops *handle;
+    SDL_Window *window;
+    int j;
+    int fps = 12;
+    int nodelay = 0;
+    int scale = 5;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
+        return 3;
+    }
+
+    while (argc > 1) {
+        if (SDL_strcmp(argv[1], "-fps") == 0) {
+            if (argv[2]) {
+                fps = SDL_atoi(argv[2]);
+                if (fps == 0) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "The -fps option requires an argument [from 1 to 1000], default is 12.\n");
+                    quit(10);
+                }
+                if ((fps < 0) || (fps > 1000)) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "The -fps option must be in range from 1 to 1000, default is 12.\n");
+                    quit(10);
+                }
+                argv += 2;
+                argc -= 2;
+            } else {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                        "The -fps option requires an argument [from 1 to 1000], default is 12.\n");
+                quit(10);
+            }
+        } else if (SDL_strcmp(argv[1], "-nodelay") == 0) {
+            nodelay = 1;
+            argv += 1;
+            argc -= 1;
+        } else if (SDL_strcmp(argv[1], "-scale") == 0) {
+            if (argv[2]) {
+                scale = SDL_atoi(argv[2]);
+                if (scale == 0) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "The -scale option requires an argument [from 1 to 50], default is 5.\n");
+                    quit(10);
+                }
+                if ((scale < 0) || (scale > 50)) {
+                    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                            "The -scale option must be in range from 1 to 50, default is 5.\n");
+                    quit(10);
+                }
+                argv += 2;
+                argc -= 2;
+            } else {
+                SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
+                        "The -fps option requires an argument [from 1 to 1000], default is 12.\n");
+                quit(10);
+            }
+        } else if ((SDL_strcmp(argv[1], "-help") == 0)
+                   || (SDL_strcmp(argv[1], "-h") == 0)) {
+            PrintUsage(argv[0]);
+            quit(0);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized option: %s.\n", argv[1]);
+            quit(10);
+        }
+        break;
+    }
+
+    RawMooseData = (Uint8 *) SDL_malloc(MOOSEFRAME_SIZE * MOOSEFRAMES_COUNT);
+    if (RawMooseData == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't allocate memory for movie !\n");
+        quit(1);
+    }
+
+    /* load the trojan moose images */
+    handle = SDL_RWFromFile("moose.dat", "rb");
+    if (handle == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Can't find the file moose.dat !\n");
+        SDL_free(RawMooseData);
+        quit(2);
+    }
+
+    SDL_RWread(handle, RawMooseData, MOOSEFRAME_SIZE, MOOSEFRAMES_COUNT);
+
+    SDL_RWclose(handle);
+
+    /* Create the window and renderer */
+    window_w = MOOSEPIC_W * scale;
+    window_h = MOOSEPIC_H * scale;
+    window = SDL_CreateWindow("Happy Moose",
+                              SDL_WINDOWPOS_UNDEFINED,
+                              SDL_WINDOWPOS_UNDEFINED,
+                              window_w, window_h,
+                              SDL_WINDOW_RESIZABLE);
+    if (!window) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create window: %s\n", SDL_GetError());
+        SDL_free(RawMooseData);
+        quit(4);
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, 0);
+    if (!renderer) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create renderer: %s\n", SDL_GetError());
+        SDL_free(RawMooseData);
+        quit(4);
+    }
+
+    MooseTexture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_YV12, SDL_TEXTUREACCESS_STREAMING, MOOSEPIC_W, MOOSEPIC_H);
+    if (!MooseTexture) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set create texture: %s\n", SDL_GetError());
+        SDL_free(RawMooseData);
+        quit(5);
+    }
+    /* Uncomment this to check vertex color with a YUV texture */
+    /* SDL_SetTextureColorMod(MooseTexture, 0xff, 0x80, 0x80); */
+
+    for (i = 0; i < MOOSEFRAMES_COUNT; i++) {
+        Uint8 MooseFrameRGB[MOOSEFRAME_SIZE*3];
+        Uint8 *rgb;
+        Uint8 *frame;
+
+        rgb = MooseFrameRGB;
+        frame = RawMooseData + i * MOOSEFRAME_SIZE;
+        for (j = 0; j < MOOSEFRAME_SIZE; ++j) {
+            rgb[0] = MooseColors[frame[j]].r;
+            rgb[1] = MooseColors[frame[j]].g;
+            rgb[2] = MooseColors[frame[j]].b;
+            rgb += 3;
+        }
+        ConvertRGBtoYUV(SDL_PIXELFORMAT_YV12, MooseFrameRGB, MOOSEPIC_W*3, MooseFrame[i], MOOSEPIC_W, MOOSEPIC_H,
+            SDL_GetYUVConversionModeForResolution(MOOSEPIC_W, MOOSEPIC_H),
+            0, 100);
+    }
+
+    SDL_free(RawMooseData);
+
+    /* set the start frame */
+    i = 0;
+    if (nodelay) {
+        fpsdelay = 0;
+    } else {
+        fpsdelay = 1000 / fps;
+    }
+
+    displayrect.x = 0;
+    displayrect.y = 0;
+    displayrect.w = window_w;
+    displayrect.h = window_h;
+
+    /* Ignore key up events, they don't even get filtered */
+    SDL_EventState(SDL_KEYUP, SDL_IGNORE);
+
+    /* Loop, waiting for QUIT or RESIZE */
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(loop, nodelay ? 0 : fps, 1);
+#else
+    while (!done) {
+        loop();
+            }
+#endif
+
+    SDL_DestroyRenderer(renderer);
+    quit(0);
+    return 0;
+}
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            INDX( 	 Ωy           (   ‡  Ë          ÿ    ÿ        &’     h V     ’‘     1FˇlcÿÄy,–Xÿ[Ødj˜gÿ:adj˜gÿ        g              
+T E S T M O ~ 1 . C   '’     x b     ’‘     òE;ˇlcÿÄy,–Xÿ]fj˜gÿfj˜gÿ        à              t e s t m u l t i a u d i o . c       '’     h V     ’‘     òE;ˇlcÿÄy,–Xÿ]fj˜gÿfj˜gÿ        à              
+T E S T M U ~ 1 . C   (’     p Z     ’‘     q¸AˇlcÿÄy,–Xÿ∑„gj˜gÿ¶ºgj˜gÿ        ~              t e s t n a t i v e . c       )’     p Z     ’‘     Eﬂ~ˇlcÿÄy,–Xÿ~∏ij˜gÿmëij˜gÿ       ∂              t e s t n a t i v e . h       *’     x d     ’‘     >HˇlcÿÄy,–Xÿ4fkj˜gÿkj˜gÿ       á              t e s t n a t i v e c o c o a . m     +’     p `     ’‘     ~<ˇlcÿÄy,–Xÿ⁄Ïlj˜gÿ…≈lj˜gÿ       Ï              t e s t n a t i v e o s 2 . c ,’     p `     ’‘     ó±eˇlcÿÄy,–XÿÄsnj˜gÿoLnj˜gÿ                     t e s t n a t i v e w 3 2 . c -’     p `     ’‘     urKˇlcÿÄy,–Xÿ6!pj˜gÿ%˙oj˜gÿ      Ü              t e s t n a t i v e x 1 1 . c (’     h V     ’‘     q¸AˇlcÿÄy,–Xÿ∑„gj˜gÿ¶ºgj˜gÿ        ~              
+T E S T N A ~ 1 . C   )’     h V     ’‘     Eﬂ~ˇlcÿÄy,–Xÿ~∏ij˜gÿmëij˜gÿ       ∂              
+T E S T N A ~ 1 . H   *’     h V     ’‘     >HˇlcÿÄy,–Xÿ4fkj˜gÿkj˜gÿ       á              
+T E S T N A ~ 1 . M   +’     h V     ’‘     ~<ˇlcÿÄy,–Xÿ⁄Ïlj˜gÿ…≈lj˜gÿ       Ï              
+T E S T N A ~ 2 . C   ,’     h V     ’‘     ó±eˇlcÿÄy,–XÿÄsnj˜g oLnj˜gÿ                     
+T E S T N A ~ 3 . C   -’     h V     ’‘     urKˇlcÿÄy,–Xÿ6!pj˜gÿ%˙oj˜gÿ       Ü              
+T E S T N A ~ 4 . C   .’     p `     ’‘     ÍtfˇlcÿÄy,–Xÿ‘Òsj˜gÿƒ sj˜gÿ        µ              t e s t o f f s c r e e n . c .’     h V     ’‘     ÍtfˇlcÿÄy,–Xÿ‘Òsj˜gÿƒ sj˜gÿ        µ              
+T E S T O F ~ 1 . C   /’     p ^     ’‘     |ÖçˇlcÿÄy,–Xÿõ∆uj˜gÿzxuj˜gÿ @      t2              t e s t o v e r l a y 2 . c                 ’‘     |ÖçˇlcÿÄy,–Xÿõ∆uj˜gÿzxuj˜gÿ @      t2              
+T E S T O V ~ 1 . C   0’     p ^     ’‘     Ω”/ˇlcÿÄy,–Xÿbõwj˜gÿAMwj˜gÿ `      ∆V              t e s t p l a t f o r m . c   0’     h V     ’‘     Ω”/ˇlcÿÄy,–Xÿbõwj˜gÿAMwj˜gÿ `      ∆V              
+T E S T P L ~ 1 . C   1’     h X     ’‘     ÙC)ˇlcÿÄy,–XÿIyj˜gÿ"yj˜gÿ       ®              t e s t p o w e r . c 1’     h V     ’‘     ÙC)ˇlcÿÄy,–XÿIyj˜gÿ"yj˜gÿ       ®              
+T E S T P O ~ 1 . C   2’     h X     ’‘     6sÉˇlcÿÄy,–Xÿœˆzj˜gÿæœzj˜gÿ       Q              t e s t q s o r t . c 2’     h V     ’‘     6sÉˇlcÿÄy,–Xÿœˆzj˜gÿæœzj˜gÿ       Q              
+T E S T Q S ~ 1 . C   3’     p ^     ’‘     ÔH0ˇlcÿÄy,–Xÿt}|j˜gÿdV|j˜gÿ       æ              t e s t r e l a t i v e . c   4’     x f     ’‘     îœ1ˇlcÿÄy,–Xÿ–±j˜gÿØcj˜gÿ        Ù              t e s t r e n d e r c o p y e x . c   5’     x f     ’‘     ¢ßWˇlcÿÄy,–Xÿá_Åj˜gÿv8Åj˜gÿ 0      #&             t e s t r e n d e r t a r g e t . c   6’     p ^     ’‘     ”àÇˇlcÿÄy,–Xÿ^[Éj˜gÿM4Éj˜gÿ       Í              t e s t r e s a m p l e . c  3’     h V     ’‘     ÔH0ˇlcÿÄy,–Xÿt}|j˜gÿdV|j˜gÿ       æ              
+T E S T R E ~ 1 . C   4’     h V     ’‘     îœ1ˇlcÿÄy,–Xÿ–±j˜gÿØcj˜gÿ        Ù              
+T E S T R E ~ 2 . C   5’     h V     ’‘     ¢ßWˇlcÿÄy,–Xÿá_Åj˜gÿv8Åj˜gÿ 0      #&              
+T E S T R E ~ 3 . C   6’     h V     ’‘     ”àÇˇlcÿÄy,–Xÿ^[Éj˜g M4Éj˜gÿ       Í              
+T E S T R E ~ 4 . C   7’     p Z     ’‘     ;GMˇlcÿÄy,–XÿF~Öj˜gÿ5WÖj˜gÿ        ú              t e s t r u m b l e . c       7’     h V     ’‘     ;GMˇlcÿÄy,–XÿF~Öj˜gÿ5WÖj˜gÿ        ú              
+T E S T R U ~ 1 . C   8’     h X     ’‘     Ä2(ˇlcÿÄy,–Xÿ¸+áj˜gÿÏáj˜gÿ        .              t e s t s c a l e . c 8’     h V     ’‘     Ä2(ˇlcÿÄy,–Xÿ¸+áj˜gÿÏáj˜gÿ        .              
+T E S T S C ~ 1 . C                                INDX( 	 ≥ú    	       (   »  Ë        n   ÿ ~           0’     p ^     ’‘     Ω”/ˇlcÿÄy,–Xÿbõwj˜gÿAMwj˜gÿ `      ∆V              t e s t p l a t f o r m . c   0’     h V     ’‘     Ω”/ˇlcÿÄy,–Xÿbõwj˜gÿAMwj˜gÿ `      ∆V              
+T E S T P L ~ 1 . C   1’     h X     ’‘     ÙC)ˇlcÿÄy,–XÿIyj˜gÿ"yj˜gÿ       ®              t e s t p o w e r . c 1’     h V     ’‘     ÙC)ˇlcÿÄy,–XÿIyj˜gÿ"yj˜gÿ       ®              
+T E S T P O ~ 1 . C   2’     h X     ’‘     6sÉˇlcÿÄy,–Xÿœˆzj˜gÿæœzj˜gÿ       Q              t e s t q s o r t . c 2’     h V     ’‘     6sÉˇlcÿÄy,–Xÿœˆzj˜gÿæœzj˜gÿ       Q              
+T E S T Q S ~ 1 . C   3’     p ^     ’‘     ÔH0ˇlcÿÄy,–Xÿt}|j˜gÿdV|j˜gÿ       æ              t e s t r e l a t i v e . c   4’     x f     ’‘     îœ1ˇlcÿÄy,–Xÿ–±j˜gÿØcj˜gÿ        Ù              t e s t r e n d e r c o p y e x . c   5’     x f     ’‘     ¢ßWˇlcÿÄy,–Xÿá_Åj˜gÿv8Åj˜gÿ 0      #&              t e s t r e  d e r t a r g e t . c   6’     p ^     ’‘     ”àÇˇlcÿÄy,–Xÿ^[Éj˜gÿM4Éj˜gÿ       Í              t e s t r e s a m p l e . c  3’     h V     ’‘     ÔH0ˇlcÿÄy,–Xÿt}|j˜gÿdV|j˜gÿ       æ              
+T E S T R E ~ 1 . C   4’     h V     ’‘     îœ1ˇlcÿÄy,–Xÿ–±j˜gÿØcj˜gÿ        Ù              
+T E S T R E ~ 2 . C   5’     h V     ’‘     ¢ßWˇlcÿÄy,–Xÿá_Åj˜gÿv8Åj˜gÿ 0      #&              
+T E S T R E ~ 3 . C   6’     h V     ’‘     ”àÇˇlcÿÄy,–Xÿ^[Éj˜gÿM4Éj˜gÿ      Í              
+T E S T R E ~ 4 . C   7’     p Z     ’‘     ;GMˇlcÿÄy,–XÿF~Öj˜gÿ5WÖj˜gÿ        ú              t e s t r u m b l e . c       7’     h V     ’‘     ;GMˇlcÿÄy,–XÿF~Öj˜gÿ5WÖj˜gÿ        ú              
+T E S T R U ~ 1 . C   8’     h X     ’‘     Ä2(ˇlcÿÄy,–Xÿ¸+áj˜gÿÏáj˜gÿ        .              t e s t s c a l e . c 8’     h V     ’‘     Ä2(ˇlcÿÄy,–Xÿ¸+áj˜gÿÏáj˜gÿ        .              
+T E S T S C ~ 1 . C                 ’‘     1Â0ˇlcÿÄy,–Xÿ¢≤àj˜g ëãàj˜gÿ        ;              	t e s t s e m . c     :’     p Z     ’‘     »>ˇlcÿÄy,–XÿX`äj˜gÿH9äj˜gÿ                     t e s t s e n s o r . c       :’     h V     ’‘     »>ˇlcÿÄy,–XÿX`äj˜gÿH9äj˜gÿ                     
+T E S T S E ~ 1 . C   ;’     p Z     ’‘     hã?ˇlcÿÄy,–Xÿåj˜gÿ˛Êãj˜gÿ P      OA              t e s t s h a d e r . c       <’     h X     ’‘     6?ˇlcÿÄy,–Xÿ≈ªçj˜gÿ¥îçj˜gÿ        ∑              t e s t s h a p e . c ;’     h V     ’‘     hã?ˇlcÿÄy,–Xÿåj˜gÿ˛Êãj˜gÿ P      OA              
+T E S T S H ~ 1 . C   <’     h V     ’‘     6?ˇlcÿÄy,–Xÿ≈ªçj˜gÿ¥îçj˜gÿ        ∑              
+T E S T S H ~ 2 . C   =’     p \     ’‘     √+mˇlcÿÄy,–Xÿ{ièj˜gÿkBèj˜gÿ `      ËR              t e s t s p r i t e 2 . c     >’     x h     ’‘     ﬁWEˇlcÿÄy,–XÿB>ëj˜gÿ1ëj˜gÿ        ë              t e s t s p r i t e m i n i m a l . c =’     h V     ’‘     √+mˇlcÿÄy,–Xÿ{ièj˜gÿkBèj˜gÿ `      ËR              
+T E S T S P  1 . C   >’     h V     ’‘     ﬁWEˇlcÿÄy,–XÿB>ëj˜gÿ1ëj˜gÿ        ë              
+T E S T S P ~ 2 . C   ?’     p `     ’‘     + MˇlcÿÄy,–Xÿ¯Îíj˜gÿ◊ùíj˜gÿ        √              t e s t s t r e a m i n g . c ?’     h V     ’‘     + MˇlcÿÄy,–Xÿ¯Îíj˜gÿ◊ùíj˜gÿ        √              
+T E S T S T ~ 1 . C   @’     p ^     ’‘     9JˇlcÿÄy,–Xÿûrîj˜gÿçKîj˜gÿ        @              t e s t s u r r o u n d . c   @’     h V     ’‘     9JˇlcÿÄy,–Xÿûrîj˜gÿçKîj˜gÿ        @             
+T E S T S U ~ 1 . C   A’     p Z     ’‘     %[iˇlcÿÄy,–XÿeGñj˜gÿD˘ïj˜gÿ       Œ              t e s t t h r e a d . c       A’     h V     ’‘     %[iˇlcÿÄy,–XÿeGñj˜gÿD˘ïj˜gÿ       Œ              
+T E S T T H ~ 1 . C   B’     h X     ’‘     ÷°GˇlcÿÄy,–Xÿıój˜gÿ˙¶ój˜gÿ        S              t e s t t i m e r . c B’     h V     ’‘     ÷°GˇlcÿÄy,–Xÿıój˜gÿ˙¶ój˜gÿ        S              
+T E S T T I ~ 1 . C                                                        /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+#include <stdio.h>
+
+#include "SDL.h"
+
+/*
+ * Watcom C flags these as Warning 201: "Unreachable code" if you just
+ *  compare them directly, so we push it through a function to keep the
+ *  compiler quiet.  --ryan.
+ */
+static int
+badsize(size_t sizeoftype, size_t hardcodetype)
+{
+    return sizeoftype != hardcodetype;
+}
+
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_SINT8, SDL_MAX_SINT8 == 127);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_SINT8, SDL_MIN_SINT8 == -128);
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_UINT8, SDL_MAX_UINT8 == 255);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_UINT8, SDL_MIN_UINT8 == 0);
+
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_SINT16, SDL_MAX_SINT16 == 32767);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_SINT16, SDL_MIN_SINT16 == -32768);
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_UINT16, SDL_MAX_UINT16 == 65535);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_UINT16, SDL_MIN_UINT16 == 0);
+
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_SINT32, SDL_MAX_SINT32 == 2147483647);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_SINT32, SDL_MIN_SINT32 == ~0x7fffffff); /* Instead of -2147483648, which is treated as unsigned by some compilers */
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_UINT32, SDL_MAX_UINT32 == 4294967295u);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_UINT32, SDL_MIN_UINT32 == 0);
+
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_SINT64, SDL_MAX_SINT64 == 9223372036854775807ll);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_SINT64, SDL_MIN_SINT64 == ~0x7fffffffffffffffll); /* Instead of -9223372036854775808, which is treated as unsigned by compilers */
+SDL_COMPILE_TIME_ASSERT(SDL_MAX_UINT64, SDL_MAX_UINT64 == 18446744073709551615ull);
+SDL_COMPILE_TIME_ASSERT(SDL_MIN_UINT64, SDL_MIN_UINT64 == 0);
+
+int
+TestTypes(SDL_bool verbose)
+{
+    int error = 0;
+
+    if (badsize(sizeof(Uint8), 1)) {
+        if (verbose)
+            SDL_Log("sizeof(Uint8) != 1, instead = %u\n",
+                   (unsigned int)sizeof(Uint8));
+        ++error;
+    }
+    if (badsize(sizeof(Uint16), 2)) {
+        if (verbose)
+            SDL_Log("sizeof(Uint16) != 2, instead = %u\n",
+                   (unsigned int)sizeof(Uint16));
+        ++error;
+    }
+    if (badsize(sizeof(Uint32), 4)) {
+        if (verbose)
+            SDL_Log("sizeof(Uint32) != 4, instead = %u\n",
+                   (unsigned int)sizeof(Uint32));
+        ++error;
+    }
+    if (badsize(sizeof(Uint64), 8)) {
+        if (verbose)
+            SDL_Log("sizeof(Uint64) != 8, instead = %u\n",
+                   (unsigned int)sizeof(Uint64));
+        ++error;
+    }
+    if (verbose && !error)
+        SDL_Log("All data types are the expected size.\n");
+
+    return (error ? 1 : 0);
+}
+
+int
+TestEndian(SDL_bool verbose)
+{
+    int error = 0;
+    Uint16 value = 0x1234;
+    int real_byteorder;
+    Uint16 value16 = 0xCDAB;
+    Uint16 swapped16 = 0xABCD;
+    Uint32 value32 = 0xEFBEADDE;
+    Uint32 swapped32 = 0xDEADBEEF;
+    Uint64 value64, swapped64;
+
+    value64 = 0xEFBEADDE;
+    value64 <<= 32;
+    value64 |= 0xCDAB3412;
+    swapped64 = 0x1234ABCD;
+    swapped64 <<= 32;
+    swapped64 |= 0xDEADBEEF;
+
+    if (verbose) {
+        SDL_Log("Detected a %s endian machine.\n",
+               (SDL_BYTEORDER == SDL_LIL_ENDIAN) ? "little" : "big");
+    }
+    if ((*((char *) &value) >> 4) == 0x1) {
+        real_byteorder = SDL_BIG_ENDIAN;
+    } else {
+        real_byteorder = SDL_LIL_ENDIAN;
+    }
+    if (real_byteorder != SDL_BYTEORDER) {
+        if (verbose) {
+            SDL_Log("Actually a %s endian machine!\n",
+                   (real_byteorder == SDL_LIL_ENDIAN) ? "little" : "big");
+        }
+        ++error;
+    }
+    if (verbose) {
+        SDL_Log("Value 16 = 0x%X, swapped = 0x%X\n", value16,
+               SDL_Swap16(value16));
+    }
+    if (SDL_Swap16(value16) != swapped16) {
+        if (verbose) {
+            SDL_Log("16 bit value swapped incorrectly!\n");
+        }
+        ++error;
+    }
+    if (verbose) {
+        SDL_Log("Value 32 = 0x%X, swapped = 0x%X\n", value32,
+               SDL_Swap32(value32));
+    }
+    if (SDL_Swap32(value32) != swapped32) {
+        if (verbose) {
+            SDL_Log("32 bit value swapped incorrectly!\n");
+        }
+        ++error;
+    }
+    if (verbose) {
+        SDL_Log("Value 64 = 0x%"SDL_PRIX64", swapped = 0x%"SDL_PRIX64"\n", value64,
+               SDL_Swap64(value64));
+    }
+    if (SDL_Swap64(value64) != swapped64) {
+        if (verbose) {
+            SDL_Log("64 bit value swapped incorrectly!\n");
+        }
+        ++error;
+    }
+    return (error ? 1 : 0);
+}
+
+static int TST_allmul (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(long long *)result) = ((*(long long *)a) * (*(long long *)b));
+    return (*(long long *)result) == (*(long long *)expected);
+}
+
+static int TST_alldiv (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(long long *)result) = ((*(long long *)a) / (*(long long *)b));
+    return (*(long long *)result) == (*(long long *)expected);
+}
+
+static int TST_allrem (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(long long *)result) = ((*(long long *)a) % (*(long long *)b));
+    return (*(long long *)result) == (*(long long *)expected);
+}
+
+static int TST_ualldiv (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(unsigned long long *)result) = ((*(unsigned long long *)a) / (*(unsigned long long *)b));
+    return (*(unsigned long long *)result) == (*(unsigned long long *)expected);
+}
+
+static int TST_uallrem (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(unsigned long long *)result) = ((*(unsigned long long *)a) % (*(unsigned long long *)b));
+    return (*(unsigned long long *)result) == (*(unsigned long long *)expected);
+}
+
+static int TST_allshl (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(long long *)result) = (*(long long *)a) << arg;
+    return (*(long long *)result) == (*(long long *)expected);
+}
+
+static int TST_aullshl (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(unsigned long long *)result) = (*(unsigned long long *)a) << arg;
+    return (*(unsigned long long *)result) == (*(unsigned long long *)expected);
+}
+
+static int TST_allshr (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(long long *)result) = (*(long long *)a) >> arg;
+    return (*(long long *)result) == (*(long long *)expected);
+}
+
+static int TST_aullshr (void *a, void *b, int arg, void *result, void *expected)
+{
+    (*(unsigned long long *)result) = (*(unsigned long long *)a) >> arg;
+    return (*(unsigned long long *)result) == (*(unsigned long long *)expected);
+}
+
+
+typedef int (*LL_Intrinsic)(void *a, void *b, int arg, void *result, void *expected);
+
+typedef struct {
+    const char *operation;
+    LL_Intrinsic routine;
+    unsigned long long a, b;
+    int arg;
+    unsigned long long expected_result;
+} LL_Test;
+
+static LL_Test LL_Tests[] = 
+{
+    /* UNDEFINED {"_allshl",   &TST_allshl,   0xFFFFFFFFFFFFFFFFll,                  0ll, 65, 0x0000000000000000ll}, */
+    {"_allshl",   &TST_allshl,   0xFFFFFFFFFFFFFFFFll,                  0ll,  1, 0xFFFFFFFFFFFFFFFEll},
+    {"_allshl",   &TST_allshl,   0xFFFFFFFFFFFFFFFFll,                  0ll, 32, 0xFFFFFFFF00000000ll},
+    {"_allshl",   &TST_allshl,   0xFFFFFFFFFFFFFFFFll,                  0ll, 33, 0xFFFFFFFE00000000ll},
+    {"_allshl",   &TST_allshl,   0xFFFFFFFFFFFFFFFFll,                  0ll,  0, 0xFFFFFFFFFFFFFFFFll},
+
+    {"_allshr",   &TST_allshr,   0xAAAAAAAA55555555ll,                  0ll, 63, 0xFFFFFFFFFFFFFFFFll},
+    /* UNDEFINED {"_allshr",   &TST_allshr,   0xFFFFFFFFFFFFFFFFll,                  0ll, 65, 0xFFFFFFFFFFFFFFFFll}, */
+    {"_allshr",   &TST_allshr,   0xFFFFFFFFFFFFFFFFll,                  0ll,  1, 0xFFFFFFFFFFFFFFFFll},
+    {"_allshr",   &TST_allshr,   0xFFFFFFFFFFFFFFFFll,                  0ll, 32, 0xFFFFFFFFFFFFFFFFll},
+    {"_allshr",   &TST_allshr,   0xFFFFFFFFFFFFFFFFll,                  0ll, 33, 0xFFFFFFFFFFFFFFFFll},
+    {"_allshr",   &TST_allshr,   0xFFFFFFFFFFFFFFFFll,                  0ll,  0, 0xFFFFFFFFFFFFFFFFll},
+    /* UNDEFINED {"_allshr",   &TST_allshr,   0x5F5F5F5F5F5F5F5Fll,                  0ll, 65, 0x0000000000000000ll}, */
+    {"_allshr",   &TST_allshr,   0x5F5F5F5F5F5F5F5Fll,                  0ll,  1, 0x2FAFAFAFAFAFAFAFll},
+    {"_allshr",   &TST_allshr,   0x5F5F5F5F5F5F5F5Fll,                  0ll, 32, 0x000000005F5F5F5Fll},
+    {"_allshr",   &TST_allshr,   0x5F5F5F5F5F5F5F5Fll,                  0ll, 33, 0x000000002FAFAFAFll},
+
+    /* UNDEFINED {"_aullshl",  &TST_aullshl,  0xFFFFFFFFFFFFFFFFll,                  0ll, 65, 0x0000000000000000ll}, */
+    {"_aullshl",  &TST_aullshl,  0xFFFFFFFFFFFFFFFFll,                  0ll,  1, 0xFFFFFFFFFFFFFFFEll},
+    {"_aullshl",  &TST_aullshl,  0xFFFFFFFFFFFFFFFFll,                  0ll, 32, 0xFFFFFFFF00000000ll},
+    {"_aullshl",  &TST_aullshl,  0xFFFFFFFFFFFFFFFFll,                  0ll, 33, 0xFFFFFFFE00000000ll},
+    {"_aullshl",  &TST_aullshl,  0xFFFFFFFFFFFFFFFFll,                  0ll,  0, 0xFFFFFFFFFFFFFFFFll},
+
+    /* UNDEFINED {"_aullshr",  &TST_aullshr,  0xFFFFFFFFFFFFFFFFll,                  0ll, 65, 0x0000000000000000ll}, */
+    {"_aullshr",  &TST_aullshr,  0xFFFFFFFFFFFFFFFFll,                  0ll,  1, 0x7FFFFFFFFFFFFFFFll},
+    {"_aullshr",  &TST_aullshr,  0xFFFFFFFFFFFFFFFFll,                  0ll, 32, 0x00000000FFFFFFFFll},
+    {"_aullshr",  &TST_aullshr,  0xFFFFFFFFFFFFFFFFll,                  0ll, 33, 0x000000007FFFFFFFll},
+    {"_aullshr",  &TST_aullshr,  0xFFFFFFFFFFFFFFFFll,                  0ll,  0, 0xFFFFFFFFFFFFFFFFll},
+
+    {"_allmul",   &TST_allmul,   0xFFFFFFFFFFFFFFFFll, 0x0000000000000000ll,  0, 0x0000000000000000ll},
+    {"_allmul",   &TST_allmul,   0x0000000000000000ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_allmul",   &TST_allmul,   0x000000000FFFFFFFll, 0x0000000000000001ll,  0, 0x000000000FFFFFFFll},
+    {"_allmul",   &TST_allmul,   0x0000000000000001ll, 0x000000000FFFFFFFll,  0, 0x000000000FFFFFFFll},
+    {"_allmul",   &TST_allmul,   0x000000000FFFFFFFll, 0x0000000000000010ll,  0, 0x00000000FFFFFFF0ll},
+    {"_allmul",   &TST_allmul,   0x0000000000000010ll, 0x000000000FFFFFFFll,  0, 0x00000000FFFFFFF0ll},
+    {"_allmul",   &TST_allmul,   0x000000000FFFFFFFll, 0x0000000000000100ll,  0, 0x0000000FFFFFFF00ll},
+    {"_allmul",   &TST_allmul,   0x0000000000000100ll, 0x000000000FFFFFFFll,  0, 0x0000000FFFFFFF00ll},
+    {"_allmul",   &TST_allmul,   0x000000000FFFFFFFll, 0x0000000010000000ll,  0, 0x00FFFFFFF0000000ll},
+    {"_allmul",   &TST_allmul,   0x0000000010000000ll, 0x000000000FFFFFFFll,  0, 0x00FFFFFFF0000000ll},
+    {"_allmul",   &TST_allmul,   0x000000000FFFFFFFll, 0x0000000080000000ll,  0, 0x07FFFFFF80000000ll},
+    {"_allmul",   &TST_allmul,   0x0000000080000000ll, 0x000000000FFFFFFFll,  0, 0x07FFFFFF80000000ll},
+    {"_allmul",   &TST_allmul,   0xFFFFFFFFFFFFFFFEll, 0x0000000080000000ll,  0, 0xFFFFFFFF00000000ll},
+    {"_allmul",   &TST_allmul,   0x0000000080000000ll, 0xFFFFFFFFFFFFFFFEll,  0, 0xFFFFFFFF00000000ll},
+    {"_allmul",   &TST_allmul,   0xFFFFFFFFFFFFFFFEll, 0x0000000080000008ll,  0, 0xFFFFFFFEFFFFFFF0ll},
+    {"_allmul",   &TST_allmul,   0x0000000080000008ll, 0xFFFFFFFFFFFFFFFEll,  0, 0xFFFFFFFEFFFFFFF0ll},
+    {"_allmul",   &TST_allmul,   0x00000000FFFFFFFFll, 0x00000000FFFFFFFFll,  0, 0xFFFFFFFE00000001ll},
+
+    {"_alldiv",   &TST_alldiv,   0x0000000000000000ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_alldiv",   &TST_alldiv,   0x0000000000000000ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_alldiv",   &TST_alldiv,   0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0xFFFFFFFFFFFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0xFFFFFFFFFFFFFFFFll, 0x0000000000000001ll,  0, 0xFFFFFFFFFFFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0xFFFFFFFFFFFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0x0000000000000001ll, 0x0000000000000001ll,  0, 0x0000000000000001ll},
+    {"_alldiv",   &TST_alldiv,   0xFFFFFFFFFFFFFFFFll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000001ll},
+    {"_alldiv",   &TST_alldiv,   0x000000000FFFFFFFll, 0x0000000000000001ll,  0, 0x000000000FFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0x0000000FFFFFFFFFll, 0x0000000000000010ll,  0, 0x00000000FFFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0x0000000000000100ll, 0x000000000FFFFFFFll,  0, 0x0000000000000000ll},
+    {"_alldiv",   &TST_alldiv,   0x00FFFFFFF0000000ll, 0x0000000010000000ll,  0, 0x000000000FFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0x07FFFFFF80000000ll, 0x0000000080000000ll,  0, 0x000000000FFFFFFFll},
+    {"_alldiv",   &TST_alldiv,   0xFFFFFFFFFFFFFFFEll, 0x0000000080000000ll,  0, 0x0000000000000000ll},
+    {"_alldiv",   &TST_alldiv,   0xFFFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x0000000080000008ll},
+    {"_alldiv",   &TST_alldiv,   0x7FFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0xC000000080000008ll},
+    {"_alldiv",   &TST_alldiv,   0x7FFFFFFEFFFFFFF0ll, 0x0000FFFFFFFFFFFEll,  0, 0x0000000000007FFFll},
+    {"_alldiv",   &TST_alldiv,   0x7FFFFFFEFFFFFFF0ll, 0x7FFFFFFEFFFFFFF0ll,  0, 0x0000000000000001ll},
+
+    {"_allrem",   &TST_allrem,   0x0000000000000000ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x0000000000000000ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0xFFFFFFFFFFFFFFFFll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x0000000000000001ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0xFFFFFFFFFFFFFFFFll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x000000000FFFFFFFll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x0000000FFFFFFFFFll, 0x0000000000000010ll,  0, 0x000000000000000Fll},
+    {"_allrem",   &TST_allrem,   0x0000000000000100ll, 0x000000000FFFFFFFll,  0, 0x0000000000000100ll},
+    {"_allrem",   &TST_allrem,   0x00FFFFFFF0000000ll, 0x0000000010000000ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x07FFFFFF80000000ll, 0x0000000080000000ll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0xFFFFFFFFFFFFFFFEll, 0x0000000080000000ll,  0, 0xFFFFFFFFFFFFFFFEll},
+    {"_allrem",   &TST_allrem,   0xFFFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x7FFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x0000000000000000ll},
+    {"_allrem",   &TST_allrem,   0x7FFFFFFEFFFFFFF0ll, 0x0000FFFFFFFFFFFEll,  0, 0x0000FFFF0000FFEEll},
+    {"_allrem",   &TST_allrem,   0x7FFFFFFEFFFFFFF0ll, 0x7FFFFFFEFFFFFFF0ll,  0, 0x0000000000000000ll},
+
+
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000000ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000000ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0xFFFFFFFFFFFFFFFFll, 0x0000000000000001ll,  0, 0xFFFFFFFFFFFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000001ll, 0x0000000000000001ll,  0, 0x0000000000000001ll},
+    {"_ualldiv",  &TST_ualldiv,  0xFFFFFFFFFFFFFFFFll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000001ll},
+    {"_ualldiv",  &TST_ualldiv,  0x000000000FFFFFFFll, 0x0000000000000001ll,  0, 0x000000000FFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000FFFFFFFFFll, 0x0000000000000010ll,  0, 0x00000000FFFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0x0000000000000100ll, 0x000000000FFFFFFFll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x00FFFFFFF0000000ll, 0x0000000010000000ll,  0, 0x000000000FFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0x07FFFFFF80000000ll, 0x0000000080000000ll,  0, 0x000000000FFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0xFFFFFFFFFFFFFFFEll, 0x0000000080000000ll,  0, 0x00000001FFFFFFFFll},
+    {"_ualldiv",  &TST_ualldiv,  0xFFFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x7FFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x0000000000000000ll},
+    {"_ualldiv",  &TST_ualldiv,  0x7FFFFFFEFFFFFFF0ll, 0x0000FFFFFFFFFFFEll,  0, 0x0000000000007FFFll},
+    {"_ualldiv",  &TST_ualldiv,  0x7FFFFFFEFFFFFFF0ll, 0x7FFFFFFEFFFFFFF0ll,  0, 0x0000000000000001ll},
+
+    {"_uallrem",  &TST_uallrem,  0x0000000000000000ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x0000000000000000ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000001ll},
+    {"_uallrem",  &TST_uallrem,  0xFFFFFFFFFFFFFFFFll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x0000000000000001ll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000001ll},
+    {"_uallrem",  &TST_uallrem,  0x0000000000000001ll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0xFFFFFFFFFFFFFFFFll, 0xFFFFFFFFFFFFFFFFll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x000000000FFFFFFFll, 0x0000000000000001ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x0000000FFFFFFFFFll, 0x0000000000000010ll,  0, 0x000000000000000Fll},
+    {"_uallrem",  &TST_uallrem,  0x0000000000000100ll, 0x000000000FFFFFFFll,  0, 0x0000000000000100ll},
+    {"_uallrem",  &TST_uallrem,  0x00FFFFFFF0000000ll, 0x0000000010000000ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0x07FFFFFF80000000ll, 0x0000000080000000ll,  0, 0x0000000000000000ll},
+    {"_uallrem",  &TST_uallrem,  0xFFFFFFFFFFFFFFFEll, 0x0000000080000000ll,  0, 0x000000007FFFFFFEll},
+    {"_uallrem",  &TST_uallrem,  0xFFFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0xFFFFFFFEFFFFFFF0ll},
+    {"_uallrem",  &TST_uallrem,  0x7FFFFFFEFFFFFFF0ll, 0xFFFFFFFFFFFFFFFEll,  0, 0x7FFFFFFEFFFFFFF0ll},
+    {"_uallrem",  &TST_uallrem,  0x7FFFFFFEFFFFFFF0ll, 0x0000FFFFFFFFFFFEll,  0, 0x0000FFFF0000FFEEll},
+    {"_uallrem",  &TST_uallrem,  0x7FFFFFFEFFFFFFF0ll, 0x7FFFFFFEFFFFFFF0ll,  0, 0x0000000000000000ll},
+
+    {NULL}
+};
+
+int
+Test64Bit (SDL_bool verbose)
+{
+    LL_Test *t;
+    int failed = 0;
+
+    for (t = LL_Tests; t->routine != NULL; t++) {
+        unsigned long long result = 0;
+        unsigned int *al = (unsigned int *)&t->a;
+        unsigned int *bl = (unsigned int *)&t->b;
+        unsigned int *el = (unsigned int *)&t->expected_result;
+        unsigned int *rl = (unsigned int *)&result;
+
+        if (!t->routine(&t->a, &t->b, t->arg, &result, &t->expected_result)) {
+            if (verbose)
+                SDL_Log("%s(0x%08X%08X, 0x%08X%08X, %3d, produced: 0x%08X%08X, expected: 0x%08X%08X\n",
+                        t->operation, al[1], al[0], bl[1], bl[0], t->arg, rl[1], rl[0], el[1], el[0]);
+            ++failed;
+        }
+    }
+    if (verbose && (failed == 0))
+        SDL_Log("All 64bit instrinsic tests passed\n");
+    return (failed ? 1 : 0);
+}
+
+int
+TestCPUInfo(SDL_bool verbose)
+{
+    if (verbose) {
+        SDL_Log("CPU count: %d\n", SDL_GetCPUCount());
+        SDL_Log("CPU cache line size: %d\n", SDL_GetCPUCacheLineSize());
+        SDL_Log("RDTSC %s\n", SDL_HasRDTSC()? "detected" : "not detected");
+        SDL_Log("AltiVec %s\n", SDL_HasAltiVec()? "detected" : "not detected");
+        SDL_Log("MMX %s\n", SDL_HasMMX()? "detected" : "not detected");
+        SDL_Log("3DNow! %s\n", SDL_Has3DNow()? "detected" : "not detected");
+        SDL_Log("SSE %s\n", SDL_HasSSE()? "detected" : "not detected");
+        SDL_Log("SSE2 %s\n", SDL_HasSSE2()? "detected" : "not detected");
+        SDL_Log("SSE3 %s\n", SDL_HasSSE3()? "detected" : "not detected");
+        SDL_Log("SSE4.1 %s\n", SDL_HasSSE41()? "detected" : "not detected");
+        SDL_Log("SSE4.2 %s\n", SDL_HasSSE42()? "detected" : "not detected");
+        SDL_Log("AVX %s\n", SDL_HasAVX()? "detected" : "not detected");
+        SDL_Log("AVX2 %s\n", SDL_HasAVX2()? "detected" : "not detected");
+        SDL_Log("AVX-512F %s\n", SDL_HasAVX512F()? "detected" : "not detected");
+        SDL_Log("ARM SIMD %s\n", SDL_HasARMSIMD()? "detected" : "not detected");
+        SDL_Log("NEON %s\n", SDL_HasNEON()? "detected" : "not detected");
+        SDL_Log("System RAM %d MB\n", SDL_GetSystemRAM());
+    }
+    return (0);
+}
+
+int
+TestAssertions(SDL_bool verbose)
+{
+    SDL_assert(1);
+    SDL_assert_release(1);
+    SDL_assert_paranoid(1);
+    SDL_assert(0 || 1);
+    SDL_assert_release(0 || 1);
+    SDL_assert_paranoid(0 || 1);
+
+#if 0   /* enable this to test assertion failures. */
+    SDL_assert_release(1 == 2);
+    SDL_assert_release(5 < 4);
+    SDL_assert_release(0 && "This is a test");
+#endif
+
+    {
+        const SDL_AssertData *item = SDL_GetAssertionReport();
+        while (item) {
+            SDL_Log("'%s', %s (%s:%d), triggered %u times, always ignore: %s.\n",
+                item->condition, item->function, item->filename,
+                item->linenum, item->trigger_count,
+                item->always_ignore ? "yes" : "no");
+            item = item->next;
+        }
+    }
+    return (0);
+}
+
+int
+main(int argc, char *argv[])
+{
+    SDL_bool verbose = SDL_TRUE;
+    int status = 0;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    if (argv[1] && (SDL_strcmp(argv[1], "-q") == 0)) {
+        verbose = SDL_FALSE;
+    }
+    if (verbose) {
+        SDL_Log("This system is running %s\n", SDL_GetPlatform());
+    }
+
+    status += TestTypes(verbose);
+    status += TestEndian(verbose);
+    status += Test64Bit(verbose);
+    status += TestCPUInfo(verbose);
+    status += TestAssertions(verbose);
+
+    return status;
+}
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+/* Simple test of power subsystem. */
+
+#include <stdio.h>
+#include "SDL.h"
+
+static void
+report_power(void)
+{
+    int seconds, percent;
+    const SDL_PowerState state = SDL_GetPowerInfo(&seconds, &percent);
+    const char *statestr = NULL;
+
+    SDL_Log("SDL-reported power info...\n");
+    switch (state) {
+    case SDL_POWERSTATE_UNKNOWN:
+        statestr = "Unknown";
+        break;
+    case SDL_POWERSTATE_ON_BATTERY:
+        statestr = "On battery";
+        break;
+    case SDL_POWERSTATE_NO_BATTERY:
+        statestr = "No battery";
+        break;
+    case SDL_POWERSTATE_CHARGING:
+        statestr = "Charging";
+        break;
+    case SDL_POWERSTATE_CHARGED:
+        statestr = "Charged";
+        break;
+    default:
+        statestr = "!!API ERROR!!";
+        break;
+    }
+
+    SDL_Log("State: %s\n", statestr);
+
+    if (percent == -1) {
+        SDL_Log("Percent left: unknown\n");
+    } else {
+        SDL_Log("Percent left: %d%%\n", percent);
+    }
+
+    if (seconds == -1) {
+        SDL_Log("Time left: unknown\n");
+    } else {
+        SDL_Log("Time left: %d minutes, %d seconds\n", (int) (seconds / 60),
+                (int) (seconds % 60));
+    }
+}
+
+
+int
+main(int argc, char *argv[])
+{
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    if (SDL_Init(0) == -1) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_Init() failed: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    report_power();
+
+    SDL_Quit();
+    return 0;
+}
+
+/* end of testpower.c ... */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+#include "SDL_test.h"
+
+static int
+num_compare(const void *_a, const void *_b)
+{
+    const int a = *((const int *) _a);
+    const int b = *((const int *) _b);
+    return (a < b) ? -1 : ((a > b) ? 1 : 0);
+}
+
+static void
+test_sort(const char *desc, int *nums, const int arraylen)
+{
+    int i;
+    int prev;
+
+    SDL_Log("test: %s arraylen=%d", desc, arraylen);
+
+    SDL_qsort(nums, arraylen, sizeof (nums[0]), num_compare);
+
+    prev = nums[0];
+    for (i = 1; i < arraylen; i++) {
+        const int val = nums[i];
+        if (val < prev) {
+            SDL_Log("sort is broken!");
+            return;
+        }
+        prev = val;
+    }
+}
+
+int
+main(int argc, char *argv[])
+{
+    static int nums[1024 * 100];
+    static const int itervals[] = { SDL_arraysize(nums), 12 };
+    int iteration;
+    SDLTest_RandomContext rndctx;
+
+    if (argc > 1)
+    {
+        int success;
+        Uint64 seed = 0;
+        if (argv[1][0] == '0' && argv[1][1] == 'x')
+            success = SDL_sscanf(argv[1] + 2, "%"SDL_PRIx64, &seed);
+        else
+            success = SDL_sscanf(argv[1], "%"SDL_PRIu64, &seed);
+        if (!success) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Invalid seed. Use a decimal or hexadecimal number.\n");
+            return 1;
+        }
+        if (seed <= ((Uint64)0xffffffff)) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Seed must be equal or greater than 0x100000000.\n");
+            return 1;
+        }
+        SDLTest_RandomInit(&rndctx, (unsigned int)(seed >> 32), (unsigned int)(seed & 0xffffffff));
+    }
+    else
+    {
+        SDLTest_RandomInitTime(&rndctx);
+    }
+    SDL_Log("Using random seed 0x%08x%08x\n", rndctx.x, rndctx.c);
+
+    for (iteration = 0; iteration < SDL_arraysize(itervals); iteration++) {
+        const int arraylen = itervals[iteration];
+        int i;
+
+        for (i = 0; i < arraylen; i++) {
+            nums[i] = i;
+        }
+        test_sort("already sorted", nums, arraylen);
+
+        for (i = 0; i < arraylen; i++) {
+            nums[i] = i;
+        }
+        nums[arraylen-1] = -1;
+        test_sort("already sorted except last element", nums, arraylen);
+
+        for (i = 0; i < arraylen; i++) {
+            nums[i] = (arraylen-1) - i;
+        }
+        test_sort("reverse sorted", nums, arraylen);
+
+        for (i = 0; i < arraylen; i++) {
+            nums[i] = SDLTest_RandomInt(&rndctx);
+        }
+        test_sort("random sorted", nums, arraylen);
+    }
+
+    return 0;
+}
+
+/* vi: set ts=4 sw=4 expandtab: */
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+/* Simple program:  Test relative mouse motion */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#include "SDL_test_common.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+static SDLTest_CommonState *state;
+int i, done;
+SDL_Rect rect;
+SDL_Event event;
+
+static void
+DrawRects(SDL_Renderer * renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+static void
+loop(){
+    /* Check for events */
+    while (SDL_PollEvent(&event)) {
+        SDLTest_CommonEvent(state, &event, &done);
+        switch(event.type) {
+        case SDL_MOUSEMOTION:
+            {
+                rect.x += event.motion.xrel;
+                rect.y += event.motion.yrel;
+            }
+            break;
+        }
+    }
+    for (i = 0; i < state->num_windows; ++i) {
+        SDL_Rect viewport;
+        SDL_Renderer *renderer = state->renderers[i];
+        if (state->windows[i] == NULL)
+            continue;
+        SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
+        SDL_RenderClear(renderer);
+
+        /* Wrap the cursor rectangle at the screen edges to keep it visible */
+        SDL_RenderGetViewport(renderer, &viewport);
+        if (rect.x < viewport.x) rect.x += viewport.w;
+        if (rect.y < viewport.y) rect.y += viewport.h;
+        if (rect.x > viewport.x + viewport.w) rect.x -= viewport.w;
+        if (rect.y > viewport.y + viewport.h) rect.y -= viewport.h;
+
+        DrawRects(renderer);
+
+        SDL_RenderPresent(renderer);
+    }
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char *argv[])
+{
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize test framework */
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+    for (i = 1; i < argc; ++i) {
+        SDLTest_CommonArg(state, i);
+    }
+    if (!SDLTest_CommonInit(state)) {
+        return 2;
+    }
+
+    /* Create the windows and initialize the renderers */
+    for (i = 0; i < state->num_windows; ++i) {
+        SDL_Renderer *renderer = state->renderers[i];
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
+        SDL_RenderClear(renderer);
+    }
+
+    srand((unsigned int)time(NULL));
+    if(SDL_SetRelativeMouseMode(SDL_TRUE) < 0) {
+        return 3;
+    };
+
+    rect.x = DEFAULT_WINDOW_WIDTH / 2;
+    rect.y = DEFAULT_WINDOW_HEIGHT / 2;
+    rect.w = 10;
+    rect.h = 10;
+    /* Main render loop */
+    done = 0;
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(loop, 0, 1);
+#else
+    while (!done) {
+        loop();
+        }
+#endif
+    SDLTest_CommonQuit(state);
+    return 0;
+}
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+/* Simple program:  Move N sprites around on the screen as fast as possible */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL_test_common.h"
+
+
+static SDLTest_CommonState *state;
+
+typedef struct {
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Texture *background;
+    SDL_Texture *sprite;
+    SDL_Rect sprite_rect;
+    int scale_direction;
+} DrawState;
+
+DrawState *drawstates;
+int done;
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    SDLTest_CommonQuit(state);
+    exit(rc);
+}
+
+SDL_Texture *
+LoadTexture(SDL_Renderer *renderer, const char *file, SDL_bool transparent)
+{
+    SDL_Surface *temp;
+    SDL_Texture *texture;
+
+    /* Load the sprite image */
+    temp = SDL_LoadBMP(file);
+    if (temp == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load %s: %s", file, SDL_GetError());
+        return NULL;
+    }
+
+    /* Set transparent pixel as the pixel at (0,0) */
+    if (transparent) {
+        if (temp->format->palette) {
+            SDL_SetColorKey(temp, SDL_TRUE, *(Uint8 *) temp->pixels);
+        } else {
+            switch (temp->format->BitsPerPixel) {
+            case 15:
+                SDL_SetColorKey(temp, SDL_TRUE,
+                                (*(Uint16 *) temp->pixels) & 0x00007FFF);
+                break;
+            case 16:
+                SDL_SetColorKey(temp, SDL_TRUE, *(Uint16 *) temp->pixels);
+                break;
+            case 24:
+                SDL_SetColorKey(temp, SDL_TRUE,
+                                (*(Uint32 *) temp->pixels) & 0x00FFFFFF);
+                break;
+            case 32:
+                SDL_SetColorKey(temp, SDL_TRUE, *(Uint32 *) temp->pixels);
+                break;
+            }
+        }
+    }
+
+    /* Create textures from the image */
+    texture = SDL_CreateTextureFromSurface(renderer, temp);
+    if (!texture) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s\n", SDL_GetError());
+        SDL_FreeSurface(temp);
+        return NULL;
+    }
+    SDL_FreeSurface(temp);
+
+    /* We're ready to roll. :) */
+    return texture;
+}
+
+void
+Draw(DrawState *s)
+{
+    SDL_Rect viewport;
+    SDL_Texture *target;
+    SDL_Point *center=NULL;
+    SDL_Point origin = {0,0};
+
+    SDL_RenderGetViewport(s->renderer, &viewport);
+
+    target = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, viewport.w, viewport.h);
+    SDL_SetRenderTarget(s->renderer, target);
+
+    /* Draw the background */
+    SDL_RenderCopy(s->renderer, s->background, NULL, NULL);
+
+    /* Scale and draw the sprite */
+    s->sprite_rect.w += s->scale_direction;
+    s->sprite_rect.h += s->scale_direction;
+    if (s->scale_direction > 0) {
+        center = &origin;
+        if (s->sprite_rect.w >= viewport.w || s->sprite_rect.h >= viewport.h) {
+            s->scale_direction = -1;
+        }
+    } else {
+        if (s->sprite_rect.w <= 1 || s->sprite_rect.h <= 1) {
+            s->scale_direction = 1;
+        }
+    }
+    s->sprite_rect.x = (viewport.w - s->sprite_rect.w) / 2;
+    s->sprite_rect.y = (viewport.h - s->sprite_rect.h) / 2;
+
+    SDL_RenderCopyEx(s->renderer, s->sprite, NULL, &s->sprite_rect, (double)s->sprite_rect.w, center, (SDL_RendererFlip)s->scale_direction);
+
+    SDL_SetRenderTarget(s->renderer, NULL);
+    SDL_RenderCopy(s->renderer, target, NULL, NULL);
+    SDL_DestroyTexture(target);
+
+    /* Update the screen! */
+    SDL_RenderPresent(s->renderer);
+    /* SDL_Delay(10); */
+}
+
+void loop()
+{
+    int i;
+    SDL_Event event;
+
+    /* Check for events */
+
+    while (SDL_PollEvent(&event)) {
+        SDLTest_CommonEvent(state, &event, &done);
+    }
+    for (i = 0; i < state->num_windows; ++i) {
+        if (state->windows[i] == NULL)
+            continue;
+        Draw(&drawstates[i]);
+    }
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char *argv[])
+{
+    int i;
+    int frames;
+    Uint32 then, now;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize test framework */
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+
+    if (!SDLTest_CommonDefaultArgs(state, argc, argv) || !SDLTest_CommonInit(state)) {
+        SDLTest_CommonQuit(state);
+        return 1;
+    }
+
+    drawstates = SDL_stack_alloc(DrawState, state->num_windows);
+    for (i = 0; i < state->num_windows; ++i) {
+        DrawState *drawstate = &drawstates[i];
+
+        drawstate->window = state->windows[i];
+        drawstate->renderer = state->renderers[i];
+        drawstate->sprite = LoadTexture(drawstate->renderer, "icon.bmp", SDL_TRUE);
+        drawstate->background = LoadTexture(drawstate->renderer, "sample.bmp", SDL_FALSE);
+        if (!drawstate->sprite || !drawstate->background) {
+            quit(2);
+        }
+        SDL_QueryTexture(drawstate->sprite, NULL, NULL,
+                         &drawstate->sprite_rect.w, &drawstate->sprite_rect.h);
+        drawstate->scale_direction = 1;
+    }
+
+    /* Main render loop */
+    frames = 0;
+    then = SDL_GetTicks();
+    done = 0;
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(loop, 0, 1);
+#else
+    while (!done) {
+        ++frames;
+        loop();
+        }
+#endif
+    /* Print out some timing information */
+    now = SDL_GetTicks();
+    if (now > then) {
+        double fps = ((double) frames * 1000) / (now - then);
+        SDL_Log("%2.2f frames per second\n", fps);
+    }
+
+    SDL_stack_free(drawstates);
+
+    quit(0);
+    return 0;
+}
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+/* Simple program:  Move N sprites around on the screen as fast as possible */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL_test_common.h"
+
+
+static SDLTest_CommonState *state;
+
+typedef struct {
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Texture *background;
+    SDL_Texture *sprite;
+    SDL_Rect sprite_rect;
+    int scale_direction;
+} DrawState;
+
+DrawState *drawstates;
+int done;
+SDL_bool test_composite = SDL_FALSE;
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    SDLTest_CommonQuit(state);
+    exit(rc);
+}
+
+SDL_Texture *
+LoadTexture(SDL_Renderer *renderer, const char *file, SDL_bool transparent)
+{
+    SDL_Surface *temp;
+    SDL_Texture *texture;
+
+    /* Load the sprite image */
+    temp = SDL_LoadBMP(file);
+    if (temp == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load %s: %s", file, SDL_GetError());
+        return NULL;
+    }
+
+    /* Set transparent pixel as the pixel at (0,0) */
+    if (transparent) {
+        if (temp->format->palette) {
+            SDL_SetColorKey(temp, SDL_TRUE, *(Uint8 *) temp->pixels);
+        } else {
+            switch (temp->format->BitsPerPixel) {
+            case 15:
+                SDL_SetColorKey(temp, SDL_TRUE,
+                                (*(Uint16 *) temp->pixels) & 0x00007FFF);
+                break;
+            case 16:
+                SDL_SetColorKey(temp, SDL_TRUE, *(Uint16 *) temp->pixels);
+                break;
+            case 24:
+                SDL_SetColorKey(temp, SDL_TRUE,
+                                (*(Uint32 *) temp->pixels) & 0x00FFFFFF);
+                break;
+            case 32:
+                SDL_SetColorKey(temp, SDL_TRUE, *(Uint32 *) temp->pixels);
+                break;
+            }
+        }
+    }
+
+    /* Create textures from the image */
+    texture = SDL_CreateTextureFromSurface(renderer, temp);
+    if (!texture) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s\n", SDL_GetError());
+        SDL_FreeSurface(temp);
+        return NULL;
+    }
+    SDL_FreeSurface(temp);
+
+    /* We're ready to roll. :) */
+    return texture;
+}
+
+SDL_bool
+DrawComposite(DrawState *s)
+{
+    SDL_Rect viewport, R;
+    SDL_Texture *target;
+
+    static SDL_bool blend_tested = SDL_FALSE;
+    if (!blend_tested) {
+        SDL_Texture *A, *B;
+        Uint32 P;
+
+        A = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 1, 1);
+        SDL_SetTextureBlendMode(A, SDL_BLENDMODE_BLEND);
+
+        B = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, 1, 1);
+        SDL_SetTextureBlendMode(B, SDL_BLENDMODE_BLEND);
+
+        SDL_SetRenderTarget(s->renderer, A);
+        SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x80);
+        SDL_RenderFillRect(s->renderer, NULL);
+
+        SDL_SetRenderTarget(s->renderer, B);
+        SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
+        SDL_RenderFillRect(s->renderer, NULL);
+        SDL_RenderCopy(s->renderer, A, NULL, NULL);
+        SDL_RenderReadPixels(s->renderer, NULL, SDL_PIXELFORMAT_ARGB8888, &P, sizeof(P));
+
+        SDL_Log("Blended pixel: 0x%8.8X\n", P);
+
+        SDL_DestroyTexture(A);
+        SDL_DestroyTexture(B);
+        blend_tested = SDL_TRUE;
+    }
+
+    SDL_RenderGetViewport(s->renderer, &viewport);
+
+    target = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, viewport.w, viewport.h);
+    SDL_SetTextureBlendMode(target, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderTarget(s->renderer, target);
+
+    /* Draw the background.
+       This is solid black so when the sprite is copied to it, any per-pixel alpha will be blended through.
+     */
+    SDL_SetRenderDrawColor(s->renderer, 0x00, 0x00, 0x00, 0x00);
+    SDL_RenderFillRect(s->renderer, NULL);
+
+    /* Scale and draw the sprite */
+    s->sprite_rect.w += s->scale_direction;
+    s->sprite_rect.h += s->scale_direction;
+    if (s->scale_direction > 0) {
+        if (s->sprite_rect.w >= viewport.w || s->sprite_rect.h >= viewport.h) {
+            s->scale_direction = -1;
+        }
+    } else {
+        if (s->sprite_rect.w <= 1 || s->sprite_rect.h <= 1) {
+            s->scale_direction = 1;
+        }
+    }
+    s->sprite_rect.x = (viewport.w - s->sprite_rect.w) / 2;
+    s->sprite_rect.y = (viewport.h - s->sprite_rect.h) / 2;
+
+    SDL_RenderCopy(s->renderer, s->sprite, NULL, &s->sprite_rect);
+
+    SDL_SetRenderTarget(s->renderer, NULL);
+    SDL_RenderCopy(s->renderer, s->background, NULL, NULL);
+
+    SDL_SetRenderDrawBlendMode(s->renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor(s->renderer, 0xff, 0x00, 0x00, 0x80);
+    R.x = 0;
+    R.y = 0;
+    R.w = 100;
+    R.h = 100;
+    SDL_RenderFillRect(s->renderer, &R);
+    SDL_SetRenderDrawBlendMode(s->renderer, SDL_BLENDMODE_NONE);
+
+    SDL_RenderCopy(s->renderer, target, NULL, NULL);
+    SDL_DestroyTexture(target);
+
+    /* Update the screen! */
+    SDL_RenderPresent(s->renderer);
+    return SDL_TRUE;
+}
+
+SDL_bool
+Draw(DrawState *s)
+{
+    SDL_Rect viewport;
+    SDL_Texture *target;
+
+    SDL_RenderGetViewport(s->renderer, &viewport);
+
+    target = SDL_CreateTexture(s->renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET, viewport.w, viewport.h);
+    if (!target) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create render target texture: %s\n", SDL_GetError());
+        return SDL_FALSE;
+    }
+    SDL_SetRenderTarget(s->renderer, target);
+
+    /* Draw the background */
+    SDL_RenderCopy(s->renderer, s->background, NULL, NULL);
+
+    /* Scale and draw the sprite */
+    s->sprite_rect.w += s->scale_direction;
+    s->sprite_rect.h += s->scale_direction;
+    if (s->scale_direction > 0) {
+        if (s->sprite_rect.w >= viewport.w || s->sprite_rect.h >= viewport.h) {
+            s->scale_direction = -1;
+        }
+    } else {
+        if (s->sprite_rect.w <= 1 || s->sprite_rect.h <= 1) {
+            s->scale_direction = 1;
+        }
+    }
+    s->sprite_rect.x = (viewport.w - s->sprite_rect.w) / 2;
+    s->sprite_rect.y = (viewport.h - s->sprite_rect.h) / 2;
+
+    SDL_RenderCopy(s->renderer, s->sprite, NULL, &s->sprite_rect);
+
+    SDL_SetRenderTarget(s->renderer, NULL);
+    SDL_RenderCopy(s->renderer, target, NULL, NULL);
+    SDL_DestroyTexture(target);
+
+    /* Update the screen! */
+    SDL_RenderPresent(s->renderer);
+    return SDL_TRUE;
+}
+
+void
+loop()
+{
+    int i;
+    SDL_Event event;
+
+    /* Check for events */
+    while (SDL_PollEvent(&event)) {
+        SDLTest_CommonEvent(state, &event, &done);
+    }
+    for (i = 0; i < state->num_windows; ++i) {
+        if (state->windows[i] == NULL)
+            continue;
+        if (test_composite) {
+            if (!DrawComposite(&drawstates[i])) done = 1;
+        } else {
+            if (!Draw(&drawstates[i])) done = 1;
+        }
+    }
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char *argv[])
+{
+    int i;
+    int frames;
+    Uint32 then, now;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_C

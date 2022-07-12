@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1649581449 source:c:\users\rizqi\desktop\c++\latihan 29\data members\cat.cpp
+	<iostream>
+	"Cat.h"
+
+1649586476 c:\users\rizqi\desktop\c++\latihan 29\data members\cat.h
+
+1649586548 source:c:\users\rizqi\desktop\c++\latihan 29\data members\main.cpp
+	<iostream>
+	"Cat.h"
+

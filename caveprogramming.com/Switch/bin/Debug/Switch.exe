@@ -1,0 +1,2004 @@
+newy;
+            if (newy > maxy) maxy = newy;
+        }
+    }
+
+    /* Call function and validate - special case: no result requested */
+    anyEnclosedNoResult = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosedNoResult,
+        "Check return value %s, got %s",
+        (expectedEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (anyEnclosedNoResult==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+    for (i=0; i<numPoints; i++) {
+        SDLTest_AssertCheck(refPoints[i].x==points[i].x && refPoints[i].y==points[i].y,
+            "Check that source point %i was not modified: expected (%i,%i) actual (%i,%i)",
+            i, refPoints[i].x, refPoints[i].y, points[i].x, points[i].y);
+    }
+
+    /* Call function and validate */
+    anyEnclosed = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)NULL, &result);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosed,
+        "Check return value %s, got %s",
+        (expectedEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (anyEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+    for (i=0; i<numPoints; i++) {
+        SDLTest_AssertCheck(refPoints[i].x==points[i].x && refPoints[i].y==points[i].y,
+            "Check that source point %i was not modified: expected (%i,%i) actual (%i,%i)",
+            i, refPoints[i].x, refPoints[i].y, points[i].x, points[i].y);
+    }
+    SDLTest_AssertCheck(result.x==minx && result.y==miny && result.w==(maxx - minx + 1) && result.h==(maxy - miny + 1),
+        "Check resulting enclosing rectangle: expected (%i,%i - %i,%i), actual (%i,%i - %i,%i)",
+        minx, miny, maxx, maxy, result.x, result.y, result.x + result.w - 1, result.y + result.h - 1);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Test SDL_EnclosePoints() with clipping
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_EnclosePoints
+ */
+int rect_testEnclosePointsWithClipping(void *arg)
+{
+    const int numPoints = 16;
+    SDL_Point refPoints[16];
+    SDL_Point points[16];
+    SDL_Rect refClip;
+    SDL_Rect clip;
+    SDL_Rect result;
+    SDL_bool anyEnclosed;
+    SDL_bool anyEnclosedNoResult;
+    SDL_bool expectedEnclosed = SDL_FALSE;
+    int newx, newy;
+    int minx = 0, maxx = 0, miny = 0, maxy = 0;
+    int i;
+
+    /* Setup clipping rectangle */
+    refClip.x = SDLTest_RandomIntegerInRange(-1024, 1024);
+    refClip.y = SDLTest_RandomIntegerInRange(-1024, 1024);
+    refClip.w = SDLTest_RandomIntegerInRange(1, 1024);
+    refClip.h = SDLTest_RandomIntegerInRange(1, 1024);
+
+    /* Create input data, tracking result */
+    for (i=0; i<numPoints; i++) {
+        newx = SDLTest_RandomIntegerInRange(-1024, 1024);
+        newy = SDLTest_RandomIntegerInRange(-1024, 1024);
+        refPoints[i].x = newx;
+        refPoints[i].y = newy;
+        points[i].x = newx;
+        points[i].y = newy;
+        if ((newx>=refClip.x) && (newx<(refClip.x + refClip.w)) &&
+            (newy>=refClip.y) && (newy<(refClip.y + refClip.h))) {
+            if (expectedEnclosed==SDL_FALSE) {
+                minx = newx;
+                maxx = newx;
+                miny = newy;
+                maxy = newy;
+            } else {
+                if (newx < minx) minx = newx;
+                if (newx > maxx) maxx = newx;
+                if (newy < miny) miny = newy;
+                if (newy > maxy) maxy = newy;
+            }
+            expectedEnclosed = SDL_TRUE;
+        }
+    }
+
+    /* Call function and validate - special case: no result requested */
+    clip = refClip;
+    anyEnclosedNoResult = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)&clip, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosedNoResult,
+        "Expected return value %s, got %s",
+        (expectedEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (anyEnclosedNoResult==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+    for (i=0; i<numPoints; i++) {
+        SDLTest_AssertCheck(refPoints[i].x==points[i].x && refPoints[i].y==points[i].y,
+            "Check that source point %i was not modified: expected (%i,%i) actual (%i,%i)",
+            i, refPoints[i].x, refPoints[i].y, points[i].x, points[i].y);
+    }
+    SDLTest_AssertCheck(refClip.x==clip.x && refClip.y==clip.y && refClip.w==clip.w && refClip.h==clip.h,
+        "Check that source clipping rectangle was not modified");
+
+    /* Call function and validate */
+    anyEnclosed = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosed,
+        "Check return value %s, got %s",
+        (expectedEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (anyEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+    for (i=0; i<numPoints; i++) {
+        SDLTest_AssertCheck(refPoints[i].x==points[i].x && refPoints[i].y==points[i].y,
+            "Check that source point %i was not modified: expected (%i,%i) actual (%i,%i)",
+            i, refPoints[i].x, refPoints[i].y, points[i].x, points[i].y);
+    }
+    SDLTest_AssertCheck(refClip.x==clip.x && refClip.y==clip.y && refClip.w==clip.w && refClip.h==clip.h,
+        "Check that source clipping rectangle was not modified");
+    if (expectedEnclosed==SDL_TRUE) {
+        SDLTest_AssertCheck(result.x==minx && result.y==miny && result.w==(maxx - minx + 1) && result.h==(maxy - miny + 1),
+            "Check resulting enclosing rectangle: expected (%i,%i - %i,%i), actual (%i,%i - %i,%i)",
+            minx, miny, maxx, maxy, result.x, result.y, result.x + result.w - 1, result.y + result.h - 1);
+    }
+
+    /* Empty clipping rectangle */
+    clip.w = 0;
+    clip.h = 0;
+    expectedEnclosed = SDL_FALSE;
+    anyEnclosed = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosed,
+        "Check return value %s, got %s",
+        (expectedEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (anyEnclosed==SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_EnclosePoints() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_EnclosePoints
+ */
+int rect_testEnclosePointsParam(void *arg)
+{
+    SDL_Point points[1];
+    int count;
+    SDL_Rect clip;
+    SDL_Rect result;
+    SDL_bool anyEnclosed;
+
+    /* invalid parameter combinations */
+    anyEnclosed = SDL_EnclosePoints((SDL_Point *)NULL, 1, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(anyEnclosed == SDL_FALSE, "Check that functions returns SDL_FALSE when 1st parameter is NULL");
+    anyEnclosed = SDL_EnclosePoints((const SDL_Point *)points, 0, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(anyEnclosed == SDL_FALSE, "Check that functions returns SDL_FALSE when 2nd parameter is 0");
+    count = SDLTest_RandomIntegerInRange(-100, -1);
+    anyEnclosed = SDL_EnclosePoints((const SDL_Point *)points, count, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(anyEnclosed == SDL_FALSE, "Check that functions returns SDL_FALSE when 2nd parameter is %i (negative)", count);
+    anyEnclosed = SDL_EnclosePoints((SDL_Point *)NULL, 0, (const SDL_Rect *)&clip, &result);
+    SDLTest_AssertCheck(anyEnclosed == SDL_FALSE, "Check that functions returns SDL_FALSE when 1st parameter is NULL and 2nd parameter was 0");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_UnionRect() where rect B is outside rect A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_UnionRect
+ */
+int rect_testUnionRectOutside(void *arg)
+{
+    SDL_Rect refRectA, refRectB;
+    SDL_Rect rectA, rectB;
+    SDL_Rect expectedResult;
+    SDL_Rect result;
+    int minx, maxx, miny, maxy;
+    int dx, dy;
+
+    /* Union 1x1 outside */
+    for (dx = -1; dx < 2; dx++) {
+        for (dy = -1; dy < 2; dy++) {
+            if ((dx != 0) || (dy != 0)) {
+                refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.w=1;
+                refRectA.h=1;
+                refRectB.x=SDLTest_RandomIntegerInRange(-1024, 1024) + dx*2048;
+                refRectB.y=SDLTest_RandomIntegerInRange(-1024, 1024) + dx*2048;
+                refRectB.w=1;
+                refRectB.h=1;
+                minx = (refRectA.x<refRectB.x) ? refRectA.x : refRectB.x;
+                maxx = (refRectA.x>refRectB.x) ? refRectA.x : refRectB.x;
+                miny = (refRectA.y<refRectB.y) ? refRectA.y : refRectB.y;
+                maxy = (refRectA.y>refRectB.y) ? refRectA.y : refRectB.y;
+                expectedResult.x = minx;
+                expectedResult.y = miny;
+                expectedResult.w = maxx - minx + 1;
+                expectedResult.h = maxy - miny + 1;
+                rectA = refRectA;
+                rectB = refRectB;
+                SDL_UnionRect(&rectA, &rectB, &result);
+                _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+            }
+        }
+    }
+
+    /* Union outside overlap */
+    for (dx = -1; dx < 2; dx++) {
+        for (dy = -1; dy < 2; dy++) {
+            if ((dx != 0) || (dy != 0)) {
+                refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.w=SDLTest_RandomIntegerInRange(256, 512);
+                refRectA.h=SDLTest_RandomIntegerInRange(256, 512);
+                refRectB.x=refRectA.x + 1 + dx*2;
+                refRectB.y=refRectA.y + 1 + dy*2;
+                refRectB.w=refRectA.w - 2;
+                refRectB.h=refRectA.h - 2;
+                expectedResult = refRectA;
+                if (dx == -1) expectedResult.x--;
+                if (dy == -1) expectedResult.y--;
+                if ((dx == 1) || (dx == -1)) expectedResult.w++;
+                if ((dy == 1) || (dy == -1)) expectedResult.h++;
+                rectA = refRectA;
+                rectB = refRectB;
+                SDL_UnionRect(&rectA, &rectB, &result);
+                _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+            }
+        }
+    }
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_UnionRect() where rect A or rect B are empty
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_UnionRect
+ */
+int rect_testUnionRectEmpty(void *arg)
+{
+    SDL_Rect refRectA, refRectB;
+    SDL_Rect rectA, rectB;
+    SDL_Rect expectedResult;
+    SDL_Rect result;
+
+    /* A empty */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=0;
+    refRectA.h=0;
+    refRectB.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.w=SDLTest_RandomIntegerInRange(1, 1024);
+    refRectB.h=SDLTest_RandomIntegerInRange(1, 1024);
+    expectedResult = refRectB;
+    rectA = refRectA;
+    rectB = refRectB;
+    SDL_UnionRect(&rectA, &rectB, &result);
+    _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* B empty */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=SDLTest_RandomIntegerInRange(1, 1024);
+    refRectA.h=SDLTest_RandomIntegerInRange(1, 1024);
+    refRectB.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.w=0;
+    refRectB.h=0;
+    expectedResult = refRectA;
+    rectA = refRectA;
+    rectB = refRectB;
+    SDL_UnionRect(&rectA, &rectB, &result);
+    _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* A and B empty */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=0;
+    refRectA.h=0;
+    refRectB.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectB.w=0;
+    refRectB.h=0;
+    result.x=0;
+    result.y=0;
+    result.w=0;
+    result.h=0;
+    expectedResult = result;
+    rectA = refRectA;
+    rectB = refRectB;
+    SDL_UnionRect(&rectA, &rectB, &result);
+    _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_UnionRect() where rect B is inside rect A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_UnionRect
+ */
+int rect_testUnionRectInside(void *arg)
+{
+    SDL_Rect refRectA, refRectB;
+    SDL_Rect rectA, rectB;
+    SDL_Rect expectedResult;
+    SDL_Rect result;
+    int dx, dy;
+
+    /* Union 1x1 with itself */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=1;
+    refRectA.h=1;
+    expectedResult = refRectA;
+    rectA = refRectA;
+    SDL_UnionRect(&rectA, &rectA, &result);
+    _validateUnionRectResults(&rectA, &rectA, &refRectA, &refRectA, &result, &expectedResult);
+
+    /* Union 1x1 somewhere inside */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=SDLTest_RandomIntegerInRange(256, 1024);
+    refRectA.h=SDLTest_RandomIntegerInRange(256, 1024);
+    refRectB.x=refRectA.x + 1 + SDLTest_RandomIntegerInRange(1, refRectA.w - 2);
+    refRectB.y=refRectA.y + 1 + SDLTest_RandomIntegerInRange(1, refRectA.h - 2);
+    refRectB.w=1;
+    refRectB.h=1;
+    expectedResult = refRectA;
+    rectA = refRectA;
+    rectB = refRectB;
+    SDL_UnionRect(&rectA, &rectB, &result);
+    _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* Union inside with edges modified */
+    for (dx = -1; dx < 2; dx++) {
+        for (dy = -1; dy < 2; dy++) {
+            if ((dx != 0) || (dy != 0)) {
+                refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRectA.w=SDLTest_RandomIntegerInRange(256, 1024);
+                refRectA.h=SDLTest_RandomIntegerInRange(256, 1024);
+                refRectB = refRectA;
+                if (dx == -1) refRectB.x++;
+                if ((dx == 1) || (dx == -1)) refRectB.w--;
+                if (dy == -1) refRectB.y++;
+                if ((dy == 1) || (dy == -1)) refRectB.h--;
+                expectedResult = refRectA;
+                rectA = refRectA;
+                rectB = refRectB;
+                SDL_UnionRect(&rectA, &rectB, &result);
+                _validateUnionRectResults(&rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+            }
+        }
+    }
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_UnionRect() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_UnionRect
+ */
+int rect_testUnionRectParam(void *arg)
+{
+    SDL_Rect rectA, rectB;
+    SDL_Rect result;
+
+    /* invalid parameter combinations */
+    SDL_UnionRect((SDL_Rect *)NULL, &rectB, &result);
+    SDLTest_AssertPass("Check that function returns when 1st parameter is NULL");
+    SDL_UnionRect(&rectA, (SDL_Rect *)NULL, &result);
+    SDLTest_AssertPass("Check that function returns  when 2nd parameter is NULL");
+    SDL_UnionRect(&rectA, &rectB, (SDL_Rect *)NULL);
+    SDLTest_AssertPass("Check that function returns  when 3rd parameter is NULL");
+    SDL_UnionRect((SDL_Rect *)NULL, &rectB, (SDL_Rect *)NULL);
+    SDLTest_AssertPass("Check that function returns  when 1st and 3rd parameter are NULL");
+    SDL_UnionRect(&rectA, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertPass("Check that function returns  when 2nd and 3rd parameter are NULL");
+    SDL_UnionRect((SDL_Rect *)NULL, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertPass("Check that function returns  when all parameters are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_RectEmpty() with various inputs
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RectEmpty
+ */
+int rect_testRectEmpty(void *arg)
+{
+    SDL_Rect refRect;
+    SDL_Rect rect;
+    SDL_bool expectedResult;
+    SDL_bool result;
+    int w, h;
+
+    /* Non-empty case */
+    refRect.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRect.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRect.w=SDLTest_RandomIntegerInRange(256, 1024);
+    refRect.h=SDLTest_RandomIntegerInRange(256, 1024);
+    expectedResult = SDL_FALSE;
+    rect = refRect;
+    result = (SDL_bool)SDL_RectEmpty((const SDL_Rect *)&rect);
+    _validateRectEmptyResults(result, expectedResult, &rect, &refRect);
+
+    /* Empty case */
+    for (w=-1; w<2; w++) {
+        for (h=-1; h<2; h++) {
+            if ((w != 1) || (h != 1)) {
+                refRect.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRect.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+                refRect.w=w;
+                refRect.h=h;
+                expectedResult = SDL_TRUE;
+                rect = refRect;
+                result = (SDL_bool)SDL_RectEmpty((const SDL_Rect *)&rect);
+                _validateRectEmptyResults(result, expectedResult, &rect, &refRect);
+            }
+        }
+    }
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_RectEmpty() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RectEmpty
+ */
+int rect_testRectEmptyParam(void *arg)
+{
+    SDL_bool result;
+
+    /* invalid parameter combinations */
+    result = (SDL_bool)SDL_RectEmpty((const SDL_Rect *)NULL);
+    SDLTest_AssertCheck(result == SDL_TRUE, "Check that function returns TRUE when 1st parameter is NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_RectEquals() with various inputs
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RectEquals
+ */
+int rect_testRectEquals(void *arg)
+{
+    SDL_Rect refRectA;
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool expectedResult;
+    SDL_bool result;
+
+    /* Equals */
+    refRectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=SDLTest_RandomIntegerInRange(1, 1024);
+    refRectA.h=SDLTest_RandomIntegerInRange(1, 1024);
+    refRectB = refRectA;
+    expectedResult = SDL_TRUE;
+    rectA = refRectA;
+    rectB = refRectB;
+    result = (SDL_bool)SDL_RectEquals((const SDL_Rect *)&rectA, (const SDL_Rect *)&rectB);
+    _validateRectEqualsResults(result, expectedResult, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_RectEquals() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RectEquals
+ */
+int rect_testRectEqualsParam(void *arg)
+{
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool result;
+
+    /* data setup */
+    rectA.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    rectA.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    rectA.w=SDLTest_RandomIntegerInRange(1, 1024);
+    rectA.h=SDLTest_RandomIntegerInRange(1, 1024);
+    rectB.x=SDLTest_RandomIntegerInRange(-1024, 1024);
+    rectB.y=SDLTest_RandomIntegerInRange(-1024, 1024);
+    rectB.w=SDLTest_RandomIntegerInRange(1, 1024);
+    rectB.h=SDLTest_RandomIntegerInRange(1, 1024);
+
+    /* invalid parameter combinations */
+    result = (SDL_bool)SDL_RectEquals((const SDL_Rect *)NULL, (const SDL_Rect *)&rectB);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 1st parameter is NULL");
+    result = (SDL_bool)SDL_RectEquals((const SDL_Rect *)&rectA, (const SDL_Rect *)NULL);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 2nd parameter is NULL");
+    result = (SDL_bool)SDL_RectEquals((const SDL_Rect *)NULL, (const SDL_Rect *)NULL);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 1st and 2nd parameter are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_FRectEquals() with various inputs
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_FRectEquals
+ */
+int rect_testFRectEquals(void *arg)
+{
+    SDL_FRect refRectA;
+    SDL_FRect refRectB;
+    SDL_FRect rectA;
+    SDL_FRect rectB;
+    SDL_bool expectedResult;
+    SDL_bool result;
+
+    /* Equals */
+    refRectA.x=(float)SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.y=(float)SDLTest_RandomIntegerInRange(-1024, 1024);
+    refRectA.w=(float)SDLTest_RandomIntegerInRange(1, 1024);
+    refRectA.h=(float)SDLTest_RandomIntegerInRange(1, 1024);
+    refRectB = refRectA;
+    expectedResult = SDL_TRUE;
+    rectA = refRectA;
+    rectB = refRectB;
+    result = (SDL_bool)SDL_FRectEquals((const SDL_FRect *)&rectA, (const SDL_FRect *)&rectB);
+    _validateFRectEqualsResults(result, expectedResult, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_FRectEquals() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_FRectEquals
+ */
+int rect_testFRectEqualsParam(void *arg)
+{
+    SDL_FRect rectA;
+    SDL_FRect rectB;
+    SDL_bool result;
+
+    /* data setup -- For the purpose of this test, the values don't matter. */
+    rectA.x=SDLTest_RandomFloat();
+    rectA.y=SDLTest_RandomFloat();
+    rectA.w=SDLTest_RandomFloat();
+    rectA.h=SDLTest_RandomFloat();
+    rectB.x=SDLTest_RandomFloat();
+    rectB.y=SDLTest_RandomFloat();
+    rectB.w=SDLTest_RandomFloat();
+    rectB.h=SDLTest_RandomFloat();
+
+    /* invalid parameter combinations */
+    result = (SDL_bool)SDL_FRectEquals((const SDL_FRect *)NULL, (const SDL_FRect *)&rectB);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 1st parameter is NULL");
+    result = (SDL_bool)SDL_FRectEquals((const SDL_FRect *)&rectA, (const SDL_FRect *)NULL);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 2nd parameter is NULL");
+    result = (SDL_bool)SDL_FRectEquals((const SDL_FRect *)NULL, (const SDL_FRect *)NULL);
+    SDLTest_AssertCheck(result == SDL_FALSE, "Check that function returns SDL_FALSE when 1st and 2nd parameter are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* ================= Test References ================== */
+
+/* Rect test cases */
+
+/* SDL_IntersectRectAndLine */
+static const SDLTest_TestCaseReference rectTest1 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectAndLine,"rect_testIntersectRectAndLine",  "Tests SDL_IntersectRectAndLine clipping cases", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest2 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectAndLineInside, "rect_testIntersectRectAndLineInside", "Tests SDL_IntersectRectAndLine with line fully contained in rect", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest3 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectAndLineOutside, "rect_testIntersectRectAndLineOutside", "Tests SDL_IntersectRectAndLine with line fully outside of rect", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest4 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectAndLineEmpty, "rect_testIntersectRectAndLineEmpty", "Tests SDL_IntersectRectAndLine with empty rectangle ", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest5 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectAndLineParam, "rect_testIntersectRectAndLineParam", "Negative tests against SDL_IntersectRectAndLine with invalid parameters", TEST_ENABLED };
+
+/* SDL_IntersectRect */
+static const SDLTest_TestCaseReference rectTest6 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectInside, "rect_testIntersectRectInside", "Tests SDL_IntersectRect with B fully contained in A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest7 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectOutside, "rect_testIntersectRectOutside", "Tests SDL_IntersectRect with B fully outside of A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest8 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectPartial, "rect_testIntersectRectPartial", "Tests SDL_IntersectRect with B partially intersecting A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest9 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectPoint, "rect_testIntersectRectPoint", "Tests SDL_IntersectRect with 1x1 sized rectangles", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest10 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectEmpty, "rect_testIntersectRectEmpty", "Tests SDL_IntersectRect with empty rectangles", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest11 =
+        { (SDLTest_TestCaseFp)rect_testIntersectRectParam, "rect_testIntersectRectParam", "Negative tests against SDL_IntersectRect with invalid parameters", TEST_ENABLED };
+
+/* SDL_HasIntersection */
+static const SDLTest_TestCaseReference rectTest12 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionInside, "rect_testHasIntersectionInside", "Tests SDL_HasIntersection with B fully contained in A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest13 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionOutside, "rect_testHasIntersectionOutside", "Tests SDL_HasIntersection with B fully outside of A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest14 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionPartial,"rect_testHasIntersectionPartial",  "Tests SDL_HasIntersection with B partially intersecting A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest15 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionPoint, "rect_testHasIntersectionPoint", "Tests SDL_HasIntersection with 1x1 sized rectangles", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest16 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionEmpty, "rect_testHasIntersectionEmpty", "Tests SDL_HasIntersection with empty rectangles", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest17 =
+        { (SDLTest_TestCaseFp)rect_testHasIntersectionParam, "rect_testHasIntersectionParam", "Negative tests against SDL_HasIntersection with invalid parameters", TEST_ENABLED };
+
+/* SDL_EnclosePoints */
+static const SDLTest_TestCaseReference rectTest18 =
+        { (SDLTest_TestCaseFp)rect_testEnclosePoints, "rect_testEnclosePoints", "Tests SDL_EnclosePoints without clipping", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest19 =
+        { (SDLTest_TestCaseFp)rect_testEnclosePointsWithClipping, "rect_testEnclosePointsWithClipping", "Tests SDL_EnclosePoints with clipping", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest20 =
+        { (SDLTest_TestCaseFp)rect_testEnclosePointsRepeatedInput, "rect_testEnclosePointsRepeatedInput", "Tests SDL_EnclosePoints with repeated input", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest21 =
+        { (SDLTest_TestCaseFp)rect_testEnclosePointsParam, "rect_testEnclosePointsParam", "Negative tests against SDL_EnclosePoints with invalid parameters", TEST_ENABLED };
+
+/* SDL_UnionRect */
+static const SDLTest_TestCaseReference rectTest22 =
+        { (SDLTest_TestCaseFp)rect_testUnionRectInside, "rect_testUnionRectInside", "Tests SDL_UnionRect where rect B is inside rect A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest23 =
+        { (SDLTest_TestCaseFp)rect_testUnionRectOutside, "rect_testUnionRectOutside", "Tests SDL_UnionRect where rect B is outside rect A", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest24 =
+        { (SDLTest_TestCaseFp)rect_testUnionRectEmpty, "rect_testUnionRectEmpty", "Tests SDL_UnionRect where rect A or rect B are empty", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest25 =
+        { (SDLTest_TestCaseFp)rect_testUnionRectParam, "rect_testUnionRectParam", "Negative tests against SDL_UnionRect with invalid parameters", TEST_ENABLED };
+
+/* SDL_RectEmpty */
+static const SDLTest_TestCaseReference rectTest26 =
+        { (SDLTest_TestCaseFp)rect_testRectEmpty, "rect_testRectEmpty", "Tests SDL_RectEmpty with various inputs", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest27 =
+        { (SDLTest_TestCaseFp)rect_testRectEmptyParam, "rect_testRectEmptyParam", "Negative tests against SDL_RectEmpty with invalid parameters", TEST_ENABLED };
+
+/* SDL_RectEquals */
+
+static const SDLTest_TestCaseReference rectTest28 =
+        { (SDLTest_TestCaseFp)rect_testRectEquals, "rect_testRectEquals", "Tests SDL_RectEquals with various inputs", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest29 =
+        { (SDLTest_TestCaseFp)rect_testRectEqualsParam, "rect_testRectEqualsParam", "Negative tests against SDL_RectEquals with invalid parameters", TEST_ENABLED };
+
+/* SDL_FRectEquals */
+
+static const SDLTest_TestCaseReference rectTest30 =
+        { (SDLTest_TestCaseFp)rect_testFRectEquals, "rect_testFRectEquals", "Tests SDL_FRectEquals with various inputs", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference rectTest31 =
+        { (SDLTest_TestCaseFp)rect_testFRectEqualsParam, "rect_testFRectEqualsParam", "Negative tests against SDL_FRectEquals with invalid parameters", TEST_ENABLED };
+
+/* !
+ * \brief Sequence of Rect test cases; functions that handle simple rectangles including overlaps and merges.
+ *
+ * \sa
+ * http://wiki.libsdl.org/CategoryRect
+ */
+static const SDLTest_TestCaseReference *rectTests[] =  {
+    &rectTest1, &rectTest2, &rectTest3, &rectTest4, &rectTest5, &rectTest6, &rectTest7, &rectTest8, &rectTest9, &rectTest10, &rectTest11, &rectTest12, &rectTest13, &rectTest14,
+    &rectTest15, &rectTest16, &rectTest17, &rectTest18, &rectTest19, &rectTest20, &rectTest21, &rectTest22, &rectTest23, &rectTest24, &rectTest25, &rectTest26, &rectTest27,
+    &rectTest28, &rectTest29, &rectTest30, &rectTest31, NULL
+};
+
+
+/* Rect test suite (global) */
+SDLTest_TestSuiteReference rectTestSuite = {
+    "Rect",
+    NULL,
+    rectTests,
+    NULL
+};
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     /**
+ * Original code: automated SDL platform test written by Edgar Simo "bobbens"
+ * Extended and extensively updated by aschiffler at ferzkopp dot net
+ */
+
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_test.h"
+
+/* ================= Test Case Implementation ================== */
+
+#define TESTRENDER_SCREEN_W     80
+#define TESTRENDER_SCREEN_H     60
+
+#define RENDER_COMPARE_FORMAT  SDL_PIXELFORMAT_ARGB8888
+#define RENDER_COMPARE_AMASK   0xff000000 /**< Alpha bit mask. */
+#define RENDER_COMPARE_RMASK   0x00ff0000 /**< Red bit mask. */
+#define RENDER_COMPARE_GMASK   0x0000ff00 /**< Green bit mask. */
+#define RENDER_COMPARE_BMASK   0x000000ff /**< Blue bit mask. */
+
+#define ALLOWABLE_ERROR_OPAQUE  0
+#define ALLOWABLE_ERROR_BLENDED 64
+
+/* Test window and renderer */
+SDL_Window *window = NULL;
+SDL_Renderer *renderer = NULL;
+
+/* Prototypes for helper functions */
+
+static int _clearScreen (void);
+static void _compare(SDL_Surface *reference, int allowable_error);
+static int _hasTexAlpha(void);
+static int _hasTexColor(void);
+static SDL_Texture *_loadTestFace(void);
+static int _hasBlendModes(void);
+static int _hasDrawColor(void);
+static int _isSupported(int code);
+
+/**
+ * Create software renderer for tests
+ */
+void InitCreateRenderer(void *arg)
+{
+  int posX = 100, posY = 100, width = 320, height = 240;
+  renderer = NULL;
+  window = SDL_CreateWindow("render_testCreateRenderer", posX, posY, width, height, 0);
+  SDLTest_AssertPass("SDL_CreateWindow()");
+  SDLTest_AssertCheck(window != NULL, "Check SDL_CreateWindow result");
+  if (window == NULL) {
+      return;
+  }
+
+  renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+  SDLTest_AssertPass("SDL_CreateRenderer()");
+  SDLTest_AssertCheck(renderer != 0, "Check SDL_CreateRenderer result");
+  if (renderer == NULL) {
+      SDL_DestroyWindow(window);
+      return;
+  }
+}
+
+/*
+ * Destroy renderer for tests
+ */
+void CleanupDestroyRenderer(void *arg)
+{
+  if (renderer != NULL) {
+     SDL_DestroyRenderer(renderer);
+     renderer = NULL;
+     SDLTest_AssertPass("SDL_DestroyRenderer()");
+  }
+
+  if (window != NULL) {
+     SDL_DestroyWindow(window);
+     window = NULL;
+     SDLTest_AssertPass("SDL_DestroyWindow");
+  }
+}
+
+
+/**
+ * @brief Tests call to SDL_GetNumRenderDrivers
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_GetNumRenderDrivers
+ */
+int
+render_testGetNumRenderDrivers(void *arg)
+{
+  int n;
+  n = SDL_GetNumRenderDrivers();
+  SDLTest_AssertCheck(n >= 1, "Number of renderers >= 1, reported as %i", n);
+  return TEST_COMPLETED;
+}
+
+
+/**
+ * @brief Tests the SDL primitives for rendering.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetRenderDrawColor
+ * http://wiki.libsdl.org/SDL_RenderFillRect
+ * http://wiki.libsdl.org/SDL_RenderDrawLine
+ *
+ */
+int render_testPrimitives (void *arg)
+{
+   int ret;
+   int x, y;
+   SDL_Rect rect;
+   SDL_Surface *referenceSurface = NULL;
+   int checkFailCount1;
+   int checkFailCount2;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Need drawcolor or just skip test. */
+   SDLTest_AssertCheck(_hasDrawColor(), "_hasDrawColor");
+
+   /* Draw a rectangle. */
+   rect.x = 40;
+   rect.y = 0;
+   rect.w = 40;
+   rect.h = 80;
+
+   ret = SDL_SetRenderDrawColor(renderer, 13, 73, 200, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, &rect );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+   /* Draw a rectangle. */
+   rect.x = 10;
+   rect.y = 10;
+   rect.w = 60;
+   rect.h = 40;
+   ret = SDL_SetRenderDrawColor(renderer, 200, 0, 100, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, &rect );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+   /* Draw some points like so:
+    * X.X.X.X..
+    * .X.X.X.X.
+    * X.X.X.X.. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   for (y=0; y<3; y++) {
+      for (x = y % 2; x<TESTRENDER_SCREEN_W; x+=2) {
+         ret = SDL_SetRenderDrawColor(renderer, x*y, x*y/2, x*y/3, SDL_ALPHA_OPAQUE );
+         if (ret != 0) checkFailCount1++;
+
+         ret = SDL_RenderDrawPoint(renderer, x, y );
+         if (ret != 0) checkFailCount2++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetRenderDrawColor, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_RenderDrawPoint, expected: 0, got: %i", checkFailCount2);
+
+   /* Draw some lines. */
+   ret = SDL_SetRenderDrawColor(renderer, 0, 255, 0, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor");
+
+   ret = SDL_RenderDrawLine(renderer, 0, 30, TESTRENDER_SCREEN_W, 30 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawColor(renderer, 55, 55, 5, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderDrawLine(renderer, 40, 30, 40, 60 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawColor(renderer, 5, 105, 105, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderDrawLine(renderer, 0, 0, 29, 29 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderDrawLine(renderer, 29, 30, 0, 59 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderDrawLine(renderer, 79, 0, 50, 29 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderDrawLine(renderer, 79, 59, 50, 30 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderDrawLine, expected: 0, got: %i", ret);
+
+   /* See if it's the same. */
+   referenceSurface = SDLTest_ImagePrimitives();
+   _compare(referenceSurface, ALLOWABLE_ERROR_OPAQUE );
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Clean up. */
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+/**
+ * @brief Tests the SDL primitives with alpha for rendering.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetRenderDrawColor
+ * http://wiki.libsdl.org/SDL_SetRenderDrawBlendMode
+ * http://wiki.libsdl.org/SDL_RenderFillRect
+ */
+int render_testPrimitivesBlend (void *arg)
+{
+   int ret;
+   int i, j;
+   SDL_Rect rect;
+   SDL_Surface *referenceSurface = NULL;
+   int checkFailCount1;
+   int checkFailCount2;
+   int checkFailCount3;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Need drawcolor and blendmode or just skip test. */
+   SDLTest_AssertCheck(_hasDrawColor(), "_hasDrawColor");
+   SDLTest_AssertCheck(_hasBlendModes(), "_hasBlendModes");
+
+   /* Create some rectangles for each blend mode. */
+   ret = SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawBlendMode, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, NULL );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+   rect.x = 10;
+   rect.y = 25;
+   rect.w = 40;
+   rect.h = 25;
+   ret = SDL_SetRenderDrawColor(renderer, 240, 10, 10, 75 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawBlendMode, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, &rect );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+   rect.x = 30;
+   rect.y = 40;
+   rect.w = 45;
+   rect.h = 15;
+   ret = SDL_SetRenderDrawColor(renderer, 10, 240, 10, 100 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawBlendMode, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, &rect );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+   rect.x = 25;
+   rect.y = 25;
+   rect.w = 25;
+   rect.h = 25;
+   ret = SDL_SetRenderDrawColor(renderer, 10, 10, 240, 125 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawBlendMode, expected: 0, got: %i", ret);
+
+   ret = SDL_RenderFillRect(renderer, &rect );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderFillRect, expected: 0, got: %i", ret);
+
+
+   /* Draw blended lines, lines for everyone. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   checkFailCount3 = 0;
+   for (i=0; i<TESTRENDER_SCREEN_W; i+=2)  {
+      ret = SDL_SetRenderDrawColor(renderer, 60+2*i, 240-2*i, 50, 3*i );
+      if (ret != 0) checkFailCount1++;
+
+      ret = SDL_SetRenderDrawBlendMode(renderer,(((i/2)%3)==0) ? SDL_BLENDMODE_BLEND :
+            (((i/2)%3)==1) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_NONE );
+      if (ret != 0) checkFailCount2++;
+
+      ret = SDL_RenderDrawLine(renderer, 0, 0, i, 59 );
+      if (ret != 0) checkFailCount3++;
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetRenderDrawColor, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_SetRenderDrawBlendMode, expected: 0, got: %i", checkFailCount2);
+   SDLTest_AssertCheck(checkFailCount3 == 0, "Validate results from calls to SDL_RenderDrawLine, expected: 0, got: %i", checkFailCount3);
+
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   checkFailCount3 = 0;
+   for (i=0; i<TESTRENDER_SCREEN_H; i+=2)  {
+      ret = SDL_SetRenderDrawColor(renderer, 60+2*i, 240-2*i, 50, 3*i );
+      if (ret != 0) checkFailCount1++;
+
+      ret = SDL_SetRenderDrawBlendMode(renderer,(((i/2)%3)==0) ? SDL_BLENDMODE_BLEND :
+            (((i/2)%3)==1) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_NONE );
+      if (ret != 0) checkFailCount2++;
+
+      ret = SDL_RenderDrawLine(renderer, 0, 0, 79, i );
+      if (ret != 0) checkFailCount3++;
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetRenderDrawColor, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_SetRenderDrawBlendMode, expected: 0, got: %i", checkFailCount2);
+   SDLTest_AssertCheck(checkFailCount3 == 0, "Validate results from calls to SDL_RenderDrawLine, expected: 0, got: %i", checkFailCount3);
+
+   /* Draw points. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   checkFailCount3 = 0;
+   for (j=0; j<TESTRENDER_SCREEN_H; j+=3) {
+      for (i=0; i<TESTRENDER_SCREEN_W; i+=3) {
+         ret = SDL_SetRenderDrawColor(renderer, j*4, i*3, j*4, i*3 );
+         if (ret != 0) checkFailCount1++;
+
+         ret = SDL_SetRenderDrawBlendMode(renderer, ((((i+j)/3)%3)==0) ? SDL_BLENDMODE_BLEND :
+               ((((i+j)/3)%3)==1) ? SDL_BLENDMODE_ADD : SDL_BLENDMODE_NONE );
+         if (ret != 0) checkFailCount2++;
+
+         ret = SDL_RenderDrawPoint(renderer, i, j );
+         if (ret != 0) checkFailCount3++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetRenderDrawColor, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_SetRenderDrawBlendMode, expected: 0, got: %i", checkFailCount2);
+   SDLTest_AssertCheck(checkFailCount3 == 0, "Validate results from calls to SDL_RenderDrawPoint, expected: 0, got: %i", checkFailCount3);
+
+   /* See if it's the same. */
+   referenceSurface = SDLTest_ImagePrimitivesBlend();
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED );
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Clean up. */
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+
+
+/**
+ * @brief Tests some blitting routines.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RenderCopy
+ * http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+int
+render_testBlit(void *arg)
+{
+   int ret;
+   SDL_Rect rect;
+   SDL_Texture *tface;
+   SDL_Surface *referenceSurface = NULL;
+   Uint32 tformat;
+   int taccess, tw, th;
+   int i, j, ni, nj;
+   int checkFailCount1;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Need drawcolor or just skip test. */
+   SDLTest_AssertCheck(_hasDrawColor(), "_hasDrawColor)");
+
+   /* Create face surface. */
+   tface = _loadTestFace();
+   SDLTest_AssertCheck(tface != NULL,  "Verify _loadTestFace() result");
+   if (tface == NULL) {
+       return TEST_ABORTED;
+   }
+
+   /* Constant values. */
+   ret = SDL_QueryTexture(tface, &tformat, &taccess, &tw, &th);
+   SDLTest_AssertCheck(ret == 0, "Verify result from SDL_QueryTexture, expected 0, got %i", ret);
+   rect.w = tw;
+   rect.h = th;
+   ni     = TESTRENDER_SCREEN_W - tw;
+   nj     = TESTRENDER_SCREEN_H - th;
+
+   /* Loop blit. */
+   checkFailCount1 = 0;
+   for (j=0; j <= nj; j+=4) {
+      for (i=0; i <= ni; i+=4) {
+         /* Blitting. */
+         rect.x = i;
+         rect.y = j;
+         ret = SDL_RenderCopy(renderer, tface, NULL, &rect );
+         if (ret != 0) checkFailCount1++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_RenderCopy, expected: 0, got: %i", checkFailCount1);
+
+   /* See if it's the same */
+   referenceSurface = SDLTest_ImageBlit();
+   _compare(referenceSurface, ALLOWABLE_ERROR_OPAQUE );
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+
+/**
+ * @brief Blits doing color tests.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetTextureColorMod
+ * http://wiki.libsdl.org/SDL_RenderCopy
+ * http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+int
+render_testBlitColor (void *arg)
+{
+   int ret;
+   SDL_Rect rect;
+   SDL_Texture *tface;
+   SDL_Surface *referenceSurface = NULL;
+   Uint32 tformat;
+   int taccess, tw, th;
+   int i, j, ni, nj;
+   int checkFailCount1;
+   int checkFailCount2;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Create face surface. */
+   tface = _loadTestFace();
+   SDLTest_AssertCheck(tface != NULL, "Verify _loadTestFace() result");
+   if (tface == NULL) {
+       return TEST_ABORTED;
+   }
+
+   /* Constant values. */
+   ret = SDL_QueryTexture(tface, &tformat, &taccess, &tw, &th);
+   SDLTest_AssertCheck(ret == 0, "Verify result from SDL_QueryTexture, expected 0, got %i", ret);
+   rect.w = tw;
+   rect.h = th;
+   ni     = TESTRENDER_SCREEN_W - tw;
+   nj     = TESTRENDER_SCREEN_H - th;
+
+   /* Test blitting with color mod. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   for (j=0; j <= nj; j+=4) {
+      for (i=0; i <= ni; i+=4) {
+         /* Set color mod. */
+         ret = SDL_SetTextureColorMod( tface, (255/nj)*j, (255/ni)*i, (255/nj)*j );
+         if (ret != 0) checkFailCount1++;
+
+         /* Blitting. */
+         rect.x = i;
+         rect.y = j;
+         ret = SDL_RenderCopy(renderer, tface, NULL, &rect );
+         if (ret != 0) checkFailCount2++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetTextureColorMod, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_RenderCopy, expected: 0, got: %i", checkFailCount2);
+
+   /* See if it's the same. */
+   referenceSurface = SDLTest_ImageBlitColor();
+   _compare(referenceSurface, ALLOWABLE_ERROR_OPAQUE );
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+
+/**
+ * @brief Tests blitting with alpha.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetTextureAlphaMod
+ * http://wiki.libsdl.org/SDL_RenderCopy
+ * http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+int
+render_testBlitAlpha (void *arg)
+{
+   int ret;
+   SDL_Rect rect;
+   SDL_Texture *tface;
+   SDL_Surface *referenceSurface = NULL;
+   Uint32 tformat;
+   int taccess, tw, th;
+   int i, j, ni, nj;
+   int checkFailCount1;
+   int checkFailCount2;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Need alpha or just skip test. */
+   SDLTest_AssertCheck(_hasTexAlpha(), "_hasTexAlpha");
+
+   /* Create face surface. */
+   tface = _loadTestFace();
+   SDLTest_AssertCheck(tface != NULL, "Verify _loadTestFace() result");
+   if (tface == NULL) {
+       return TEST_ABORTED;
+   }
+
+   /* Constant values. */
+   ret = SDL_QueryTexture(tface, &tformat, &taccess, &tw, &th);
+   SDLTest_AssertCheck(ret == 0, "Verify result from SDL_QueryTexture, expected 0, got %i", ret);
+   rect.w = tw;
+   rect.h = th;
+   ni     = TESTRENDER_SCREEN_W - tw;
+   nj     = TESTRENDER_SCREEN_H - th;
+
+   /* Test blitting with alpha mod. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   for (j=0; j <= nj; j+=4) {
+      for (i=0; i <= ni; i+=4) {
+         /* Set alpha mod. */
+         ret = SDL_SetTextureAlphaMod( tface, (255/ni)*i );
+         if (ret != 0) checkFailCount1++;
+
+         /* Blitting. */
+         rect.x = i;
+         rect.y = j;
+         ret = SDL_RenderCopy(renderer, tface, NULL, &rect );
+         if (ret != 0) checkFailCount2++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetTextureAlphaMod, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_RenderCopy, expected: 0, got: %i", checkFailCount2);
+
+   /* See if it's the same. */
+   referenceSurface = SDLTest_ImageBlitAlpha();
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED );
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+/* Helper functions */
+
+/**
+ * @brief Tests a blend mode.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetTextureBlendMode
+ * http://wiki.libsdl.org/SDL_RenderCopy
+ */
+static void
+_testBlitBlendMode( SDL_Texture * tface, int mode )
+{
+   int ret;
+   Uint32 tformat;
+   int taccess, tw, th;
+   int i, j, ni, nj;
+   SDL_Rect rect;
+   int checkFailCount1;
+   int checkFailCount2;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Constant values. */
+   ret = SDL_QueryTexture(tface, &tformat, &taccess, &tw, &th);
+   SDLTest_AssertCheck(ret == 0, "Verify result from SDL_QueryTexture, expected 0, got %i", ret);
+   rect.w = tw;
+   rect.h = th;
+   ni     = TESTRENDER_SCREEN_W - tw;
+   nj     = TESTRENDER_SCREEN_H - th;
+
+   /* Test blend mode. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   for (j=0; j <= nj; j+=4) {
+      for (i=0; i <= ni; i+=4) {
+         /* Set blend mode. */
+         ret = SDL_SetTextureBlendMode( tface, (SDL_BlendMode)mode );
+         if (ret != 0) checkFailCount1++;
+
+         /* Blitting. */
+         rect.x = i;
+         rect.y = j;
+         ret = SDL_RenderCopy(renderer, tface, NULL, &rect );
+         if (ret != 0) checkFailCount2++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetTextureBlendMode, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_RenderCopy, expected: 0, got: %i", checkFailCount2);
+}
+
+
+/**
+ * @brief Tests some more blitting routines.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetTextureColorMod
+ * http://wiki.libsdl.org/SDL_SetTextureAlphaMod
+ * http://wiki.libsdl.org/SDL_SetTextureBlendMode
+ * http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+int
+render_testBlitBlend (void *arg)
+{
+   int ret;
+   SDL_Rect rect;
+   SDL_Texture *tface;
+   SDL_Surface *referenceSurface = NULL;
+   Uint32 tformat;
+   int taccess, tw, th;
+   int i, j, ni, nj;
+   int mode;
+   int checkFailCount1;
+   int checkFailCount2;
+   int checkFailCount3;
+   int checkFailCount4;
+
+   SDLTest_AssertCheck(_hasBlendModes(), "_hasBlendModes");
+   SDLTest_AssertCheck(_hasTexColor(), "_hasTexColor");
+   SDLTest_AssertCheck(_hasTexAlpha(), "_hasTexAlpha");
+
+   /* Create face surface. */
+   tface = _loadTestFace();
+   SDLTest_AssertCheck(tface != NULL, "Verify _loadTestFace() result");
+   if (tface == NULL) {
+       return TEST_ABORTED;
+   }
+
+   /* Constant values. */
+   ret = SDL_QueryTexture(tface, &tformat, &taccess, &tw, &th);
+   SDLTest_AssertCheck(ret == 0, "Verify result from SDL_QueryTexture, expected 0, got %i", ret);
+   rect.w = tw;
+   rect.h = th;
+   ni = TESTRENDER_SCREEN_W - tw;
+   nj = TESTRENDER_SCREEN_H - th;
+
+   /* Set alpha mod. */
+   ret = SDL_SetTextureAlphaMod( tface, 100 );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetTextureAlphaMod, expected: 0, got: %i", ret);
+
+   /* Test None. */
+   _testBlitBlendMode( tface, SDL_BLENDMODE_NONE );
+   referenceSurface = SDLTest_ImageBlitBlendNone();
+
+   /* Compare, then Present */
+   _compare(referenceSurface, ALLOWABLE_ERROR_OPAQUE );
+   SDL_RenderPresent(renderer);
+
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   /* Test Blend. */
+   _testBlitBlendMode( tface, SDL_BLENDMODE_BLEND );
+   referenceSurface = SDLTest_ImageBlitBlend();
+
+   /* Compare, then Present */
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED );
+   SDL_RenderPresent(renderer);
+
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   /* Test Add. */
+   _testBlitBlendMode( tface, SDL_BLENDMODE_ADD );
+   referenceSurface = SDLTest_ImageBlitBlendAdd();
+
+   /* Compare, then Present */
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED );
+   SDL_RenderPresent(renderer);
+
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   /* Test Mod. */
+   _testBlitBlendMode( tface, SDL_BLENDMODE_MOD);
+   referenceSurface = SDLTest_ImageBlitBlendMod();
+
+   /* Compare, then Present */
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED );
+   SDL_RenderPresent(renderer);
+
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   /* Clear surface. */
+   _clearScreen();
+
+   /* Loop blit. */
+   checkFailCount1 = 0;
+   checkFailCount2 = 0;
+   checkFailCount3 = 0;
+   checkFailCount4 = 0;
+   for (j=0; j <= nj; j+=4) {
+      for (i=0; i <= ni; i+=4) {
+
+         /* Set color mod. */
+         ret = SDL_SetTextureColorMod( tface, (255/nj)*j, (255/ni)*i, (255/nj)*j );
+         if (ret != 0) checkFailCount1++;
+
+         /* Set alpha mod. */
+         ret = SDL_SetTextureAlphaMod( tface, (100/ni)*i );
+         if (ret != 0) checkFailCount2++;
+
+         /* Crazy blending mode magic. */
+         mode = (i/4*j/4) % 4;
+         if (mode==0) mode = SDL_BLENDMODE_NONE;
+         else if (mode==1) mode = SDL_BLENDMODE_BLEND;
+         else if (mode==2) mode = SDL_BLENDMODE_ADD;
+         else if (mode==3) mode = SDL_BLENDMODE_MOD;
+         ret = SDL_SetTextureBlendMode( tface, (SDL_BlendMode)mode );
+         if (ret != 0) checkFailCount3++;
+
+         /* Blitting. */
+         rect.x = i;
+         rect.y = j;
+         ret = SDL_RenderCopy(renderer, tface, NULL, &rect );
+         if (ret != 0) checkFailCount4++;
+      }
+   }
+   SDLTest_AssertCheck(checkFailCount1 == 0, "Validate results from calls to SDL_SetTextureColorMod, expected: 0, got: %i", checkFailCount1);
+   SDLTest_AssertCheck(checkFailCount2 == 0, "Validate results from calls to SDL_SetTextureAlphaMod, expected: 0, got: %i", checkFailCount2);
+   SDLTest_AssertCheck(checkFailCount3 == 0, "Validate results from calls to SDL_SetTextureBlendMode, expected: 0, got: %i", checkFailCount3);
+   SDLTest_AssertCheck(checkFailCount4 == 0, "Validate results from calls to SDL_RenderCopy, expected: 0, got: %i", checkFailCount4);
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+
+   /* Check to see if final image matches. */
+   referenceSurface = SDLTest_ImageBlitBlendAll();
+   _compare(referenceSurface, ALLOWABLE_ERROR_BLENDED);
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   SDL_FreeSurface(referenceSurface);
+   referenceSurface = NULL;
+
+   return TEST_COMPLETED;
+}
+
+
+/**
+ * @brief Checks to see if functionality is supported. Helper function.
+ */
+static int
+_isSupported( int code )
+{
+   return (code == 0);
+}
+
+/**
+ * @brief Test to see if we can vary the draw color. Helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetRenderDrawColor
+ * http://wiki.libsdl.org/SDL_GetRenderDrawColor
+ */
+static int
+_hasDrawColor (void)
+{
+   int ret, fail;
+   Uint8 r, g, b, a;
+
+   fail = 0;
+
+   /* Set color. */
+   ret = SDL_SetRenderDrawColor(renderer, 100, 100, 100, 100 );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a );
+   if (!_isSupported(ret))
+      fail = 1;
+
+   /* Restore natural. */
+   ret = SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+   if (!_isSupported(ret))
+      fail = 1;
+
+   /* Something failed, consider not available. */
+   if (fail)
+      return 0;
+
+   /* Not set properly, consider failed. */
+   else if ((r != 100) || (g != 100) || (b != 100) || (a != 100))
+      return 0;
+   return 1;
+}
+
+/**
+ * @brief Test to see if we can vary the blend mode. Helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetRenderDrawBlendMode
+ * http://wiki.libsdl.org/SDL_GetRenderDrawBlendMode
+ */
+static int
+_hasBlendModes (void)
+{
+   int fail;
+   int ret;
+   SDL_BlendMode mode;
+
+   fail = 0;
+
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetRenderDrawBlendMode(renderer, &mode );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = (mode != SDL_BLENDMODE_BLEND);
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_ADD );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetRenderDrawBlendMode(renderer, &mode );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = (mode != SDL_BLENDMODE_ADD);
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_MOD );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetRenderDrawBlendMode(renderer, &mode );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = (mode != SDL_BLENDMODE_MOD);
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetRenderDrawBlendMode(renderer, &mode );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = (mode != SDL_BLENDMODE_NONE);
+   if (!_isSupported(ret))
+      fail = 1;
+
+   return !fail;
+}
+
+
+/**
+ * @brief Loads the test image 'Face' as texture. Helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_CreateTextureFromSurface
+ */
+static SDL_Texture *
+_loadTestFace(void)
+{
+   SDL_Surface *face;
+   SDL_Texture *tface;
+
+   face = SDLTest_ImageFace();
+   if (face == NULL) {
+      return NULL;
+   }
+
+   tface = SDL_CreateTextureFromSurface(renderer, face);
+   if (tface == NULL) {
+       SDLTest_LogError("SDL_CreateTextureFromSurface() failed with error: %s", SDL_GetError());
+   }
+
+   SDL_FreeSurface(face);
+
+   return tface;
+}
+
+
+/**
+ * @brief Test to see if can set texture color mode. Helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetTextureColorMod
+ * http://wiki.libsdl.org/SDL_GetTextureColorMod
+ * http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+static int
+_hasTexColor (void)
+{
+   int fail;
+   int ret;
+   SDL_Texture *tface;
+   Uint8 r, g, b;
+
+   /* Get test face. */
+   tface = _loadTestFace();
+   if (tface == NULL)
+      return 0;
+
+   /* See if supported. */
+   fail = 0;
+   ret = SDL_SetTextureColorMod( tface, 100, 100, 100 );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetTextureColorMod( tface, &r, &g, &b );
+   if (!_isSupported(ret))
+      fail = 1;
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+
+   if (fail)
+      return 0;
+   else if ((r != 100) || (g != 100) || (b != 100))
+      return 0;
+   return 1;
+}
+
+/**
+ * @brief Test to see if we can vary the alpha of the texture. Helper function.
+ *
+ * \sa
+ *  http://wiki.libsdl.org/SDL_SetTextureAlphaMod
+ *  http://wiki.libsdl.org/SDL_GetTextureAlphaMod
+ *  http://wiki.libsdl.org/SDL_DestroyTexture
+ */
+static int
+_hasTexAlpha(void)
+{
+   int fail;
+   int ret;
+   SDL_Texture *tface;
+   Uint8 a;
+
+   /* Get test face. */
+   tface = _loadTestFace();
+   if (tface == NULL)
+      return 0;
+
+   /* See if supported. */
+   fail = 0;
+   ret = SDL_SetTextureAlphaMod( tface, 100 );
+   if (!_isSupported(ret))
+      fail = 1;
+   ret = SDL_GetTextureAlphaMod( tface, &a );
+   if (!_isSupported(ret))
+      fail = 1;
+
+   /* Clean up. */
+   SDL_DestroyTexture( tface );
+
+   if (fail)
+      return 0;
+   else if (a != 100)
+      return 0;
+   return 1;
+}
+
+/**
+ * @brief Compares screen pixels with image pixels. Helper function.
+ *
+ * @param s Image to compare against.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RenderReadPixels
+ * http://wiki.libsdl.org/SDL_CreateRGBSurfaceFrom
+ * http://wiki.libsdl.org/SDL_FreeSurface
+ */
+static void
+_compare(SDL_Surface *referenceSurface, int allowable_error)
+{
+   int result;
+   SDL_Rect rect;
+   Uint8 *pixels;
+   SDL_Surface *testSurface;
+
+   /* Read pixels. */
+   pixels = (Uint8 *)SDL_malloc(4*TESTRENDER_SCREEN_W*TESTRENDER_SCREEN_H);
+   SDLTest_AssertCheck(pixels != NULL, "Validate allocated temp pixel buffer");
+   if (pixels == NULL) return;
+
+   /* Explicitly specify the rect in case the window isn't the expected size... */
+   rect.x = 0;
+   rect.y = 0;
+   rect.w = TESTRENDER_SCREEN_W;
+   rect.h = TESTRENDER_SCREEN_H;
+   result = SDL_RenderReadPixels(renderer, &rect, RENDER_COMPARE_FORMAT, pixels, 80*4 );
+   SDLTest_AssertCheck(result == 0, "Validate result from SDL_RenderReadPixels, expected: 0, got: %i", result);
+
+   /* Create surface. */
+   testSurface = SDL_CreateRGBSurfaceFrom(pixels, TESTRENDER_SCREEN_W, TESTRENDER_SCREEN_H, 32, TESTRENDER_SCREEN_W*4,
+                                       RENDER_COMPARE_RMASK, RENDER_COMPARE_GMASK, RENDER_COMPARE_BMASK, RENDER_COMPARE_AMASK);
+   SDLTest_AssertCheck(testSurface != NULL, "Verify result from SDL_CreateRGBSurfaceFrom is not NULL");
+
+   /* Compare surface. */
+   result = SDLTest_CompareSurfaces( testSurface, referenceSurface, allowable_error );
+   SDLTest_AssertCheck(result == 0, "Validate result from SDLTest_CompareSurfaces, expected: 0, got: %i", result);
+
+   /* Clean up. */
+   SDL_free(pixels);
+   SDL_FreeSurface(testSurface);
+}
+
+/**
+ * @brief Clears the screen. Helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetRenderDrawColor
+ * http://wiki.libsdl.org/SDL_RenderClear
+ * http://wiki.libsdl.org/SDL_RenderPresent
+ * http://wiki.libsdl.org/SDL_SetRenderDrawBlendMode
+ */
+static int
+_clearScreen(void)
+{
+   int ret;
+
+   /* Set color. */
+   ret = SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   /* Clear screen. */
+   ret = SDL_RenderClear(renderer);
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_RenderClear, expected: 0, got: %i", ret);
+
+   /* Make current */
+   SDL_RenderPresent(renderer);
+
+   /* Set defaults. */
+   ret = SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawBlendMode, expected: 0, got: %i", ret);
+
+   ret = SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE );
+   SDLTest_AssertCheck(ret == 0, "Validate result from SDL_SetRenderDrawColor, expected: 0, got: %i", ret);
+
+   return 0;
+}
+
+/* ================= Test References ================== */
+
+/* Render test cases */
+static const SDLTest_TestCaseReference renderTest1 =
+        { (SDLTest_TestCaseFp)render_testGetNumRenderDrivers, "render_testGetNumRenderDrivers", "Tests call to SDL_GetNumRenderDrivers", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference renderTest2 =
+        { (SDLTest_TestCaseFp)render_testPrimitives, "render_testPrimitives", "Tests rendering primitives", TEST_ENABLED };
+
+/* TODO: rewrite test case, define new test data and re-enable; current implementation fails */
+static const SDLTest_TestCaseReference renderTest3 =
+        { (SDLTest_TestCaseFp)render_testPrimitivesBlend, "render_testPrimitivesBlend", "Tests rendering primitives with blending", TEST_DISABLED };
+
+static const SDLTest_TestCaseReference renderTest4 =
+        { (SDLTest_TestCaseFp)render_testBlit, "render_testBlit", "Tests blitting", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference renderTest5 =
+        { (SDLTest_TestCaseFp)render_testBlitColor, "render_testBlitColor", "Tests blitting with color", TEST_ENABLED };
+
+/* TODO: rewrite test case, define new test data and re-enable; current implementation fails */
+static const SDLTest_TestCaseReference renderTest6 =
+        { (SDLTest_TestCaseFp)render_testBlitAlpha, "render_testBlitAlpha", "Tests blitting with alpha", TEST_DISABLED };
+
+/* TODO: rewrite test case, define new test data and re-enable; current implementation fails */
+static const SDLTest_TestCaseReference renderTest7 =
+        {  (SDLTest_TestCaseFp)render_testBlitBlend, "render_testBlitBlend", "Tests blitting with blending", TEST_DISABLED };
+
+/* Sequence of Render test cases */
+static const SDLTest_TestCaseReference *renderTests[] =  {
+    &renderTest1, &renderTest2, &renderTest3, &renderTest4, &renderTest5, &renderTest6, &renderTest7, NULL
+};
+
+/* Render test suite (global) */
+SDLTest_TestSuiteReference renderTestSuite = {
+    "Render",
+    InitCreateRenderer,
+    renderTests,
+    CleanupDestroyRenderer
+};
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+/**
+ * Automated SDL_RWops test.
+ *
+ * Original code written by Edgar Simo "bobbens"
+ * Ported by Markus Kauppila (markus.kauppila@gmail.com)
+ * Updated and extended for SDL_test by aschiffler at ferzkopp dot net
+ *
+ * Released under Public Domain.
+ */
+
+/* quiet windows compiler warnings */
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_test.h"
+
+/* ================= Test Case Implementation ================== */
+
+const char* RWopsReadTestFilename = "rwops_read";
+const char* RWopsWriteTestFilename = "rwops_write";
+const char* RWopsAlphabetFilename = "rwops_alphabet";
+
+static const char RWopsHelloWorldTestString[] = "Hello World!";
+static const char RWopsHelloWorldCompString[] = "Hello World!";
+static const char RWopsAlphabetString[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+/* Fixture */
+
+void
+RWopsSetUp(void *arg)
+{
+    size_t fileLen;
+    FILE *handle;
+    size_t writtenLen;
+    int result;
+
+    /* Clean up from previous runs (if any); ignore errors */
+    remove(RWopsReadTestFilename);
+    remove(RWopsWriteTestFilename);
+    remove(RWopsAlphabetFilename);
+
+    /* Create a test file */
+    handle = fopen(RWopsReadTestFilename, "w");
+    SDLTest_AssertCheck(handle != NULL, "Verify creation of file '%s' returned non NULL handle", RWopsReadTestFilename);
+        if (handle == NULL) return;
+
+    /* Write some known text into it */
+    fileLen = SDL_strlen(RWopsHelloWorldTestString);
+    writtenLen = fwrite(RWopsHelloWorldTestString, 1, fileLen, handle);
+    SDLTest_AssertCheck(fileLen == writtenLen, "Verify number of written bytes, expected %i, got %i", (int) fileLen, (int) writtenLen);
+    result = fclose(handle);
+    SDLTest_AssertCheck(result == 0, "Verify result from fclose, expected 0, got %i", result);
+
+    /* Create a second test file */
+    handle = fopen(RWopsAlphabetFilename, "w");
+    SDLTest_AssertCheck(handle != NULL, "Verify creation of file '%s' returned non NULL handle", RWopsAlphabetFilename);
+        if (handle == NULL) return;
+
+    /* Write alphabet text into it */
+    fileLen = SDL_strlen(RWopsAlphabetString);
+    writtenLen = fwrite(RWopsAlphabetString, 1, fileLen, handle);
+    SDLTest_AssertCheck(fileLen == writtenLen, "Verify number of written bytes, expected %i, got %i", (int) fileLen, (int) writtenLen);
+    result = fclose(handle);
+    SDLTest_AssertCheck(result == 0, "Verify result from fclose, expected 0, got %i", result);
+
+    SDLTest_AssertPass("Creation of test file completed");
+}
+
+void
+RWopsTearDown(void *arg)
+{
+    int result;
+
+    /* Remove the created files to clean up; ignore errors for write filename */
+    result = remove(RWopsReadTestFilename);
+    SDLTest_AssertCheck(result == 0, "Verify result from remove(%s), expected 0, got %i", RWopsReadTestFilename, result);
+    remove(RWopsWriteTestFilename);
+    result = remove(RWopsAlphabetFilename);
+    SDLTest_AssertCheck(result == 0, "Verify result from remove(%s), expected 0, got %i", RWopsAlphabetFilename, result);
+
+    SDLTest_AssertPass("Cleanup of test files completed");
+}
+
+/**
+ * @brief Makes sure parameters work properly. Local helper function.
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_RWseek
+ * http://wiki.libsdl.org/SDL_RWread
+ */
+void
+_testGenericRWopsValidations(SDL_RWops *rw, int write)
+{
+   char buf[sizeof(RWopsHelloWorldTestString)];
+   Sint64 i;
+   size_t s;
+   int seekPos = SDLTest_RandomIntegerInRange(4, 8);
+
+   /* Clear buffer */
+   SDL_zeroa(buf);
+
+   /* Set to start. */
+   i = SDL_RWseek(rw, 0, RW_SEEK_SET );
+   SDLTest_AssertPass("Call to SDL_RWseek succeeded");
+   SDLTest_AssertCheck(i == (Sint64)0, "Verify seek to 0 with SDL_RWseek (RW_SEEK_SET), expected 0, got %"SDL_PRIs64, i);
+
+   /* Test write. */
+   s = SDL_RWwrite(rw, RWopsHelloWorldTestString, sizeof(RWopsHelloWorldTestString)-1, 1);
+   SDLTest_AssertPass("Call to SDL_RWwrite succeeded");
+   if (write) {
+        SDLTest_AssertCheck(s == (size_t)1, "Verify result of writing one byte with SDL_RWwrite, expected 1, got %i", (int) s);
+   }
+   else {
+        SDLTest_AssertCheck(s == (size_t)0, "Verify result of writing with SDL_RWwrite, expected: 0, got %i", (int) s);
+   }
+
+   /* Test seek to random position */
+   i = SDL_RWseek( rw, seekPos, RW_SEEK_SET );
+   SDLTest_AssertPass("Call to SDL_RWseek succeeded");
+   SDLTest_AssertCheck(i == (Sint64)seekPos, "Verify seek to %i with SDL_RWseek (RW_SEEK_SET), expected %i, got %"SDL_PRIs64, seekPos, seekPos, i);
+
+   /* Test seek back to start */
+   i = SDL_RWseek(rw, 0, RW_SEEK_SET );
+   SDLTest_AssertPass("Call to SDL_RWseek succeeded");
+   SDLTest_AssertCheck(i == (Sint64)0, "Verify seek to 0 with SDL_RWseek (RW_SEEK_SET), expected 0, got %"SDL_PRIs64, i);
+
+   /* Test read */
+   s = SDL_RWread( rw, buf, 1, sizeof(RWopsHelloWorldTestString)-1 );
+   SDLTest_AssertPass("Call to SDL_RWread succeeded");
+   SDLTest_AssertCheck(
+       s == (size_t)(sizeof(RWopsHelloWorldTestString)-1),
+       "Verify result from SDL_RWread, expected %i, got %i",
+       (int) (sizeof(RWopsHelloWorldTestString)-1),
+       (int) s);
+   SDLTest_AssertCheck(
+       SDL_memcmp(buf, RWopsHelloWorldTestString, sizeof(RWopsHelloWorldTestString)-1 ) == 0,
+       "Verify read bytes match expected string, expected '%s', got '%s'", RWopsHelloWorldTestString, buf);
+
+   /* More seek tests. */
+   i = SDL_RWseek( rw, -4, RW_SEEK_CUR );
+   SDLTest_AssertPass("Call to SDL_RWseek(...,-4,RW_SEEK_CUR) succeeded");
+   SDLTest_AssertCheck(
+       i == (Sint64)(sizeof(RWopsHelloWorldTestString)-5),
+       "Verify seek to -4 with SDL_RWseek (RW_SEEK_CUR), expected %i, got %i",
+       (int) (sizeof(RWopsHelloWorldTestString)-5),
+       (int) i);
+
+   i = SDL_RWseek( rw, -1, RW_SEEK_END );
+   SDLTest_AssertPass("Call to SDL_RWseek(...,-1,RW_SEEK_END) succeeded");
+   SDLTest_AssertCheck(
+       i == (Sint64)(sizeof(RWopsHelloWorldTestString)-2),
+       "Verify seek to -1 with SDL_RWseek (RW_SEEK_END), expected %i, got %i",
+       (int) (sizeof(RWopsHelloWorldTestString)-2),
+       (int) i);
+
+   /* Invalid whence seek */
+   i = SDL_RWseek( rw, 0, 999 );
+   SDLTest_AssertPass("Call to SDL_RWseek(...,0,invalid_whence) succeeded");
+   SDLTest_AssertCheck(
+       i == (Sint64)(-1),
+       "Verify seek with SDL_RWseek (invalid_whence); expected: -1, got %i",
+       (int) i);
+}
+
+/* !
+ * Negative test for SDL_RWFromFile parameters
+ *
+ * \sa http://wiki.libsdl.org/SDL_RWFromFile
+ *
+ */
+int
+rwops_testParamNegative (void)
+{
+   SDL_RWops *rwops;
+
+   /* These should all fail. */
+   rwops = SDL_RWFromFile(NULL, NULL);
+   SDLTest_AssertPass("Call to SDL_RWFromFile(NULL, NULL) succeeded");
+   SDLTest_AssertCheck(rwops == NULL, "Verify SDL_RWFromFile(NULL, NULL) returns NULL");
+
+   rwops = SDL_RWFromFile(NULL, "ab+");
+   SDLTest_AssertPass("Call to SDL_RWFromFile(NULL, \"ab+\") succeeded");
+   SDLTest_AssertCheck(rwops == NULL, "Verify SDL_RWFromFile(NULL, \"ab+\") returns NULL");
+
+   rwops = SDL_RWFromFile(NULL, "sldfkjsldkfj");
+   SDLTest_AssertPass("Call to SDL_RWFromFile(NULL, \"sldfkjsldkfj\") succeeded");
+   SDLTest_AssertCheck(rwops == NULL, "Verify SDL_RWFromFile(NULL, \"sldfkjsldkfj\") returns NULL");
+
+   rwops = SDL_RWFromFile("something", "");
+   SDLTest_AssertPass("Call to SDL_RWFromFile(\"something\", \"\") succeeded");
+   SDLTest_AssertCheck(rwops == NULL, "Verify SDL_RWFromFile(\"something\", \"\") returns NULL");
+
+   rwops = SDL_RWFromFile("something", NULL);
+   SDLTest_AssertPass("Call to SDL_RWFromFile(\"something\", N

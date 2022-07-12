@@ -1,0 +1,786 @@
+efinition of mouse Cursor */
+static const char *_mouseArrowData[] = {
+  /* pixels */
+  "X                               ",
+  "XX                              ",
+  "X.X                             ",
+  "X..X                            ",
+  "X...X                           ",
+  "X....X                          ",
+  "X.....X                         ",
+  "X......X                        ",
+  "X.......X                       ",
+  "X........X                      ",
+  "X.....XXXXX                     ",
+  "X..X..X                         ",
+  "X.X X..X                        ",
+  "XX  X..X                        ",
+  "X    X..X                       ",
+  "     X..X                       ",
+  "      X..X                      ",
+  "      X..X                      ",
+  "       XX                       ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                ",
+  "                                "
+};
+
+/* Helper that creates a new mouse cursor from an XPM */
+static SDL_Cursor *_initArrowCursor(const char *image[])
+{
+  SDL_Cursor *cursor;
+  int i, row, col;
+  Uint8 data[4*32];
+  Uint8 mask[4*32];
+
+  i = -1;
+  for ( row=0; row<32; ++row ) {
+    for ( col=0; col<32; ++col ) {
+      if ( col % 8 ) {
+        data[i] <<= 1;
+        mask[i] <<= 1;
+      } else {
+        ++i;
+        data[i] = mask[i] = 0;
+      }
+      switch (image[row][col]) {
+        case 'X':
+          data[i] |= 0x01;
+          mask[i] |= 0x01;
+          break;
+        case '.':
+          mask[i] |= 0x01;
+          break;
+        case ' ':
+          break;
+      }
+    }
+  }
+
+  cursor = SDL_CreateCursor(data, mask, 32, 32, 0, 0);
+  return cursor;
+}
+
+/**
+ * @brief Check call to SDL_CreateCursor and SDL_FreeCursor
+ *
+ * @sa http://wiki.libsdl.org/SDL_CreateCursor
+ * @sa http://wiki.libsdl.org/SDL_FreeCursor
+ */
+int
+mouse_createFreeCursor(void *arg)
+{
+    SDL_Cursor *cursor;
+
+    /* Create a cursor */
+    cursor = _initArrowCursor(_mouseArrowData);
+        SDLTest_AssertPass("Call to SDL_CreateCursor()");
+        SDLTest_AssertCheck(cursor != NULL, "Validate result from SDL_CreateCursor() is not NULL");
+    if (cursor == NULL) {
+        return TEST_ABORTED;
+    }
+
+    /* Free cursor again */
+    SDL_FreeCursor(cursor);
+    SDLTest_AssertPass("Call to SDL_FreeCursor()");
+
+    return TEST_COMPLETED;
+}
+
+/**
+ * @brief Check call to SDL_CreateColorCursor and SDL_FreeCursor
+ *
+ * @sa http://wiki.libsdl.org/SDL_CreateColorCursor
+ * @sa http://wiki.libsdl.org/SDL_FreeCursor
+ */
+int
+mouse_createFreeColorCursor(void *arg)
+{
+    SDL_Surface *face;
+    SDL_Cursor *cursor;
+
+    /* Get sample surface */
+    face = SDLTest_ImageFace();
+    SDLTest_AssertCheck(face != NULL, "Validate sample input image is not NULL");
+    if (face == NULL) return TEST_ABORTED;
+
+    /* Create a color cursor from surface */
+    cursor = SDL_CreateColorCursor(face, 0, 0);
+        SDLTest_AssertPass("Call to SDL_CreateColorCursor()");
+        SDLTest_AssertCheck(cursor != NULL, "Validate result from SDL_CreateColorCursor() is not NULL");
+    if (cursor == NULL) {
+        SDL_FreeSurface(face);
+        return TEST_ABORTED;
+    }
+
+    /* Free cursor again */
+    SDL_FreeCursor(cursor);
+    SDLTest_AssertPass("Call to SDL_FreeCursor()");
+
+    /* Clean up */
+    SDL_FreeSurface(face);
+
+    return TEST_COMPLETED;
+}
+
+/* Helper that changes cursor visibility */
+void _changeCursorVisibility(int state)
+{
+    int oldState;
+    int newState;
+    int result;
+
+        oldState = SDL_ShowCursor(SDL_QUERY);
+    SDLTest_AssertPass("Call to SDL_ShowCursor(SDL_QUERY)");
+
+        result = SDL_ShowCursor(state);
+    SDLTest_AssertPass("Call to SDL_ShowCursor(%s)", (state == SDL_ENABLE) ? "SDL_ENABLE" : "SDL_DISABLE");
+    SDLTest_AssertCheck(result == oldState, "Validate result from SDL_ShowCursor(%s), expected: %i, got: %i",
+        (state == SDL_ENABLE) ? "SDL_ENABLE" : "SDL_DISABLE", oldState, result);
+
+    newState = SDL_ShowCursor(SDL_QUERY);
+    SDLTest_AssertPass("Call to SDL_ShowCursor(SDL_QUERY)");
+    SDLTest_AssertCheck(state == newState, "Validate new state, expected: %i, got: %i",
+        state, newState);
+}
+
+/**
+ * @brief Check call to SDL_ShowCursor
+ *
+ * @sa http://wiki.libsdl.org/SDL_ShowCursor
+ */
+int
+mouse_showCursor(void *arg)
+{
+    int currentState;
+
+    /* Get current state */
+    currentState = SDL_ShowCursor(SDL_QUERY);
+    SDLTest_AssertPass("Call to SDL_ShowCursor(SDL_QUERY)");
+    SDLTest_AssertCheck(currentState == SDL_DISABLE || currentState == SDL_ENABLE,
+        "Validate result is %i or %i, got: %i", SDL_DISABLE, SDL_ENABLE, currentState);
+    if (currentState == SDL_DISABLE) {
+        /* Show the cursor, then hide it again */
+        _changeCursorVisibility(SDL_ENABLE);
+        _changeCursorVisibility(SDL_DISABLE);
+    } else if (currentState == SDL_ENABLE) {
+        /* Hide the cursor, then show it again */
+        _changeCursorVisibility(SDL_DISABLE);
+        _changeCursorVisibility(SDL_ENABLE);
+    } else {
+        return TEST_ABORTED;
+    }
+
+    return TEST_COMPLETED;
+}
+
+/**
+ * @brief Check call to SDL_SetCursor
+ *
+ * @sa http://wiki.libsdl.org/SDL_SetCursor
+ */
+int
+mouse_setCursor(void *arg)
+{
+    SDL_Cursor *cursor;
+
+    /* Create a cursor */
+    cursor = _initArrowCursor(_mouseArrowData);
+        SDLTest_AssertPass("Call to SDL_CreateCursor()");
+        SDLTest_AssertCheck(cursor != NULL, "Validate result from SDL_CreateCursor() is not NULL");
+    if (cursor == NULL) {
+        return TEST_ABORTED;
+    }
+
+    /* Set the arrow cursor */
+    SDL_SetCursor(cursor);
+    SDLTest_AssertPass("Call to SDL_SetCursor(cursor)");
+
+    /* Force redraw */
+    SDL_SetCursor(NULL);
+    SDLTest_AssertPass("Call to SDL_SetCursor(NULL)");
+
+    /* Free cursor again */
+    SDL_FreeCursor(cursor);
+    SDLTest_AssertPass("Call to SDL_FreeCursor()");
+
+    return TEST_COMPLETED;
+}
+
+/**
+ * @brief Check call to SDL_GetCursor
+ *
+ * @sa http://wiki.libsdl.org/SDL_GetCursor
+ */
+int
+mouse_getCursor(void *arg)
+{
+    SDL_Cursor *cursor;
+
+    /* Get current cursor */
+    cursor = SDL_GetCursor();
+        SDLTest_AssertPass("Call to SDL_GetCursor()");
+        SDLTest_AssertCheck(cursor != NULL, "Validate result from SDL_GetCursor() is not NULL");
+
+    return TEST_COMPLETED;
+}
+
+/**
+ * @brief Check call to SDL_GetRelativeMouseMode and SDL_SetRelativeMouseMode
+ *
+ * @sa http://wiki.libsdl.org/SDL_GetRelativeMouseMode
+ * @sa http://wiki.libsdl.org/SDL_SetRelativeMouseMode
+ */
+int
+mouse_getSetRelativeMouseMode(void *arg)
+{
+    int result;
+        int i;
+    SDL_bool initialState;
+    SDL_bool currentState;
+
+    /* Capture original state so we can revert back to it later */
+    initialState = SDL_GetRelativeMouseMode();
+        SDLTest_AssertPass("Call to SDL_GetRelativeMouseMode()");
+
+        /* Repeat twice to check D->D transition */
+        for (i=0; i<2; i++) {
+      /* Disable - should always be supported */
+          result = SDL_SetRelativeMouseMode(SDL_FALSE);
+          SDLTest_AssertPass("Call to SDL_SetRelativeMouseMode(FALSE)");
+          SDLTest_AssertCheck(result == 0, "Validate result value from SDL_SetRelativeMouseMode, expected: 0, got: %i", result);
+      currentState = SDL_GetRelativeMouseMode();
+          SDLTest_AssertPass("Call to SDL_GetRelativeMouseMode()");
+          SDLTest_AssertCheck(currentState == SDL_FALSE, "Validate current state is FALSE, got: %i", currentState);
+        }
+
+        /* Repeat twice to check D->E->E transition */
+        for (i=0; i<2; i++) {
+      /* Enable - may not be supported */
+          result = SDL_SetRelativeMouseMode(SDL_TRUE);
+          SDLTest_AssertPass("Call to SDL_SetRelativeMouseMode(TRUE)");
+          if (result != -1) {
+            SDLTest_AssertCheck(result == 0, "Validate result value from SDL_SetRelativeMouseMode, expected: 0, got: %i", result);
+        currentState = SDL_GetRelativeMouseMode();
+            SDLTest_AssertPass("Call to SDL_GetRelativeMouseMode()");
+            SDLTest_AssertCheck(currentState == SDL_TRUE, "Validate current state is TRUE, got: %i", currentState);
+          }
+        }
+
+    /* Disable to check E->D transition */
+        result = SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDLTest_AssertPass("Call to SDL_SetRelativeMouseMode(FALSE)");
+        SDLTest_AssertCheck(result == 0, "Validate result value from SDL_SetRelativeMouseMode, expected: 0, got: %i", result);
+    currentState = SDL_GetRelativeMouseMode();
+        SDLTest_AssertPass("Call to SDL_GetRelativeMouseMode()");
+        SDLTest_AssertCheck(currentState == SDL_FALSE, "Validate current state is FALSE, got: %i", currentState);
+
+        /* Revert to original state - ignore result */
+        result = SDL_SetRelativeMouseMode(initialState);
+
+    return TEST_COMPLETED;
+}
+
+#define MOUSE_TESTWINDOW_WIDTH  320
+#define MOUSE_TESTWINDOW_HEIGHT 200
+
+/**
+ * Creates a test window
+ */
+SDL_Window *_createMouseSuiteTestWindow()
+{
+  int posX = 100, posY = 100, width = MOUSE_TESTWINDOW_WIDTH, height = MOUSE_TESTWINDOW_HEIGHT;
+  SDL_Window *window;
+  window = SDL_CreateWindow("mouse_createMouseSuiteTestWindow", posX, posY, width, height, 0);
+  SDLTest_AssertPass("SDL_CreateWindow()");
+  SDLTest_AssertCheck(window != NULL, "Check SDL_CreateWindow result");
+  return window;
+}
+
+/*
+ * Destroy test window
+ */
+void _destroyMouseSuiteTestWindow(SDL_Window *window)
+{
+  if (window != NULL) {
+     SDL_DestroyWindow(window);
+     window = NULL;
+     SDLTest_AssertPass("SDL_DestroyWindow()");
+  }
+}
+
+/**
+ * @brief Check call to SDL_WarpMouseInWindow
+ *
+ * @sa http://wiki.libsdl.org/SDL_WarpMouseInWindow
+ */
+int
+mouse_warpMouseInWindow(void *arg)
+{
+    const int w = MOUSE_TESTWINDOW_WIDTH, h = MOUSE_TESTWINDOW_HEIGHT;
+    int numPositions = 6;
+    int xPositions[6];
+    int yPositions[6];
+    int x, y, i, j;
+    SDL_Window *window;
+
+    xPositions[0] = -1;
+    xPositions[1] = 0;
+    xPositions[2] = 1;
+    xPositions[3] = w-1;
+    xPositions[4] = w;
+    xPositions[5] = w+1;
+    yPositions[0] = -1;
+    yPositions[1] = 0;
+    yPositions[2] = 1;
+    yPositions[3] = h-1;
+    yPositions[4] = h;
+    yPositions[5] = h+1;
+    /* Create test window */
+    window = _createMouseSuiteTestWindow();
+    if (window == NULL) return TEST_ABORTED;
+
+    /* Mouse to random position inside window */
+    x = SDLTest_RandomIntegerInRange(1, w-1);
+    y = SDLTest_RandomIntegerInRange(1, h-1);
+    SDL_WarpMouseInWindow(window, x, y);
+    SDLTest_AssertPass("SDL_WarpMouseInWindow(...,%i,%i)", x, y);
+
+        /* Same position again */
+    SDL_WarpMouseInWindow(window, x, y);
+    SDLTest_AssertPass("SDL_WarpMouseInWindow(...,%i,%i)", x, y);
+
+    /* Mouse to various boundary positions */
+    for (i=0; i<numPositions; i++) {
+      for (j=0; j<numPositions; j++) {
+        x = xPositions[i];
+        y = yPositions[j];
+        SDL_WarpMouseInWindow(window, x, y);
+        SDLTest_AssertPass("SDL_WarpMouseInWindow(...,%i,%i)", x, y);
+
+        /* TODO: add tracking of events and check that each call generates a mouse motion event */
+        SDL_PumpEvents();
+        SDLTest_AssertPass("SDL_PumpEvents()");
+      }
+    }
+
+
+        /* Clean up test window */
+    _destroyMouseSuiteTestWindow(window);
+
+    return TEST_COMPLETED;
+}
+
+/**
+ * @brief Check call to SDL_GetMouseFocus
+ *
+ * @sa http://wiki.libsdl.org/SDL_GetMouseFocus
+ */
+int
+mouse_getMouseFocus(void *arg)
+{
+    const int w = MOUSE_TESTWINDOW_WIDTH, h = MOUSE_TESTWINDOW_HEIGHT;
+    int x, y;
+    SDL_Window *window;
+    SDL_Window *focusWindow;
+
+    /* Get focus - focus non-deterministic */
+    focusWindow = SDL_GetMouseFocus();
+    SDLTest_AssertPass("SDL_GetMouseFocus()");
+
+        /* Create test window */
+    window = _createMouseSuiteTestWindow();
+    if (window == NULL) return TEST_ABORTED;
+
+    /* Mouse to random position inside window */
+    x = SDLTest_RandomIntegerInRange(1, w-1);
+    y = SDLTest_RandomIntegerInRange(1, h-1);
+    SDL_WarpMouseInWindow(window, x, y);
+    SDLTest_AssertPass("SDL_WarpMouseInWindow(...,%i,%i)", x, y);
+
+    /* Pump events to update focus state */
+    SDL_Delay(100);
+    SDL_PumpEvents();
+    SDLTest_AssertPass("SDL_PumpEvents()");
+
+        /* Get focus with explicit window setup - focus deterministic */
+    focusWindow = SDL_GetMouseFocus();
+    SDLTest_AssertPass("SDL_GetMouseFocus()");
+    SDLTest_AssertCheck (focusWindow != NULL, "Check returned window value is not NULL");
+    SDLTest_AssertCheck (focusWindow == window, "Check returned window value is test window");
+
+    /* Mouse to random position outside window */
+    x = SDLTest_RandomIntegerInRange(-9, -1);
+    y = SDLTest_RandomIntegerInRange(-9, -1);
+    SDL_WarpMouseInWindow(window, x, y);
+    SDLTest_AssertPass("SDL_WarpMouseInWindow(...,%i,%i)", x, y);
+
+        /* Clean up test window */
+    _destroyMouseSuiteTestWindow(window);
+
+    /* Pump events to update focus state */
+    SDL_PumpEvents();
+    SDLTest_AssertPass("SDL_PumpEvents()");
+
+        /* Get focus for non-existing window */
+    focusWindow = SDL_GetMouseFocus();
+    SDLTest_AssertPass("SDL_GetMouseFocus()");
+    SDLTest_AssertCheck (focusWindow == NULL, "Check returned window value is NULL");
+
+
+    return TEST_COMPLETED;
+}
+
+/* ================= Test References ================== */
+
+/* Mouse test cases */
+static const SDLTest_TestCaseReference mouseTest1 =
+        { (SDLTest_TestCaseFp)mouse_getMouseState, "mouse_getMouseState", "Check call to SDL_GetMouseState", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest2 =
+        { (SDLTest_TestCaseFp)mouse_getRelativeMouseState, "mouse_getRelativeMouseState", "Check call to SDL_GetRelativeMouseState", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest3 =
+        { (SDLTest_TestCaseFp)mouse_createFreeCursor, "mouse_createFreeCursor", "Check call to SDL_CreateCursor and SDL_FreeCursor", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest4 =
+        { (SDLTest_TestCaseFp)mouse_showCursor, "mouse_showCursor", "Check call to SDL_ShowCursor", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest5 =
+        { (SDLTest_TestCaseFp)mouse_setCursor, "mouse_setCursor", "Check call to SDL_SetCursor", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest6 =
+        { (SDLTest_TestCaseFp)mouse_getCursor, "mouse_getCursor", "Check call to SDL_GetCursor", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest7 =
+        { (SDLTest_TestCaseFp)mouse_warpMouseInWindow, "mouse_warpMouseInWindow", "Check call to SDL_WarpMouseInWindow", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest8 =
+        { (SDLTest_TestCaseFp)mouse_getMouseFocus, "mouse_getMouseFocus", "Check call to SDL_getMouseFocus", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest9 =
+        { (SDLTest_TestCaseFp)mouse_createFreeColorCursor, "mouse_createFreeColorCursor", "Check call to SDL_CreateColorCursor and SDL_FreeCursor", TEST_ENABLED };
+
+static const SDLTest_TestCaseReference mouseTest10 =
+        { (SDLTest_TestCaseFp)mouse_getSetRelativeMouseMode, "mouse_getSetRelativeMouseMode", "Check call to SDL_GetRelativeMouseMode and SDL_SetRelativeMouseMode", TEST_ENABLED };
+
+/* Sequence of Mouse test cases */
+static const SDLTest_TestCaseReference *mouseTests[] =  {
+    &mouseTest1, &mouseTest2, &mouseTest3, &mouseTest4, &mouseTest5, &mouseTest6,
+    &mouseTest7, &mouseTest8, &mouseTest9, &mouseTest10, NULL
+};
+
+/* Mouse test suite (global) */
+SDLTest_TestSuiteReference mouseTestSuite = {
+    "Mouse",
+    NULL,
+    mouseTests,
+    NULL
+};
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   /**
+ * Pixels test suite
+ */
+
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_test.h"
+
+/* Test case functions */
+
+/* Definition of all RGB formats used to test pixel conversions */
+const int _numRGBPixelFormats = 31;
+Uint32 _RGBPixelFormats[] =
+  {
+    SDL_PIXELFORMAT_INDEX1LSB,
+    SDL_PIXELFORMAT_INDEX1MSB,
+    SDL_PIXELFORMAT_INDEX4LSB,
+    SDL_PIXELFORMAT_INDEX4MSB,
+    SDL_PIXELFORMAT_INDEX8,
+    SDL_PIXELFORMAT_RGB332,
+    SDL_PIXELFORMAT_RGB444,
+    SDL_PIXELFORMAT_BGR444,
+    SDL_PIXELFORMAT_RGB555,
+    SDL_PIXELFORMAT_BGR555,
+    SDL_PIXELFORMAT_ARGB4444,
+    SDL_PIXELFORMAT_RGBA4444,
+    SDL_PIXELFORMAT_ABGR4444,
+    SDL_PIXELFORMAT_BGRA4444,
+    SDL_PIXELFORMAT_ARGB1555,
+    SDL_PIXELFORMAT_RGBA5551,
+    SDL_PIXELFORMAT_ABGR1555,
+    SDL_PIXELFORMAT_BGRA5551,
+    SDL_PIXELFORMAT_RGB565,
+    SDL_PIXELFORMAT_BGR565,
+    SDL_PIXELFORMAT_RGB24,
+    SDL_PIXELFORMAT_BGR24,
+    SDL_PIXELFORMAT_RGB888,
+    SDL_PIXELFORMAT_RGBX8888,
+    SDL_PIXELFORMAT_BGR888,
+    SDL_PIXELFORMAT_BGRX8888,
+    SDL_PIXELFORMAT_ARGB8888,
+    SDL_PIXELFORMAT_RGBA8888,
+    SDL_PIXELFORMAT_ABGR8888,
+    SDL_PIXELFORMAT_BGRA8888,
+    SDL_PIXELFORMAT_ARGB2101010
+  };
+const char* _RGBPixelFormatsVerbose[] =
+  {
+    "SDL_PIXELFORMAT_INDEX1LSB",
+    "SDL_PIXELFORMAT_INDEX1MSB",
+    "SDL_PIXELFORMAT_INDEX4LSB",
+    "SDL_PIXELFORMAT_INDEX4MSB",
+    "SDL_PIXELFORMAT_INDEX8",
+    "SDL_PIXELFORMAT_RGB332",
+    "SDL_PIXELFORMAT_RGB444",
+    "SDL_PIXELFORMAT_BGR444",
+    "SDL_PIXELFORMAT_RGB555",
+    "SDL_PIXELFORMAT_BGR555",
+    "SDL_PIXELFORMAT_ARGB4444",
+    "SDL_PIXELFORMAT_RGBA4444",
+    "SDL_PIXELFORMAT_ABGR4444",
+    "SDL_PIXELFORMAT_BGRA4444",
+    "SDL_PIXELFORMAT_ARGB1555",
+    "SDL_PIXELFORMAT_RGBA5551",
+    "SDL_PIXELFORMAT_ABGR1555",
+    "SDL_PIXELFORMAT_BGRA5551",
+    "SDL_PIXELFORMAT_RGB565",
+    "SDL_PIXELFORMAT_BGR565",
+    "SDL_PIXELFORMAT_RGB24",
+    "SDL_PIXELFORMAT_BGR24",
+    "SDL_PIXELFORMAT_RGB888",
+    "SDL_PIXELFORMAT_RGBX8888",
+    "SDL_PIXELFORMAT_BGR888",
+    "SDL_PIXELFORMAT_BGRX8888",
+    "SDL_PIXELFORMAT_ARGB8888",
+    "SDL_PIXELFORMAT_RGBA8888",
+    "SDL_PIXELFORMAT_ABGR8888",
+    "SDL_PIXELFORMAT_BGRA8888",
+    "SDL_PIXELFORMAT_ARGB2101010"
+  };
+
+/* Definition of all Non-RGB formats used to test pixel conversions */
+const int _numNonRGBPixelFormats = 7;
+Uint32 _nonRGBPixelFormats[] =
+  {
+    SDL_PIXELFORMAT_YV12,
+    SDL_PIXELFORMAT_IYUV,
+    SDL_PIXELFORMAT_YUY2,
+    SDL_PIXELFORMAT_UYVY,
+    SDL_PIXELFORMAT_YVYU,
+    SDL_PIXELFORMAT_NV12,
+    SDL_PIXELFORMAT_NV21
+  };
+const char* _nonRGBPixelFormatsVerbose[] =
+  {
+    "SDL_PIXELFORMAT_YV12",
+    "SDL_PIXELFORMAT_IYUV",
+    "SDL_PIXELFORMAT_YUY2",
+    "SDL_PIXELFORMAT_UYVY",
+    "SDL_PIXELFORMAT_YVYU",
+    "SDL_PIXELFORMAT_NV12",
+    "SDL_PIXELFORMAT_NV21"
+  };
+
+/* Definition of some invalid formats for negative tests */
+const int _numInvalidPixelFormats = 2;
+Uint32 _invalidPixelFormats[] =
+  {
+    0xfffffffe,
+    0xffffffff
+  };
+const char* _invalidPixelFormatsVerbose[] =
+  {
+    "SDL_PIXELFORMAT_UNKNOWN",
+    "SDL_PIXELFORMAT_UNKNOWN"
+  };
+
+/* Test case functions */
+
+/**
+ * @brief Call to SDL_AllocFormat and SDL_FreeFormat
+ *
+ * @sa http://wiki.libsdl.org/SDL_AllocFormat
+ * @sa http://wiki.libsdl.org/SDL_FreeFormat
+ */
+int
+pixels_allocFreeFormat(void *arg)
+{
+  const char *unknownFormat = "SDL_PIXELFORMAT_UNKNOWN";
+  const char *expectedError = "Parameter 'format' is invalid";
+  const char *error;
+  int i;
+  Uint32 format;
+  Uint32 masks;
+  SDL_PixelFormat* result;
+
+  /* Blank/unknown format */
+  format = 0;
+  SDLTest_Log("RGB Format: %s (%u)", unknownFormat, format);
+
+  /* Allocate format */
+  result = SDL_AllocFormat(format);
+  SDLTest_AssertPass("Call to SDL_AllocFormat()");
+  SDLTest_AssertCheck(result != NULL, "Verify result is not NULL");
+  if (result != NULL) {
+    SDLTest_AssertCheck(result->format == format, "Verify value of result.format; expected: %u, got %u", format, result->format);
+    SDLTest_AssertCheck(result->BitsPerPixel == 0, "Verify value of result.BitsPerPixel; expected: 0, got %u", result->BitsPerPixel);
+    SDLTest_AssertCheck(result->BytesPerPixel == 0, "Verify value of result.BytesPerPixel; expected: 0, got %u", result->BytesPerPixel);
+    masks = result->Rmask | result->Gmask | result->Bmask | result->Amask;
+    SDLTest_AssertCheck(masks == 0, "Verify value of result.[RGBA]mask combined; expected: 0, got %u", masks);
+
+    /* Deallocate again */
+    SDL_FreeFormat(result);
+    SDLTest_AssertPass("Call to SDL_FreeFormat()");
+  }
+
+  /* RGB formats */
+  for (i = 0; i < _numRGBPixelFormats; i++) {
+    format = _RGBPixelFormats[i];
+    SDLTest_Log("RGB Format: %s (%u)", _RGBPixelFormatsVerbose[i], format);
+
+    /* Allocate format */
+    result = SDL_AllocFormat(format);
+    SDLTest_AssertPass("Call to SDL_AllocFormat()");
+    SDLTest_AssertCheck(result != NULL, "Verify result is not NULL");
+    if (result != NULL) {
+      SDLTest_AssertCheck(result->format == format, "Verify value of result.format; expected: %u, got %u", format, result->format);
+      SDLTest_AssertCheck(result->BitsPerPixel > 0, "Verify value of result.BitsPerPixel; expected: >0, got %u", result->BitsPerPixel);
+      SDLTest_AssertCheck(result->BytesPerPixel > 0, "Verify value of result.BytesPerPixel; expected: >0, got %u", result->BytesPerPixel);
+      if (result->palette != NULL) {
+         masks = result->Rmask | result->Gmask | result->Bmask | result->Amask;
+         SDLTest_AssertCheck(masks > 0, "Verify value of result.[RGBA]mask combined; expected: >0, got %u", masks);
+      }
+
+      /* Deallocate again */
+      SDL_FreeFormat(result);
+      SDLTest_AssertPass("Call to SDL_FreeFormat()");
+    }
+  }
+
+  /* Non-RGB formats */
+  for (i = 0; i < _numNonRGBPixelFormats; i++) {
+    format = _nonRGBPixelFormats[i];
+    SDLTest_Log("non-RGB Format: %s (%u)", _nonRGBPixelFormatsVerbose[i], format);
+
+    /* Try to allocate format */
+    result = SDL_AllocFormat(format);
+    SDLTest_AssertPass("Call to SDL_AllocFormat()");
+    SDLTest_AssertCheck(result == NULL, "Verify result is NULL");
+  }
+
+  /* Negative cases */
+
+  /* Invalid Formats */
+  for (i = 0; i < _numInvalidPixelFormats; i++) {
+    SDL_ClearError();
+    SDLTest_AssertPass("Call to SDL_ClearError()");
+    format = _invalidPixelFormats[i];
+    result = SDL_AllocFormat(format);
+    SDLTest_AssertPass("Call to SDL_AllocFormat(%u)", format);
+    SDLTest_AssertCheck(result == NULL, "Verify result is NULL");
+    error = SDL_GetError();
+    SDLTest_AssertPass("Call to SDL_GetError()");
+    SDLTest_AssertCheck(error != NULL, "Validate that error message was not NULL");
+    if (error != NULL) {
+      SDLTest_AssertCheck(SDL_strcmp(error, expectedError) == 0,
+          "Validate error message, expected: '%s', got: '%s'", expectedError, error);
+    }
+  }
+
+  /* Invalid free pointer */
+  SDL_ClearError();
+  SDLTest_AssertPass("Call to SDL_ClearError()");
+  SDL_FreeFormat(NULL);
+  SDLTest_AssertPass("Call to SDL_FreeFormat(NULL)");
+  error = SDL_GetError();
+  SDLTest_AssertPass("Call to SDL_GetError()");
+  SDLTest_AssertCheck(error != NULL, "Validate that error message was not NULL");
+  if (error != NULL) {
+      SDLTest_AssertCheck(SDL_strcmp(error, expectedError) == 0,
+          "Validate error message, expected: '%s', got: '%s'", expectedError, error);
+  }
+
+  return TEST_COMPLETED;
+}
+
+/**
+ * @brief Call to SDL_GetPixelFormatName
+ *
+ * @sa http://wiki.libsdl.org/SDL_GetPixelFormatName
+ */
+int
+pixels_getPixelFormatName(void *arg)
+{
+  const char *unknownFormat = "SDL_PIXELFORMAT_UNKNOWN";
+  const char *error;
+  int i;
+  Uint32 format;
+  const char *result;
+
+  /* Blank/undefined format */
+  format = 0;
+  SDLTest_Log("RGB Format: %s (%u)", unknownFormat, format);
+
+  /* Get name of format */
+  result = SDL_GetPixelFormatName(format);
+  SDLTest_AssertPass("Call to SDL_GetPixelFormatName()");
+  SDLTest_AssertCheck(result != NULL, "Verify result is not NULL");
+  if (result != NULL) {
+      SDLTest_AssertCheck(result[0] != '\0', "Verify result is non-empty");
+      SDLTest_AssertCheck(SDL_strcmp(result, unknownFormat) == 0,
+        "Verify result text; expected: %s, got %s", unknownFormat, result);
+  }
+
+  /* RGB formats */
+  for (i = 0; i < _numRGBPixelFormats; i++) {
+    format = _RGBPixelFormats[i];
+    SDLTest_Log("RGB Format: %s (%u)", _RGBPixelFormatsVerbose[i], format);
+
+    /* Get name of format */
+    result = SDL_GetPixelFormatName(format);
+    SDLTest_AssertPass("Call to SDL_GetPixelFormatName()");
+    SDLTest_AssertCheck(result != NULL, "Verify result is not NULL");
+    if (result != NULL) {
+      SDLTest_AssertCheck(result[0] != '\0', "Verify result is non-empty");
+      SDLTest_AssertCheck(SDL_strcmp(result, _RGBPixelFormatsVerbose[i]) == 0,
+        "Verify result text; expected: %s, got %s", _RGBPixelFormatsVerbose[i], result);
+    }
+  }
+
+  /* Non-RGB formats */
+  for (i = 0; i < _numNonRGBPixelFormats; i++) {
+    format = _nonRGBPixelFormats[i];
+    SDLTest_Log("non-RGB Format: %s (%u)", _nonRGBPixelFormatsVerbose[i], format);
+
+    /* Get name of format */
+    result = SDL_GetPixelFormatName(format);
+    SDLTest_AssertPass("Call to SDL_GetPixelFormatName()");
+    SDLTest_AssertCheck(result != NULL, "Verify result is not NULL");
+    if (result != NULL) {
+      SDLTest_AssertCheck(result[0] != '\0', "Verify result is non-empty");
+      SDLTest_AssertCheck(SDL_strcmp(result, _nonRGBPixelFormatsVerbose[i]) == 0,
+        "Verify result text; expected: %s, got %s", _nonRGBPixelFormatsVerbose[i], result);
+    }
+  }
+
+  /* Negative cases */
+
+  /* Invalid Formats */
+  SDL_ClearError();
+  SDLTest_AssertPass("Call to SDL_ClearError()");
+  for (i = 0; i < _numInvalidPixelFormats; i++) {
+    format = _invalidPixelFormats[i];
+    result = SDL_GetPixelFormatName(format);
+    SDLTest_AssertPass("Call to SDL_GetPixelFormatName(%u)", format);
+    SDLTest_Assert

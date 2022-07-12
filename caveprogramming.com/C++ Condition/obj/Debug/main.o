@@ -1,0 +1,523 @@
+/*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+#ifndef SDL_assert_h_
+#define SDL_assert_h_
+
+#include "SDL_config.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef SDL_ASSERT_LEVEL
+#ifdef SDL_DEFAULT_ASSERT_LEVEL
+#define SDL_ASSERT_LEVEL SDL_DEFAULT_ASSERT_LEVEL
+#elif defined(_DEBUG) || defined(DEBUG) || \
+      (defined(__GNUC__) && !defined(__OPTIMIZE__))
+#define SDL_ASSERT_LEVEL 2
+#else
+#define SDL_ASSERT_LEVEL 1
+#endif
+#endif /* SDL_ASSERT_LEVEL */
+
+/*
+These are macros and not first class functions so that the debugger breaks
+on the assertion line and not in some random guts of SDL, and so each
+assert can have unique static variables associated with it.
+*/
+
+#if defined(_MSC_VER)
+/* Don't include intrin.h here because it contains C++ code */
+    extern void __cdecl __debugbreak(void);
+    #define SDL_TriggerBreakpoint() __debugbreak()
+#elif ( (!defined(__NACL__)) && ((defined(__GNUC__) || defined(__clang__)) && (defined(__i386__) || defined(__x86_64__))) )
+    #define SDL_TriggerBreakpoint() __asm__ __volatile__ ( "int $3\n\t" )
+#elif ( defined(__APPLE__) && (defined(__arm64__) || defined(__aarch64__)) )  /* this might work on other ARM targets, but this is a known quantity... */
+    #define SDL_TriggerBreakpoint() __asm__ __volatile__ ( "brk #22\n\t" )
+#elif defined(__APPLE__) && defined(__arm__)
+    #define SDL_TriggerBreakpoint() __asm__ __volatile__ ( "bkpt #22\n\t" )
+#elif defined(__386__) && defined(__WATCOMC__)
+    #define SDL_TriggerBreakpoint() { _asm { int 0x03 } }
+#elif defined(HAVE_SIGNAL_H) && !defined(__WATCOMC__)
+    #include <signal.h>
+    #define SDL_TriggerBreakpoint() raise(SIGTRAP)
+#else
+    /* How do we trigger breakpoints on this platform? */
+    #define SDL_TriggerBreakpoint()
+#endif
+
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L) /* C99 supports __func__ as a standard. */
+#   define SDL_FUNCTION __func__
+#elif ((__GNUC__ >= 2) || defined(_MSC_VER) || defined (__WATCOMC__))
+#   define SDL_FUNCTION __FUNCTION__
+#else
+#   define SDL_FUNCTION "???"
+#endif
+#define SDL_FILE    __FILE__
+#define SDL_LINE    __LINE__
+
+/*
+sizeof (x) makes the compiler still parse the expression even without
+assertions enabled, so the code is always checked at compile time, but
+doesn't actually generate code for it, so there are no side effects or
+expensive checks at run time, just the constant size of what x WOULD be,
+which presumably gets optimized out as unused.
+This also solves the problem of...
+
+    int somevalue = blah();
+    SDL_assert(somevalue == 1);
+
+...which would cause compiles to complain that somevalue is unused if we
+disable assertions.
+*/
+
+/* "while (0,0)" fools Microsoft's compiler's /W4 warning level into thinking
+    this condition isn't constant. And looks like an owl's face! */
+#ifdef _MSC_VER  /* stupid /W4 warnings. */
+#define SDL_NULL_WHILE_LOOP_CONDITION (0,0)
+#else
+#define SDL_NULL_WHILE_LOOP_CONDITION (0)
+#endif
+
+#define SDL_disabled_assert(condition) \
+    do { (void) sizeof ((condition)); } while (SDL_NULL_WHILE_LOOP_CONDITION)
+
+typedef enum
+{
+    SDL_ASSERTION_RETRY,  /**< Retry the assert immediately. */
+    SDL_ASSERTION_BREAK,  /**< Make the debugger trigger a breakpoint. */
+    SDL_ASSERTION_ABORT,  /**< Terminate the program. */
+    SDL_ASSERTION_IGNORE,  /**< Ignore the assert. */
+    SDL_ASSERTION_ALWAYS_IGNORE  /**< Ignore the assert from now on. */
+} SDL_AssertState;
+
+typedef struct SDL_AssertData
+{
+    int always_ignore;
+    unsigned int trigger_count;
+    const char *condition;
+    const char *filename;
+    int linenum;
+    const char *function;
+    const struct SDL_AssertData *next;
+} SDL_AssertData;
+
+#if (SDL_ASSERT_LEVEL > 0)
+
+/* Never call this directly. Use the SDL_assert* macros. */
+extern DECLSPEC SDL_AssertState SDLCALL SDL_ReportAssertion(SDL_AssertData *,
+                                                             const char *,
+                                                             const char *, int)
+#if defined(__clang__)
+#if __has_feature(attribute_analyzer_noreturn)
+/* this tells Clang's static analysis that we're a custom assert function,
+   and that the analyzer should assume the condition was always true past this
+   SDL_assert test. */
+   __attribute__((analyzer_noreturn))
+#endif
+#endif
+;
+
+/* the do {} while(0) avoids dangling else problems:
+    if (x) SDL_assert(y); else blah();
+       ... without the do/while, the "else" could attach to this macro's "if".
+   We try to handle just the minimum we need here in a macro...the loop,
+   the static vars, and break points. The heavy lifting is handled in
+   SDL_ReportAssertion(), in SDL_assert.c.
+*/
+#define SDL_enabled_assert(condition) \
+    do { \
+        while ( !(condition) ) { \
+            static struct SDL_AssertData sdl_assert_data = { \
+                0, 0, #condition, 0, 0, 0, 0 \
+            }; \
+            const SDL_AssertState sdl_assert_state = SDL_ReportAssertion(&sdl_assert_data, SDL_FUNCTION, SDL_FILE, SDL_LINE); \
+            if (sdl_assert_state == SDL_ASSERTION_RETRY) { \
+                continue; /* go again. */ \
+            } else if (sdl_assert_state == SDL_ASSERTION_BREAK) { \
+                SDL_TriggerBreakpoint(); \
+            } \
+            break; /* not retrying. */ \
+        } \
+    } while (SDL_NULL_WHILE_LOOP_CONDITION)
+
+#endif  /* enabled assertions support code */
+
+/* Enable various levels of assertions. */
+#if SDL_ASSERT_LEVEL == 0   /* assertions disabled */
+#   define SDL_assert(condition) SDL_disabled_assert(condition)
+#   define SDL_assert_release(condition) SDL_disabled_assert(condition)
+#   define SDL_assert_paranoid(condition) SDL_disabled_assert(condition)
+#elif SDL_ASSERT_LEVEL == 1  /* release settings. */
+#   define SDL_assert(condition) SDL_disabled_assert(condition)
+#   define SDL_assert_release(condition) SDL_enabled_assert(condition)
+#   define SDL_assert_paranoid(condition) SDL_disabled_assert(condition)
+#elif SDL_ASSERT_LEVEL == 2  /* normal settings. */
+#   define SDL_assert(condition) SDL_enabled_assert(condition)
+#   define SDL_assert_release(condition) SDL_enabled_assert(condition)
+#   define SDL_assert_paranoid(condition) SDL_disabled_assert(condition)
+#elif SDL_ASSERT_LEVEL == 3  /* paranoid settings. */
+#   define SDL_assert(condition) SDL_enabled_assert(condition)
+#   define SDL_assert_release(condition) SDL_enabled_assert(condition)
+#   define SDL_assert_paranoid(condition) SDL_enabled_assert(condition)
+#else
+#   error Unknown assertion level.
+#endif
+
+/* this assertion is never disabled at any level. */
+#define SDL_assert_always(condition) SDL_enabled_assert(condition)
+
+
+/**
+ * A callback that fires when an SDL assertion fails.
+ *
+ * \param data a pointer to the SDL_AssertData structure corresponding to the
+ *             current assertion
+ * \param userdata what was passed as `userdata` to SDL_SetAssertionHandler()
+ * \returns an SDL_AssertState value indicating how to handle the failure.
+ */
+typedef SDL_AssertState (SDLCALL *SDL_AssertionHandler)(
+                                 const SDL_AssertData* data, void* userdata);
+
+/**
+ * Set an application-defined assertion handler.
+ *
+ * This function allows an application to show its own assertion UI and/or
+ * force the response to an assertion failure. If the application doesn't
+ * provide this, SDL will try to do the right thing, popping up a
+ * system-specific GUI dialog, and probably minimizing any fullscreen windows.
+ *
+ * This callback may fire from any thread, but it runs wrapped in a mutex, so
+ * it will only fire from one thread at a time.
+ *
+ * This callback is NOT reset to SDL's internal handler upon SDL_Quit()!
+ *
+ * \param handler the SDL_AssertionHandler function to call when an assertion
+ *                fails or NULL for the default handler
+ * \param userdata a pointer that is passed to `handler`
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetAssertionHandler
+ */
+extern DECLSPEC void SDLCALL SDL_SetAssertionHandler(
+                                            SDL_AssertionHandler handler,
+                                            void *userdata);
+
+/**
+ * Get the default assertion handler.
+ *
+ * This returns the function pointer that is called by default when an
+ * assertion is triggered. This is an internal function provided by SDL, that
+ * is used for assertions when SDL_SetAssertionHandler() hasn't been used to
+ * provide a different function.
+ *
+ * \returns the default SDL_AssertionHandler that is called when an assert
+ *          triggers.
+ *
+ * \since This function is available since SDL 2.0.2.
+ *
+ * \sa SDL_GetAssertionHandler
+ */
+extern DECLSPEC SDL_AssertionHandler SDLCALL SDL_GetDefaultAssertionHandler(void);
+
+/**
+ * Get the current assertion handler.
+ *
+ * This returns the function pointer that is called when an assertion is
+ * triggered. This is either the value last passed to
+ * SDL_SetAssertionHandler(), or if no application-specified function is set,
+ * is equivalent to calling SDL_GetDefaultAssertionHandler().
+ *
+ * The parameter `puserdata` is a pointer to a void*, which will store the
+ * "userdata" pointer that was passed to SDL_SetAssertionHandler(). This value
+ * will always be NULL for the default handler. If you don't care about this
+ * data, it is safe to pass a NULL pointer to this function to ignore it.
+ *
+ * \param puserdata pointer which is filled with the "userdata" pointer that
+ *                  was passed to SDL_SetAssertionHandler()
+ * \returns the SDL_AssertionHandler that is called when an assert triggers.
+ *
+ * \since This function is available since SDL 2.0.2.
+ *
+ * \sa SDL_SetAssertionHandler
+ */
+extern DECLSPEC SDL_AssertionHandler SDLCALL SDL_GetAssertionHandler(void **puserdata);
+
+/**
+ * Get a list of all assertion failures.
+ *
+ * This function gets all assertions triggered since the last call to
+ * SDL_ResetAssertionReport(), or the start of the program.
+ *
+ * The proper way to examine this data looks something like this:
+ *
+ * ```c
+ * const SDL_AssertData *item = SDL_GetAssertionReport();
+ * while (item) {
+ *    printf("'%s', %s (%s:%d), triggered %u times, always ignore: %s.\\n",
+ *           item->condition, item->function, item->filename,
+ *           item->linenum, item->trigger_count,
+ *           item->always_ignore ? "yes" : "no");
+ *    item = item->next;
+ * }
+ * ```
+ *
+ * \returns a list of all failed assertions or NULL if the list is empty. This
+ *          memory should not be modified or freed by the application.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ResetAssertionReport
+ */
+extern DECLSPEC const SDL_AssertData * SDLCALL SDL_GetAssertionReport(void);
+
+/**
+ * Clear the list of all assertion failures.
+ *
+ * This function will clear the list of all assertions triggered up to that
+ * point. Immediately following this call, SDL_GetAssertionReport will return
+ * no items. In addition, any previously-triggered assertions will be reset to
+ * a trigger_count of zero, and their always_ignore state will be false.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetAssertionReport
+ */
+extern DECLSPEC void SDLCALL SDL_ResetAssertionReport(void);
+
+
+/* these had wrong naming conventions until 2.0.4. Please update your app! */
+#define SDL_assert_state SDL_AssertState
+#define SDL_assert_data SDL_AssertData
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_assert_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_blendmode.h
+ *
+ *  Header file declaring the SDL_BlendMode enumeration
+ */
+
+#ifndef SDL_blendmode_h_
+#define SDL_blendmode_h_
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ *  \brief The blend mode used in SDL_RenderCopy() and drawing operations.
+ */
+typedef enum
+{
+    SDL_BLENDMODE_NONE = 0x00000000,     /**< no blending
+                                              dstRGBA = srcRGBA */
+    SDL_BLENDMODE_BLEND = 0x00000001,    /**< alpha blending
+                                              dstRGB = (srcRGB * srcA) + (dstRGB * (1-srcA))
+                                              dstA = srcA + (dstA * (1-srcA)) */
+    SDL_BLENDMODE_ADD = 0x00000002,      /**< additive blending
+                                              dstRGB = (srcRGB * srcA) + dstRGB
+                                              dstA = dstA */
+    SDL_BLENDMODE_MOD = 0x00000004,      /**< color modulate
+                                              dstRGB = srcRGB * dstRGB
+                                              dstA = dstA */
+    SDL_BLENDMODE_MUL = 0x00000008,      /**< color multiply
+                                              dstRGB = (srcRGB * dstRGB) + (dstRGB * (1-srcA))
+                                              dstA = (srcA * dstA) + (dstA * (1-srcA)) */
+    SDL_BLENDMODE_INVALID = 0x7FFFFFFF
+
+    /* Additional custom blend modes can be returned by SDL_ComposeCustomBlendMode() */
+
+} SDL_BlendMode;
+
+/**
+ *  \brief The blend operation used when combining source and destination pixel components
+ */
+typedef enum
+{
+    SDL_BLENDOPERATION_ADD              = 0x1,  /**< dst + src: supported by all renderers */
+    SDL_BLENDOPERATION_SUBTRACT         = 0x2,  /**< dst - src : supported by D3D9, D3D11, OpenGL, OpenGLES */
+    SDL_BLENDOPERATION_REV_SUBTRACT     = 0x3,  /**< src - dst : supported by D3D9, D3D11, OpenGL, OpenGLES */
+    SDL_BLENDOPERATION_MINIMUM          = 0x4,  /**< min(dst, src) : supported by D3D9, D3D11 */
+    SDL_BLENDOPERATION_MAXIMUM          = 0x5   /**< max(dst, src) : supported by D3D9, D3D11 */
+} SDL_BlendOperation;
+
+/**
+ *  \brief The normalized factor used to multiply pixel components
+ */
+typedef enum
+{
+    SDL_BLENDFACTOR_ZERO                = 0x1,  /**< 0, 0, 0, 0 */
+    SDL_BLENDFACTOR_ONE                 = 0x2,  /**< 1, 1, 1, 1 */
+    SDL_BLENDFACTOR_SRC_COLOR           = 0x3,  /**< srcR, srcG, srcB, srcA */
+    SDL_BLENDFACTOR_ONE_MINUS_SRC_COLOR = 0x4,  /**< 1-srcR, 1-srcG, 1-srcB, 1-srcA */
+    SDL_BLENDFACTOR_SRC_ALPHA           = 0x5,  /**< srcA, srcA, srcA, srcA */
+    SDL_BLENDFACTOR_ONE_MINUS_SRC_ALPHA = 0x6,  /**< 1-srcA, 1-srcA, 1-srcA, 1-srcA */
+    SDL_BLENDFACTOR_DST_COLOR           = 0x7,  /**< dstR, dstG, dstB, dstA */
+    SDL_BLENDFACTOR_ONE_MINUS_DST_COLOR = 0x8,  /**< 1-dstR, 1-dstG, 1-dstB, 1-dstA */
+    SDL_BLENDFACTOR_DST_ALPHA           = 0x9,  /**< dstA, dstA, dstA, dstA */
+    SDL_BLENDFACTOR_ONE_MINUS_DST_ALPHA = 0xA   /**< 1-dstA, 1-dstA, 1-dstA, 1-dstA */
+} SDL_BlendFactor;
+
+/**
+ * Compose a custom blend mode for renderers.
+ *
+ * The functions SDL_SetRenderDrawBlendMode and SDL_SetTextureBlendMode accept
+ * the SDL_BlendMode returned by this function if the renderer supports it.
+ *
+ * A blend mode controls how the pixels from a drawing operation (source) get
+ * combined with the pixels from the render target (destination). First, the
+ * components of the source and destination pixels get multiplied with their
+ * blend factors. Then, the blend operation takes the two products and
+ * calculates the result that will get stored in the render target.
+ *
+ * Expressed in pseudocode, it would look like this:
+ *
+ * ```c
+ * dstRGB = colorOperation(srcRGB * srcColorFactor, dstRGB * dstColorFactor);
+ * dstA = alphaOperation(srcA * srcAlphaFactor, dstA * dstAlphaFactor);
+ * ```
+ *
+ * Where the functions `colorOperation(src, dst)` and `alphaOperation(src,
+ * dst)` can return one of the following:
+ *
+ * - `src + dst`
+ * - `src - dst`
+ * - `dst - src`
+ * - `min(src, dst)`
+ * - `max(src, dst)`
+ *
+ * The red, green, and blue components are always multiplied with the first,
+ * second, and third components of the SDL_BlendFactor, respectively. The
+ * fourth component is not used.
+ *
+ * The alpha component is always multiplied with the fourth component of the
+ * SDL_BlendFactor. The other components are not used in the alpha
+ * calculation.
+ *
+ * Support for these blend modes varies for each renderer. To check if a
+ * specific SDL_BlendMode is supported, create a renderer and pass it to
+ * either SDL_SetRenderDrawBlendMode or SDL_SetTextureBlendMode. They will
+ * return with an error if the blend mode is not supported.
+ *
+ * This list describes the support of custom blend modes for each renderer in
+ * SDL 2.0.6. All renderers support the four blend modes listed in the
+ * SDL_BlendMode enumeration.
+ *
+ * - **direct3d**: Supports all operations with all factors. However, some
+ *   factors produce unexpected results with `SDL_BLENDOPERATION_MINIMUM` and
+ *   `SDL_BLENDOPERATION_MAXIMUM`.
+ * - **direct3d11**: Same as Direct3D 9.
+ * - **opengl**: Supports the `SDL_BLENDOPERATION_ADD` operation with all
+ *   factors. OpenGL versions 1.1, 1.2, and 1.3 do not work correctly with SDL
+ *   2.0.6.
+ * - **opengles**: Supports the `SDL_BLENDOPERATION_ADD` operation with all
+ *   factors. Color and alpha factors need to be the same. OpenGL ES 1
+ *   implementation specific: May also support `SDL_BLENDOPERATION_SUBTRACT`
+ *   and `SDL_BLENDOPERATION_REV_SUBTRACT`. May support color and alpha
+ *   operations being different from each other. May support color and alpha
+ *   factors being different from each other.
+ * - **opengles2**: Supports the `SDL_BLENDOPERATION_ADD`,
+ *   `SDL_BLENDOPERATION_SUBTRACT`, `SDL_BLENDOPERATION_REV_SUBTRACT`
+ *   operations with all factors.
+ * - **psp**: No custom blend mode support.
+ * - **software**: No custom blend mode support.
+ *
+ * Some renderers do not provide an alpha component for the default render
+ * target. The `SDL_BLENDFACTOR_DST_ALPHA` and
+ * `SDL_BLENDFACTOR_ONE_MINUS_DST_ALPHA` factors do not have an effect in this
+ * case.
+ *
+ * \param srcColorFactor the SDL_BlendFactor applied to the red, green, and
+ *                       blue components of the source pixels
+ * \param dstColorFactor the SDL_BlendFactor applied to the red, green, and
+ *                       blue components of the destination pixels
+ * \param colorOperation the SDL_BlendOperation used to combine the red,
+ *                       green, and blue components of the source and
+ *                       destination pixels
+ * \param srcAlphaFactor the SDL_BlendFactor applied to the alpha component of
+ *                       the source pixels
+ * \param dstAlphaFactor the SDL_BlendFactor applied to the alpha component of
+ *                       the destination pixels
+ * \param alphaOperation the SDL_BlendOperation used to combine the alpha
+ *                       component of the source and destination pixels
+ * \returns an SDL_BlendMode that represents the chosen factors and
+ *          operations.
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_SetRenderDrawBlendMode
+ * \sa SDL_GetRenderDrawBlendMode
+ * \sa SDL_SetTextureBlendMode
+ * \sa SDL_GetTextureBlendMode
+ */
+extern DECLSPEC SDL_BlendMode SDLCALL SDL_ComposeCustomBlendMode(SDL_BlendFactor srcColorFactor,
+                                                                 SDL_BlendFactor dstColorFactor,
+                                                                 SDL_BlendOperation colorOperation,
+                                                                 SDL_BlendFactor srcAlphaFactor,
+                                                                 SDL_BlendFactor dstAlphaFactor,
+                                                                 SDL_BlendOperation alphaOperation);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_blendmode_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                    

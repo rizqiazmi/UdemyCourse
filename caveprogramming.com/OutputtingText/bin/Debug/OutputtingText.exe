@@ -1,0 +1,1406 @@
+cludes"
+    fi
+    if test x$ac_x_libraries = xno || test "x$ac_x_libraries" = xNone; then
+        :
+    else
+        if test "x$ac_x_libraries" = x; then
+            XPATH=""
+            XLIB="-lX11"
+        else
+            XPATH="-L$ac_x_libraries"
+            XLIB="-L$ac_x_libraries -lX11"
+        fi
+    fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenGL support" >&5
+$as_echo_n "checking for OpenGL support... " >&6; }
+have_opengl=no
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+ #include "SDL_opengl.h"
+ #ifndef SDL_VIDEO_OPENGL
+ #error SDL_VIDEO_OPENGL
+ #endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_opengl=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_opengl" >&5
+$as_echo "$have_opengl" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenGL ES support" >&5
+$as_echo_n "checking for OpenGL ES support... " >&6; }
+have_opengles=no
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+ #include "SDL_opengles.h"
+ #ifndef SDL_VIDEO_OPENGL_ES
+ #error SDL_VIDEO_OPENGL_ES
+ #endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_opengles=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_opengles" >&5
+$as_echo "$have_opengles" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for OpenGL ES2 support" >&5
+$as_echo_n "checking for OpenGL ES2 support... " >&6; }
+have_opengles2=no
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+ #include "SDL_opengles2.h"
+ #ifndef SDL_VIDEO_OPENGL_ES2
+ #error SDL_VIDEO_OPENGL_ES2
+ #endif
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  have_opengles2=yes
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $have_opengles2" >&5
+$as_echo "$have_opengles2" >&6; }
+
+GLLIB=""
+GLESLIB=""
+GLES2LIB=""
+OPENGLES1_TARGETS="UNUSED"
+OPENGLES2_TARGETS="UNUSED"
+OPENGL_TARGETS="UNUSED"
+if test x$have_opengles = xyes; then
+    CFLAGS="$CFLAGS -DHAVE_OPENGLES"
+    GLESLIB="$XPATH -lGLESv1_CM"
+    OPENGLES1_TARGETS="TARGETS"
+fi
+if test x$have_opengles2 = xyes; then
+    CFLAGS="$CFLAGS -DHAVE_OPENGLES2"
+    #GLES2LIB="$XPATH -lGLESv2"
+    OPENGLES2_TARGETS="TARGETS"
+fi
+if test x$have_opengl = xyes; then
+    CFLAGS="$CFLAGS -DHAVE_OPENGL"
+    GLLIB="$XPATH $SYS_GL_LIBS"
+    OPENGL_TARGETS="TARGETS"
+fi
+
+
+
+
+
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TTF_Init in -lSDL2_ttf" >&5
+$as_echo_n "checking for TTF_Init in -lSDL2_ttf... " >&6; }
+if ${ac_cv_lib_SDL2_ttf_TTF_Init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lSDL2_ttf  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char TTF_Init ();
+int
+main ()
+{
+return TTF_Init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_SDL2_ttf_TTF_Init=yes
+else
+  ac_cv_lib_SDL2_ttf_TTF_Init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_SDL2_ttf_TTF_Init" >&5
+$as_echo "$ac_cv_lib_SDL2_ttf_TTF_Init" >&6; }
+if test "x$ac_cv_lib_SDL2_ttf_TTF_Init" = xyes; then :
+  have_SDL_ttf=yes
+fi
+
+if test x$have_SDL_ttf = xyes; then
+    CFLAGS="$CFLAGS -DHAVE_SDL_TTF"
+    SDL_TTF_LIB="-lSDL2_ttf"
+fi
+
+
+
+pkg_failed=no
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libunwind" >&5
+$as_echo_n "checking for libunwind... " >&6; }
+
+if test -n "$LIBUNWIND_CFLAGS"; then
+    pkg_cv_LIBUNWIND_CFLAGS="$LIBUNWIND_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libunwind\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libunwind") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUNWIND_CFLAGS=`$PKG_CONFIG --cflags "libunwind" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBUNWIND_LIBS"; then
+    pkg_cv_LIBUNWIND_LIBS="$LIBUNWIND_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libunwind\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libunwind") 2>&5
+  ac_status=$?
+  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUNWIND_LIBS=`$PKG_CONFIG --libs "libunwind" 2>/dev/null`
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+   	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBUNWIND_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "libunwind" 2>&1`
+        else
+	        LIBUNWIND_PKG_ERRORS=`$PKG_CONFIG --print-errors "libunwind" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBUNWIND_PKG_ERRORS" >&5
+
+	have_libunwind=no
+elif test $pkg_failed = untried; then
+     	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	have_libunwind=no
+else
+	LIBUNWIND_CFLAGS=$pkg_cv_LIBUNWIND_CFLAGS
+	LIBUNWIND_LIBS=$pkg_cv_LIBUNWIND_LIBS
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	have_libunwind=yes
+fi
+if test x$have_libunwind = xyes ; then
+   LIBS="$LIBS $LIBUNWIND_LIBS"
+fi
+
+ac_config_files="$ac_config_files Makefile"
+
+cat >confcache <<\_ACEOF
+# This file is a shell script that caches the results of configure
+# tests run on this system so they can be shared between configure
+# scripts and configure runs, see configure's option --config-cache.
+# It is not useful on other systems.  If it contains results you don't
+# want to keep, you may remove or edit it.
+#
+# config.status only pays attention to the cache file if you give it
+# the --recheck option to rerun configure.
+#
+# `ac_cv_env_foo' variables (set or unset) will be overridden when
+# loading this file, other *unset* `ac_cv_foo' will be assigned the
+# following values.
+
+_ACEOF
+
+# The following way of writing the cache mishandles newlines in values,
+# but we know of no workaround that is simple, portable, and efficient.
+# So, we kill variables containing newlines.
+# Ultrix sh set writes to stderr and can't be redirected directly,
+# and sets the high bit in the cache file unless we assign to the vars.
+(
+  for ac_var in `(set) 2>&1 | sed -n 's/^\([a-zA-Z_][a-zA-Z0-9_]*\)=.*/\1/p'`; do
+    eval ac_val=\$$ac_var
+    case $ac_val in #(
+    *${as_nl}*)
+      case $ac_var in #(
+      *_cv_*) { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cache variable $ac_var contains a newline" >&5
+$as_echo "$as_me: WARNING: cache variable $ac_var contains a newline" >&2;} ;;
+      esac
+      case $ac_var in #(
+      _ | IFS | as_nl) ;; #(
+      BASH_ARGV | BASH_SOURCE) eval $ac_var= ;; #(
+      *) { eval $ac_var=; unset $ac_var;} ;;
+      esac ;;
+    esac
+  done
+
+  (set) 2>&1 |
+    case $as_nl`(ac_space=' '; set) 2>&1` in #(
+    *${as_nl}ac_space=\ *)
+      # `set' does not quote correctly, so add quotes: double-quote
+      # substitution turns \\\\ into \\, and sed turns \\ into \.
+      sed -n \
+	"s/'/'\\\\''/g;
+	  s/^\\([_$as_cr_alnum]*_cv_[_$as_cr_alnum]*\\)=\\(.*\\)/\\1='\\2'/p"
+      ;; #(
+    *)
+      # `set' quotes correctly as required by POSIX, so do not add quotes.
+      sed -n "/^[_$as_cr_alnum]*_cv_[_$as_cr_alnum]*=/p"
+      ;;
+    esac |
+    sort
+) |
+  sed '
+     /^ac_cv_env_/b end
+     t clear
+     :clear
+     s/^\([^=]*\)=\(.*[{}].*\)$/test "${\1+set}" = set || &/
+     t end
+     s/^\([^=]*\)=\(.*\)$/\1=${\1=\2}/
+     :end' >>confcache
+if diff "$cache_file" confcache >/dev/null 2>&1; then :; else
+  if test -w "$cache_file"; then
+    if test "x$cache_file" != "x/dev/null"; then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: updating cache $cache_file" >&5
+$as_echo "$as_me: updating cache $cache_file" >&6;}
+      if test ! -f "$cache_file" || test -h "$cache_file"; then
+	cat confcache >"$cache_file"
+      else
+        case $cache_file in #(
+        */* | ?:*)
+	  mv -f confcache "$cache_file"$$ &&
+	  mv -f "$cache_file"$$ "$cache_file" ;; #(
+        *)
+	  mv -f confcache "$cache_file" ;;
+	esac
+      fi
+    fi
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: not updating unwritable cache $cache_file" >&5
+$as_echo "$as_me: not updating unwritable cache $cache_file" >&6;}
+  fi
+fi
+rm -f confcache
+
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+# Let make expand exec_prefix.
+test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+
+# Transform confdefs.h into DEFS.
+# Protect against shell expansion while executing Makefile rules.
+# Protect against Makefile macro expansion.
+#
+# If the first sed substitution is executed (which looks for macros that
+# take arguments), then branch to the quote section.  Otherwise,
+# look for a macro that doesn't take arguments.
+ac_script='
+:mline
+/\\$/{
+ N
+ s,\\\n,,
+ b mline
+}
+t clear
+:clear
+s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 (][^	 (]*([^)]*)\)[	 ]*\(.*\)/-D\1=\2/g
+t quote
+s/^[	 ]*#[	 ]*define[	 ][	 ]*\([^	 ][^	 ]*\)[	 ]*\(.*\)/-D\1=\2/g
+t quote
+b any
+:quote
+s/[	 `~#$^&*(){}\\|;'\''"<>?]/\\&/g
+s/\[/\\&/g
+s/\]/\\&/g
+s/\$/$$/g
+H
+:any
+${
+	g
+	s/^\n//
+	s/\n/ /g
+	p
+}
+'
+DEFS=`sed -n "$ac_script" confdefs.h`
+
+
+ac_libobjs=
+ac_ltlibobjs=
+U=
+for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
+  # 1. Remove the extension, and $U if already installed.
+  ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'
+  ac_i=`$as_echo "$ac_i" | sed "$ac_script"`
+  # 2. Prepend LIBOBJDIR.  When used with automake>=1.10 LIBOBJDIR
+  #    will be set to the directory where LIBOBJS objects are built.
+  as_fn_append ac_libobjs " \${LIBOBJDIR}$ac_i\$U.$ac_objext"
+  as_fn_append ac_ltlibobjs " \${LIBOBJDIR}$ac_i"'$U.lo'
+done
+LIBOBJS=$ac_libobjs
+
+LTLIBOBJS=$ac_ltlibobjs
+
+
+
+: "${CONFIG_STATUS=./config.status}"
+ac_write_fail=0
+ac_clean_files_save=$ac_clean_files
+ac_clean_files="$ac_clean_files $CONFIG_STATUS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: creating $CONFIG_STATUS" >&5
+$as_echo "$as_me: creating $CONFIG_STATUS" >&6;}
+as_write_fail=0
+cat >$CONFIG_STATUS <<_ASEOF || as_write_fail=1
+#! $SHELL
+# Generated by $as_me.
+# Run this file to recreate the current configuration.
+# Compiler output produced by configure, useful for debugging
+# configure, is in config.log if it exists.
+
+debug=false
+ac_cs_recheck=false
+ac_cs_silent=false
+
+SHELL=\${CONFIG_SHELL-$SHELL}
+export SHELL
+_ASEOF
+cat >>$CONFIG_STATUS <<\_ASEOF || as_write_fail=1
+## -------------------- ##
+## M4sh Initialization. ##
+## -------------------- ##
+
+# Be more Bourne compatible
+DUALCASE=1; export DUALCASE # for MKS sh
+if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then :
+  emulate sh
+  NULLCMD=:
+  # Pre-4.2 versions of Zsh do word splitting on ${1+"$@"}, which
+  # is contrary to our usage.  Disable this feature.
+  alias -g '${1+"$@"}'='"$@"'
+  setopt NO_GLOB_SUBST
+else
+  case `(set -o) 2>/dev/null` in #(
+  *posix*) :
+    set -o posix ;; #(
+  *) :
+     ;;
+esac
+fi
+
+
+as_nl='
+'
+export as_nl
+# Printing a long string crashes Solaris 7 /usr/bin/printf.
+as_echo='\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\'
+as_echo=$as_echo$as_echo$as_echo$as_echo$as_echo
+as_echo=$as_echo$as_echo$as_echo$as_echo$as_echo$as_echo
+# Prefer a ksh shell builtin over an external printf program on Solaris,
+# but without wasting forks for bash or zsh.
+if test -z "$BASH_VERSION$ZSH_VERSION" \
+    && (test "X`print -r -- $as_echo`" = "X$as_echo") 2>/dev/null; then
+  as_echo='print -r --'
+  as_echo_n='print -rn --'
+elif (test "X`printf %s $as_echo`" = "X$as_echo") 2>/dev/null; then
+  as_echo='printf %s\n'
+  as_echo_n='printf %s'
+else
+  if test "X`(/usr/ucb/echo -n -n $as_echo) 2>/dev/null`" = "X-n $as_echo"; then
+    as_echo_body='eval /usr/ucb/echo -n "$1$as_nl"'
+    as_echo_n='/usr/ucb/echo -n'
+  else
+    as_echo_body='eval expr "X$1" : "X\\(.*\\)"'
+    as_echo_n_body='eval
+      arg=$1;
+      case $arg in #(
+      *"$as_nl"*)
+	expr "X$arg" : "X\\(.*\\)$as_nl";
+	arg=`expr "X$arg" : ".*$as_nl\\(.*\\)"`;;
+      esac;
+      expr "X$arg" : "X\\(.*\\)" | tr -d "$as_nl"
+    '
+    export as_echo_n_body
+    as_echo_n='sh -c $as_echo_n_body as_echo'
+  fi
+  export as_echo_body
+  as_echo='sh -c $as_echo_body as_echo'
+fi
+
+# The user is always right.
+if test "${PATH_SEPARATOR+set}" != set; then
+  PATH_SEPARATOR=:
+  (PATH='/bin;/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 && {
+    (PATH='/bin:/bin'; FPATH=$PATH; sh -c :) >/dev/null 2>&1 ||
+      PATH_SEPARATOR=';'
+  }
+fi
+
+
+# IFS
+# We need space, tab and new line, in precisely that order.  Quoting is
+# there to prevent editors from complaining about space-tab.
+# (If _AS_PATH_WALK were called with IFS unset, it would disable word
+# splitting by setting IFS to empty value.)
+IFS=" ""	$as_nl"
+
+# Find who we are.  Look in the path if we contain no directory separator.
+as_myself=
+case $0 in #((
+  *[\\/]* ) as_myself=$0 ;;
+  *) as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    test -r "$as_dir/$0" && as_myself=$as_dir/$0 && break
+  done
+IFS=$as_save_IFS
+
+     ;;
+esac
+# We did not find ourselves, most probably we were run as `sh COMMAND'
+# in which case we are not to be found in the path.
+if test "x$as_myself" = x; then
+  as_myself=$0
+fi
+if test ! -f "$as_myself"; then
+  $as_echo "$as_myself: error: cannot find myself; rerun with an absolute file name" >&2
+  exit 1
+fi
+
+# Unset variables that we do not need and which cause bugs (e.g. in
+# pre-3.0 UWIN ksh).  But do not cause bugs in bash 2.01; the "|| exit 1"
+# suppresses any "Segmentation fault" message there.  '((' could
+# trigger a bug in pdksh 5.2.14.
+for as_var in BASH_ENV ENV MAIL MAILPATH
+do eval test x\${$as_var+set} = xset \
+  && ( (unset $as_var) || exit 1) >/dev/null 2>&1 && unset $as_var || :
+done
+PS1='$ '
+PS2='> '
+PS4='+ '
+
+# NLS nuisances.
+LC_ALL=C
+export LC_ALL
+LANGUAGE=C
+export LANGUAGE
+
+# CDPATH.
+(unset CDPATH) >/dev/null 2>&1 && unset CDPATH
+
+
+# as_fn_error STATUS ERROR [LINENO LOG_FD]
+# ----------------------------------------
+# Output "`basename $0`: error: ERROR" to stderr. If LINENO and LOG_FD are
+# provided, also output the error to LOG_FD, referencing LINENO. Then exit the
+# script with STATUS, using 1 if that was 0.
+as_fn_error ()
+{
+  as_status=$1; test $as_status -eq 0 && as_status=1
+  if test "$4"; then
+    as_lineno=${as_lineno-"$3"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+    $as_echo "$as_me:${as_lineno-$LINENO}: error: $2" >&$4
+  fi
+  $as_echo "$as_me: error: $2" >&2
+  as_fn_exit $as_status
+} # as_fn_error
+
+
+# as_fn_set_status STATUS
+# -----------------------
+# Set $? to STATUS, without forking.
+as_fn_set_status ()
+{
+  return $1
+} # as_fn_set_status
+
+# as_fn_exit STATUS
+# -----------------
+# Exit the shell with STATUS, even in a "trap 0" or "set -e" context.
+as_fn_exit ()
+{
+  set +e
+  as_fn_set_status $1
+  exit $1
+} # as_fn_exit
+
+# as_fn_unset VAR
+# ---------------
+# Portably unset VAR.
+as_fn_unset ()
+{
+  { eval $1=; unset $1;}
+}
+as_unset=as_fn_unset
+# as_fn_append VAR VALUE
+# ----------------------
+# Append the text in VALUE to the end of the definition contained in VAR. Take
+# advantage of any shell optimizations that allow amortized linear growth over
+# repeated appends, instead of the typical quadratic growth present in naive
+# implementations.
+if (eval "as_var=1; as_var+=2; test x\$as_var = x12") 2>/dev/null; then :
+  eval 'as_fn_append ()
+  {
+    eval $1+=\$2
+  }'
+else
+  as_fn_append ()
+  {
+    eval $1=\$$1\$2
+  }
+fi # as_fn_append
+
+# as_fn_arith ARG...
+# ------------------
+# Perform arithmetic evaluation on the ARGs, and store the result in the
+# global $as_val. Take advantage of shells that can avoid forks. The arguments
+# must be portable across $(()) and expr.
+if (eval "test \$(( 1 + 1 )) = 2") 2>/dev/null; then :
+  eval 'as_fn_arith ()
+  {
+    as_val=$(( $* ))
+  }'
+else
+  as_fn_arith ()
+  {
+    as_val=`expr "$@" || test $? -eq 1`
+  }
+fi # as_fn_arith
+
+
+if expr a : '\(a\)' >/dev/null 2>&1 &&
+   test "X`expr 00001 : '.*\(...\)'`" = X001; then
+  as_expr=expr
+else
+  as_expr=false
+fi
+
+if (basename -- /) >/dev/null 2>&1 && test "X`basename -- / 2>&1`" = "X/"; then
+  as_basename=basename
+else
+  as_basename=false
+fi
+
+if (as_dir=`dirname -- /` && test "X$as_dir" = X/) >/dev/null 2>&1; then
+  as_dirname=dirname
+else
+  as_dirname=false
+fi
+
+as_me=`$as_basename -- "$0" ||
+$as_expr X/"$0" : '.*/\([^/][^/]*\)/*$' \| \
+	 X"$0" : 'X\(//\)$' \| \
+	 X"$0" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X/"$0" |
+    sed '/^.*\/\([^/][^/]*\)\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\/\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\/\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+
+# Avoid depending upon Character Ranges.
+as_cr_letters='abcdefghijklmnopqrstuvwxyz'
+as_cr_LETTERS='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+as_cr_Letters=$as_cr_letters$as_cr_LETTERS
+as_cr_digits='0123456789'
+as_cr_alnum=$as_cr_Letters$as_cr_digits
+
+ECHO_C= ECHO_N= ECHO_T=
+case `echo -n x` in #(((((
+-n*)
+  case `echo 'xy\c'` in
+  *c*) ECHO_T='	';;	# ECHO_T is single tab character.
+  xy)  ECHO_C='\c';;
+  *)   echo `echo ksh88 bug on AIX 6.1` > /dev/null
+       ECHO_T='	';;
+  esac;;
+*)
+  ECHO_N='-n';;
+esac
+
+rm -f conf$$ conf$$.exe conf$$.file
+if test -d conf$$.dir; then
+  rm -f conf$$.dir/conf$$.file
+else
+  rm -f conf$$.dir
+  mkdir conf$$.dir 2>/dev/null
+fi
+if (echo >conf$$.file) 2>/dev/null; then
+  if ln -s conf$$.file conf$$ 2>/dev/null; then
+    as_ln_s='ln -s'
+    # ... but there are two gotchas:
+    # 1) On MSYS, both `ln -s file dir' and `ln file dir' fail.
+    # 2) DJGPP < 2.04 has no symlinks; `ln -s' creates a wrapper executable.
+    # In both cases, we have to default to `cp -pR'.
+    ln -s conf$$.file conf$$.dir 2>/dev/null && test ! -f conf$$.exe ||
+      as_ln_s='cp -pR'
+  elif ln conf$$.file conf$$ 2>/dev/null; then
+    as_ln_s=ln
+  else
+    as_ln_s='cp -pR'
+  fi
+else
+  as_ln_s='cp -pR'
+fi
+rm -f conf$$ conf$$.exe conf$$.dir/conf$$.file conf$$.file
+rmdir conf$$.dir 2>/dev/null
+
+
+# as_fn_mkdir_p
+# -------------
+# Create "$as_dir" as a directory, including parents if necessary.
+as_fn_mkdir_p ()
+{
+
+  case $as_dir in #(
+  -*) as_dir=./$as_dir;;
+  esac
+  test -d "$as_dir" || eval $as_mkdir_p || {
+    as_dirs=
+    while :; do
+      case $as_dir in #(
+      *\'*) as_qdir=`$as_echo "$as_dir" | sed "s/'/'\\\\\\\\''/g"`;; #'(
+      *) as_qdir=$as_dir;;
+      esac
+      as_dirs="'$as_qdir' $as_dirs"
+      as_dir=`$as_dirname -- "$as_dir" ||
+$as_expr X"$as_dir" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$as_dir" : 'X\(//\)[^/]' \| \
+	 X"$as_dir" : 'X\(//\)$' \| \
+	 X"$as_dir" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$as_dir" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)[^/].*/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+      test -d "$as_dir" && break
+    done
+    test -z "$as_dirs" || eval "mkdir $as_dirs"
+  } || test -d "$as_dir" || as_fn_error $? "cannot create directory $as_dir"
+
+
+} # as_fn_mkdir_p
+if mkdir -p . 2>/dev/null; then
+  as_mkdir_p='mkdir -p "$as_dir"'
+else
+  test -d ./-p && rmdir ./-p
+  as_mkdir_p=false
+fi
+
+
+# as_fn_executable_p FILE
+# -----------------------
+# Test if FILE is an executable regular file.
+as_fn_executable_p ()
+{
+  test -f "$1" && test -x "$1"
+} # as_fn_executable_p
+as_test_x='test -x'
+as_executable_p=as_fn_executable_p
+
+# Sed expression to map a string onto a valid CPP name.
+as_tr_cpp="eval sed 'y%*$as_cr_letters%P$as_cr_LETTERS%;s%[^_$as_cr_alnum]%_%g'"
+
+# Sed expression to map a string onto a valid variable name.
+as_tr_sh="eval sed 'y%*+%pp%;s%[^_$as_cr_alnum]%_%g'"
+
+
+exec 6>&1
+## ----------------------------------- ##
+## Main body of $CONFIG_STATUS script. ##
+## ----------------------------------- ##
+_ASEOF
+test $as_write_fail = 0 && chmod +x $CONFIG_STATUS || ac_write_fail=1
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+# Save the log message, to keep $0 and so on meaningful, and to
+# report actual input values of CONFIG_FILES etc. instead of their
+# values after options handling.
+ac_log="
+This file was extended by $as_me, which was
+generated by GNU Autoconf 2.69.  Invocation command line was
+
+  CONFIG_FILES    = $CONFIG_FILES
+  CONFIG_HEADERS  = $CONFIG_HEADERS
+  CONFIG_LINKS    = $CONFIG_LINKS
+  CONFIG_COMMANDS = $CONFIG_COMMANDS
+  $ $0 $@
+
+on `(hostname || uname -n) 2>/dev/null | sed 1q`
+"
+
+_ACEOF
+
+case $ac_config_files in *"
+"*) set x $ac_config_files; shift; ac_config_files=$*;;
+esac
+
+
+
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+# Files that config.status was made for.
+config_files="$ac_config_files"
+
+_ACEOF
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+ac_cs_usage="\
+\`$as_me' instantiates files and other configuration actions
+from templates according to the current configuration.  Unless the files
+and actions are specified as TAGs, all are instantiated by default.
+
+Usage: $0 [OPTION]... [TAG]...
+
+  -h, --help       print this help, then exit
+  -V, --version    print version number and configuration settings, then exit
+      --config     print configuration, then exit
+  -q, --quiet, --silent
+                   do not print progress messages
+  -d, --debug      don't remove temporary files
+      --recheck    update $as_me by reconfiguring in the same conditions
+      --file=FILE[:TEMPLATE]
+                   instantiate the configuration file FILE
+
+Configuration files:
+$config_files
+
+Report bugs to the package provider."
+
+_ACEOF
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+ac_cs_config="`$as_echo "$ac_configure_args" | sed 's/^ //; s/[\\""\`\$]/\\\\&/g'`"
+ac_cs_version="\\
+config.status
+configured by $0, generated by GNU Autoconf 2.69,
+  with options \\"\$ac_cs_config\\"
+
+Copyright (C) 2012 Free Software Foundation, Inc.
+This config.status script is free software; the Free Software Foundation
+gives unlimited permission to copy, distribute and modify it."
+
+ac_pwd='$ac_pwd'
+srcdir='$srcdir'
+test -n "\$AWK" || AWK=awk
+_ACEOF
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+# The default lists apply if the user does not specify any file.
+ac_need_defaults=:
+while test $# != 0
+do
+  case $1 in
+  --*=?*)
+    ac_option=`expr "X$1" : 'X\([^=]*\)='`
+    ac_optarg=`expr "X$1" : 'X[^=]*=\(.*\)'`
+    ac_shift=:
+    ;;
+  --*=)
+    ac_option=`expr "X$1" : 'X\([^=]*\)='`
+    ac_optarg=
+    ac_shift=:
+    ;;
+  *)
+    ac_option=$1
+    ac_optarg=$2
+    ac_shift=shift
+    ;;
+  esac
+
+  case $ac_option in
+  # Handling of the options.
+  -recheck | --recheck | --rechec | --reche | --rech | --rec | --re | --r)
+    ac_cs_recheck=: ;;
+  --version | --versio | --versi | --vers | --ver | --ve | --v | -V )
+    $as_echo "$ac_cs_version"; exit ;;
+  --config | --confi | --conf | --con | --co | --c )
+    $as_echo "$ac_cs_config"; exit ;;
+  --debug | --debu | --deb | --de | --d | -d )
+    debug=: ;;
+  --file | --fil | --fi | --f )
+    $ac_shift
+    case $ac_optarg in
+    *\'*) ac_optarg=`$as_echo "$ac_optarg" | sed "s/'/'\\\\\\\\''/g"` ;;
+    '') as_fn_error $? "missing file argument" ;;
+    esac
+    as_fn_append CONFIG_FILES " '$ac_optarg'"
+    ac_need_defaults=false;;
+  --he | --h |  --help | --hel | -h )
+    $as_echo "$ac_cs_usage"; exit ;;
+  -q | -quiet | --quiet | --quie | --qui | --qu | --q \
+  | -silent | --silent | --silen | --sile | --sil | --si | --s)
+    ac_cs_silent=: ;;
+
+  # This is an error.
+  -*) as_fn_error $? "unrecognized option: \`$1'
+Try \`$0 --help' for more information." ;;
+
+  *) as_fn_append ac_config_targets " $1"
+     ac_need_defaults=false ;;
+
+  esac
+  shift
+done
+
+ac_configure_extra_args=
+
+if $ac_cs_silent; then
+  exec 6>/dev/null
+  ac_configure_extra_args="$ac_configure_extra_args --silent"
+fi
+
+_ACEOF
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+if \$ac_cs_recheck; then
+  set X $SHELL '$0' $ac_configure_args \$ac_configure_extra_args --no-create --no-recursion
+  shift
+  \$as_echo "running CONFIG_SHELL=$SHELL \$*" >&6
+  CONFIG_SHELL='$SHELL'
+  export CONFIG_SHELL
+  exec "\$@"
+fi
+
+_ACEOF
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+exec 5>>config.log
+{
+  echo
+  sed 'h;s/./-/g;s/^.../## /;s/...$/ ##/;p;x;p;x' <<_ASBOX
+## Running $as_me. ##
+_ASBOX
+  $as_echo "$ac_log"
+} >&5
+
+_ACEOF
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+_ACEOF
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+
+# Handling of arguments.
+for ac_config_target in $ac_config_targets
+do
+  case $ac_config_target in
+    "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
+
+  *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
+  esac
+done
+
+
+# If the user did not use the arguments to specify the items to instantiate,
+# then the envvar interface is used.  Set only those that are not.
+# We use the long form for the default assignment because of an extremely
+# bizarre bug on SunOS 4.1.3.
+if $ac_need_defaults; then
+  test "${CONFIG_FILES+set}" = set || CONFIG_FILES=$config_files
+fi
+
+# Have a temporary directory for convenience.  Make it in the build tree
+# simply because there is no reason against having it here, and in addition,
+# creating and moving files from /tmp can sometimes cause problems.
+# Hook for its removal unless debugging.
+# Note that there is a small window in which the directory will not be cleaned:
+# after its creation but before its name has been assigned to `$tmp'.
+$debug ||
+{
+  tmp= ac_tmp=
+  trap 'exit_status=$?
+  : "${ac_tmp:=$tmp}"
+  { test ! -d "$ac_tmp" || rm -fr "$ac_tmp"; } && exit $exit_status
+' 0
+  trap 'as_fn_exit 1' 1 2 13 15
+}
+# Create a (secure) tmp directory for tmp files.
+
+{
+  tmp=`(umask 077 && mktemp -d "./confXXXXXX") 2>/dev/null` &&
+  test -d "$tmp"
+}  ||
+{
+  tmp=./conf$$-$RANDOM
+  (umask 077 && mkdir "$tmp")
+} || as_fn_error $? "cannot create a temporary directory in ." "$LINENO" 5
+ac_tmp=$tmp
+
+# Set up the scripts for CONFIG_FILES section.
+# No need to generate them if there are no CONFIG_FILES.
+# This happens for instance with `./config.status config.h'.
+if test -n "$CONFIG_FILES"; then
+
+
+ac_cr=`echo X | tr X '\015'`
+# On cygwin, bash can eat \r inside `` if the user requested igncr.
+# But we know of no other shell where ac_cr would be empty at this
+# point, so we can use a bashism as a fallback.
+if test "x$ac_cr" = x; then
+  eval ac_cr=\$\'\\r\'
+fi
+ac_cs_awk_cr=`$AWK 'BEGIN { print "a\rb" }' </dev/null 2>/dev/null`
+if test "$ac_cs_awk_cr" = "a${ac_cr}b"; then
+  ac_cs_awk_cr='\\r'
+else
+  ac_cs_awk_cr=$ac_cr
+fi
+
+echo 'BEGIN {' >"$ac_tmp/subs1.awk" &&
+_ACEOF
+
+
+{
+  echo "cat >conf$$subs.awk <<_ACEOF" &&
+  echo "$ac_subst_vars" | sed 's/.*/&!$&$ac_delim/' &&
+  echo "_ACEOF"
+} >conf$$subs.sh ||
+  as_fn_error $? "could not make $CONFIG_STATUS" "$LINENO" 5
+ac_delim_num=`echo "$ac_subst_vars" | grep -c '^'`
+ac_delim='%!_!# '
+for ac_last_try in false false false false false :; do
+  . ./conf$$subs.sh ||
+    as_fn_error $? "could not make $CONFIG_STATUS" "$LINENO" 5
+
+  ac_delim_n=`sed -n "s/.*$ac_delim\$/X/p" conf$$subs.awk | grep -c X`
+  if test $ac_delim_n = $ac_delim_num; then
+    break
+  elif $ac_last_try; then
+    as_fn_error $? "could not make $CONFIG_STATUS" "$LINENO" 5
+  else
+    ac_delim="$ac_delim!$ac_delim _$ac_delim!! "
+  fi
+done
+rm -f conf$$subs.sh
+
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+cat >>"\$ac_tmp/subs1.awk" <<\\_ACAWK &&
+_ACEOF
+sed -n '
+h
+s/^/S["/; s/!.*/"]=/
+p
+g
+s/^[^!]*!//
+:repl
+t repl
+s/'"$ac_delim"'$//
+t delim
+:nl
+h
+s/\(.\{148\}\)..*/\1/
+t more1
+s/["\\]/\\&/g; s/^/"/; s/$/\\n"\\/
+p
+n
+b repl
+:more1
+s/["\\]/\\&/g; s/^/"/; s/$/"\\/
+p
+g
+s/.\{148\}//
+t nl
+:delim
+h
+s/\(.\{148\}\)..*/\1/
+t more2
+s/["\\]/\\&/g; s/^/"/; s/$/"/
+p
+b
+:more2
+s/["\\]/\\&/g; s/^/"/; s/$/"\\/
+p
+g
+s/.\{148\}//
+t delim
+' <conf$$subs.awk | sed '
+/^[^""]/{
+  N
+  s/\n//
+}
+' >>$CONFIG_STATUS || ac_write_fail=1
+rm -f conf$$subs.awk
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+_ACAWK
+cat >>"\$ac_tmp/subs1.awk" <<_ACAWK &&
+  for (key in S) S_is_set[key] = 1
+  FS = ""
+
+}
+{
+  line = $ 0
+  nfields = split(line, field, "@")
+  substed = 0
+  len = length(field[1])
+  for (i = 2; i < nfields; i++) {
+    key = field[i]
+    keylen = length(key)
+    if (S_is_set[key]) {
+      value = S[key]
+      line = substr(line, 1, len) "" value "" substr(line, len + keylen + 3)
+      len += length(value) + length(field[++i])
+      substed = 1
+    } else
+      len += 1 + keylen
+  }
+
+  print line
+}
+
+_ACAWK
+_ACEOF
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+if sed "s/$ac_cr//" < /dev/null > /dev/null 2>&1; then
+  sed "s/$ac_cr\$//; s/$ac_cr/$ac_cs_awk_cr/g"
+else
+  cat
+fi < "$ac_tmp/subs1.awk" > "$ac_tmp/subs.awk" \
+  || as_fn_error $? "could not setup config files machinery" "$LINENO" 5
+_ACEOF
+
+# VPATH may cause trouble with some makes, so we remove sole $(srcdir),
+# ${srcdir} and @srcdir@ entries from VPATH if srcdir is ".", strip leading and
+# trailing colons and then remove the whole line if VPATH becomes empty
+# (actually we leave an empty line to preserve line numbers).
+if test "x$srcdir" = x.; then
+  ac_vpsub='/^[	 ]*VPATH[	 ]*=[	 ]*/{
+h
+s///
+s/^/:/
+s/[	 ]*$/:/
+s/:\$(srcdir):/:/g
+s/:\${srcdir}:/:/g
+s/:@srcdir@:/:/g
+s/^:*//
+s/:*$//
+x
+s/\(=[	 ]*\).*/\1/
+G
+s/\n//
+s/^[^=]*=[	 ]*$//
+}'
+fi
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+fi # test -n "$CONFIG_FILES"
+
+
+eval set X "  :F $CONFIG_FILES      "
+shift
+for ac_tag
+do
+  case $ac_tag in
+  :[FHLC]) ac_mode=$ac_tag; continue;;
+  esac
+  case $ac_mode$ac_tag in
+  :[FHL]*:*);;
+  :L* | :C*:*) as_fn_error $? "invalid tag \`$ac_tag'" "$LINENO" 5;;
+  :[FH]-) ac_tag=-:-;;
+  :[FH]*) ac_tag=$ac_tag:$ac_tag.in;;
+  esac
+  ac_save_IFS=$IFS
+  IFS=:
+  set x $ac_tag
+  IFS=$ac_save_IFS
+  shift
+  ac_file=$1
+  shift
+
+  case $ac_mode in
+  :L) ac_source=$1;;
+  :[FH])
+    ac_file_inputs=
+    for ac_f
+    do
+      case $ac_f in
+      -) ac_f="$ac_tmp/stdin";;
+      *) # Look for the file first in the build tree, then in the source tree
+	 # (if the path is not absolute).  The absolute path cannot be DOS-style,
+	 # because $ac_f cannot contain `:'.
+	 test -f "$ac_f" ||
+	   case $ac_f in
+	   [\\/$]*) false;;
+	   *) test -f "$srcdir/$ac_f" && ac_f="$srcdir/$ac_f";;
+	   esac ||
+	   as_fn_error 1 "cannot find input file: \`$ac_f'" "$LINENO" 5;;
+      esac
+      case $ac_f in *\'*) ac_f=`$as_echo "$ac_f" | sed "s/'/'\\\\\\\\''/g"`;; esac
+      as_fn_append ac_file_inputs " '$ac_f'"
+    done
+
+    # Let's still pretend it is `configure' which instantiates (i.e., don't
+    # use $as_me), people would be surprised to read:
+    #    /* config.h.  Generated by config.status.  */
+    configure_input='Generated from '`
+	  $as_echo "$*" | sed 's|^[^:]*/||;s|:[^:]*/|, |g'
+	`' by configure.'
+    if test x"$ac_file" != x-; then
+      configure_input="$ac_file.  $configure_input"
+      { $as_echo "$as_me:${as_lineno-$LINENO}: creating $ac_file" >&5
+$as_echo "$as_me: creating $ac_file" >&6;}
+    fi
+    # Neutralize special characters interpreted by sed in replacement strings.
+    case $configure_input in #(
+    *\&* | *\|* | *\\* )
+       ac_sed_conf_input=`$as_echo "$configure_input" |
+       sed 's/[\\\\&|]/\\\\&/g'`;; #(
+    *) ac_sed_conf_input=$configure_input;;
+    esac
+
+    case $ac_tag in
+    *:-:* | *:-) cat >"$ac_tmp/stdin" \
+      || as_fn_error $? "could not create $ac_file" "$LINENO" 5 ;;
+    esac
+    ;;
+  esac
+
+  ac_dir=`$as_dirname -- "$ac_file" ||
+$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
+	 X"$ac_file" : 'X\(//\)[^/]' \| \
+	 X"$ac_file" : 'X\(//\)$' \| \
+	 X"$ac_file" : 'X\(/\)' \| . 2>/dev/null ||
+$as_echo X"$ac_file" |
+    sed '/^X\(.*[^/]\)\/\/*[^/][^/]*\/*$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)[^/].*/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\/\)$/{
+	    s//\1/
+	    q
+	  }
+	  /^X\(\/\).*/{
+	    s//\1/
+	    q
+	  }
+	  s/.*/./; q'`
+  as_dir="$ac_dir"; as_fn_mkdir_p
+  ac_builddir=.
+
+case "$ac_dir" in
+.) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
+*)
+  ac_dir_suffix=/`$as_echo "$ac_dir" | sed 's|^\.[\\/]||'`
+  # A ".." for each directory in $ac_dir_suffix.
+  ac_top_builddir_sub=`$as_echo "$ac_dir_suffix" | sed 's|/[^\\/]*|/..|g;s|/||'`
+  case $ac_top_builddir_sub in
+  "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
+  *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
+  esac ;;
+esac
+ac_abs_top_builddir=$ac_pwd
+ac_abs_builddir=$ac_pwd$ac_dir_suffix
+# for backward compatibility:
+ac_top_builddir=$ac_top_build_prefix
+
+case $srcdir in
+  .)  # We are building in place.
+    ac_srcdir=.
+    ac_top_srcdir=$ac_top_builddir_sub
+    ac_abs_top_srcdir=$ac_pwd ;;
+  [\\/]* | ?:[\\/]* )  # Absolute name.
+    ac_srcdir=$srcdir$ac_dir_suffix;
+    ac_top_srcdir=$srcdir
+    ac_abs_top_srcdir=$srcdir ;;
+  *) # Relative name.
+    ac_srcdir=$ac_top_build_prefix$srcdir$ac_dir_suffix
+    ac_top_srcdir=$ac_top_build_prefix$srcdir
+    ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
+esac
+ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
+
+
+  case $ac_mode in
+  :F)
+  #
+  # CONFIG_FILE
+  #
+
+_ACEOF
+
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+# If the template does not know about datarootdir, expand it.
+# FIXME: This hack should be removed a few years after 2.60.
+ac_datarootdir_hack=; ac_datarootdir_seen=
+ac_sed_dataroot='
+/datarootdir/ {
+  p
+  q
+}
+/@datadir@/p
+/@docdir@/p
+/@infodir@/p
+/@localedir@/p
+/@mandir@/p'
+case `eval "sed -n \"\$ac_sed_dataroot\" $ac_file_inputs"` in
+*datarootdir*) ac_datarootdir_seen=yes;;
+*@datadir@*|*@docdir@*|*@infodir@*|*@localedir@*|*@mandir@*)
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $ac_file_inputs seems to ignore the --datarootdir setting" >&5
+$as_echo "$as_me: WARNING: $ac_file_inputs seems to ignore the --datarootdir setting" >&2;}
+_ACEOF
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+  ac_datarootdir_hack='
+  s&@datadir@&$datadir&g
+  s&@docdir@&$docdir&g
+  s&@infodir@&$infodir&g
+  s&@localedir@&$localedir&g
+  s&@mandir@&$mandir&g
+  s&\\\${datarootdir}&$datarootdir&g' ;;
+esac
+_ACEOF
+
+# Neutralize VPATH when `$srcdir' = `.'.
+# Shell code in configure.ac might set extrasub.
+# FIXME: do we really want to maintain this feature?
+cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
+ac_sed_extra="$ac_vpsub
+$extrasub
+_ACEOF
+cat >>$CONFIG_STATUS <<\_ACEOF || ac_write_fail=1
+:t
+/@[a-zA-Z_][a-zA-Z_0-9]*@/!b
+s|@configure_input@|$ac_sed_conf_input|;t t
+s&@top_builddir@&$ac_top_builddir_sub&;t t
+s&@top_build_prefix@&$ac_top_build_prefix&;t t
+s&@srcdir@&$ac_srcdir&;t t
+s&@abs_srcdir@&$ac_abs_srcdir&;t t
+s&@top_srcdir@&$ac_top_srcdir&;t t
+s&@abs_top_srcdir@&$ac_abs_top_srcdir&;t t
+s&@builddir@&$ac_builddir&;t t
+s&@abs_builddir@&$ac_abs_builddir&;t t
+s&@abs_top_builddir@&$ac_abs_top_builddir&;t t
+$ac_datarootdir_hack
+"
+eval sed \"\$ac_sed_extra\" "$ac_file_inputs" | $AWK -f "$ac_tmp/subs.awk" \
+  >$ac_tmp/out || as_fn_error $? "could not create $ac_file" "$LINENO" 5
+
+test -z "$ac_datarootdir_hack$ac_datarootdir_seen" &&
+  { ac_out=`sed -n '/\${datarootdir}/p' "$ac_tmp/out"`; test -n "$ac_out"; } &&
+  { ac_out=`sed -n '/^[	 ]*datarootdir[	 ]*:*=/p' \
+      "$ac_tmp/out"`; test -z "$ac_out"; } &&
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $ac_file contains a reference to the variable \`datarootdir'
+which seems to be undefined.  Please make sure it is defined" >&5
+$as_echo "$as_me: WARNING: $ac_file contains a reference to the variable \`datarootdir'
+which seems to be undefined.  Please make sure it is defined" >&2;}
+
+  rm -f "$ac_tmp/stdin"
+  case $ac_file in
+  -) cat "$ac_tmp/out" && rm -f "$ac_tmp/out";;
+  *) rm -f "$ac_file" && mv "$ac_tmp/out" "$ac_file";;
+  esac \
+  || as_fn_error $? "could not create $ac_file" "$LINENO" 5
+ ;;
+
+
+
+  esac
+
+done # for ac_tag
+
+
+as_fn_exit 0
+_ACEOF
+ac_clean_files=$ac_clean_files_save
+
+test $ac_write_fail = 0 ||
+  as_fn_error $? "write failure creating $CONFIG_STATUS" "$LINENO" 5
+
+
+# configure is writing to config.log, and then calls config.status.
+# config.status does its own redirection, appending to config.log.
+# Unfortunately, on DOS this fails, as config.log is still kept open
+# by configure, so config.status won't be able to write to it; its
+# output is simply discarded.  So we exec the FD to /dev/null,
+# effectively closing config.log, so it can be properly (re)opened and
+# appended to by config.status.  When coming back to configure, we
+# need to make the FD available again.
+if test "$no_create" != yes; then
+  ac_cs_success=:
+  ac_config_status_args=
+  test "$silent" = yes &&
+    ac_config_status_args="$ac_config_status_args --quiet"
+  exec 5>/dev/null
+  $SHELL $CONFIG_STATUS $ac_config_status_args || ac_cs_success=false
+  exec 5>>config.log
+  # Use ||, not &&, to avoid exiting from the if with $? = 1, which
+  # would make configure fail if this is the last instruction.
+  $ac_cs_success || as_fn_exit 1
+fi
+if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5
+$as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
+fi
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       0&                                   <&                    *6&# 0*             "                   00&                  6<*#*6<0                             0< *<0&                0A0&*6<*#                             6A< 0<0&              &<A<06<*#  #&                           *<A6&66*&             6AAA<A6# #0<0                      #& *<A<6<0&            0<AAAA<0&&0<*#                 &<A0&0<A<A6*&           6AAAAAA<06A*#                #6AA<6AAAA<0&          *<AGGAAAA<A*# #60           &6AAAAAAAA6&          0AGKGAAAAA6# &<0& "      && #<AAAAAAA<*          6AGNGAAAAA<06<0& "    &<60&0<AAAAAA<*          0AGKKGAAAAAA<0&    &0<<6<AAAAAAA6*          *<GKNGAAAAA<6&     &0<AAAAAAAA<6&          &6AGKGAAAA<6*      #0<AAAAAA<6*&           *<AGKGAAA<6#   I$     *<AAAAAA66&            &0<AGGAA<6&    O    &6AAAAA<6*#             &6<AAAA<6&      SL%   0<AAA<6*#              #*6<AAAA<*   OHS1.%  #6AAA<6*&&               &*0<AAAA0&    LL'SO8)!+8.% *<AA<6*&#                 &&06<AA6*    OB8OOE=1)7B=7)&6<A<6*&#                   ##*0<A<0#   7LEEOMHFEB@=84%#0<A<0*&#                      &&*6<<0 1BE==BFFFI@884%&0AA<0*&                         1&&*0<*+B8,7+7BF@7+4%#*<60*&&                           8@=1&&6* + 9:B,7=7,582#*60*&&                            $)F@=7$&#8EMS@%1%:LB7%#&*&&+7%                          %)$)4)$=(%HS@2:O8%((# +%                          )  (9,%HSLQ8%,3,                             =%B?D2:?:2;?5%(                              9(ELDJ
+ H 
+J;255,                              	 LD2FPP4
+RJ2,3                                 	&9PD=JPJ;=;JPD,;%                                   *(/J8IJ;EFC;D=(D                                   &,D=CFFIIIF.-%;,##                                   && 2CFB=FIB4E8,% #&                                   #* FLE8?LF=I8EB88EL= &&                                    &#=8 LE=FIBLBB=1E= ,+#                                     &&8O% L=BFLIC=3=L %H%#                                      #1LH%QI=B>CB98HQ%F=#                                       #1OQQQL=B@9BHMLL=$#                                        =IQQQL=BCLMQL8,	#                                          EMQQQMMQLMQOI@1#                                            8QQQQOQQQQQOB8$                                             $LQQQQQQQQOF8)                                             1LOOQQQQLH8)                                              8IIOQQLB+ $                                              8ELOQOE1                                               0#-FMQQH=+                                              0# 2LQQMI=+                                               *&  @OQOOE7                                           +1   *<   7EOMLE+                                          7=,  6     =HOE7       171                                1=H7               !  $+8825!%.                             8IEB               !%17+7@I-55$%%                      +7=87+1=B=$               $%17+=IF-553(,%                   8@.$-2FB8+188%               !)78=IF-5555,,(%                   57%$:52BF@=78%               )8=HF-5555--,,%                   55)%::52=HB=7%               %7=F=555555--,                    5:5):::5-=781$                $)8=255::552-%                    ,::5::::52=1%                ,7855:::52-,                      55::::::52%                !)15:::552,%                      ,55:::::5-2!                 ,-5:5552,%                        ,55:::552(!                 $-55552,(                          2555552-(                  $255-,,                            2552--(%                   ,2-,,                              %,,,,%$                     (,                                  %,%%                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           "                                                                                  &&                                                            00*                   6<&                	               06* 6A<&                 6A0# 00                             6A6* 0A0&               0A0 6A*             	                *6A6*&0A0#             &<0& 0A0 60                        &6# *6A<0<A<&             0A<<0A0 06*         	            026&#06AAAAA0           &<AAAA6&&6A0#       	          #026*0<A<AAA0&           0AA<AAA<A<0#            #02A<AAAAAA<&          &<AGGAAAA0*#*6"  66* #*6A<AAAA<A<&          0<GKGA<AA<0*06#6A6*066AAA<AAAA<&          6AGNAAAA<AAA60#		06A66<AAAAAAAAA0&          6AGKKAAAAAA<6#			 	06AAA<AAAA<AA<6          6AAKNGA<AA66#       02AAAA<AAAAA0*           &<AGKGAAA<6#     	    	#06A<AAAAA<<*           0<<GHGA66      %		   	*0<AAAAAA<6#             &6<AAGA<*#      	'	+7'2   #*6<AA<A<6&#             *66AAA<&#      H+OB + 7   #*0<AAA<6&#               *6<A<A0#     7	+SH SM: +7+7:+  )%0<<AA<6&#                 *66AA6#    =$MH7OS7MSM7:9:9+ (.)#6AA<0*&                   *6<A<0#    +E+SO==HHMB==77+!%.'*6A<06&                     #*66A60#    +@=7:+79C=7+-1' 06666&#%                  ++ %#*0<60# '+2B7)797+-:-%&666*&+!%                +B77 %%7#*06##-HCS7+7+-MH:##0&# !77!                 =7 +=.%  -76###@55HS5+-MC-%*## '                '7+9=9+   9H+5IM:M.<'+!		   	                      ++G>+ 	 	7C-D7>C: /(-                          .+ 			  	GDJ
+ = 
+J;5	                       '      		9RR+
+PJ+		                              7+7DRJ;B;JPD%5C!                                CJ9+HJ;CHC;DB-:D5                                  #7;D:=HIHIIICH:;%                                    #		%B;9B:9IIH99H-:                                    *	'95HHB:I9=IE: 	                                    #!->CIIFIHIE=:%	#                                    0 HM9GHCIIIIH==:-=7#                                     #7CQBBHHIII==:2==-                                      &HO'M@@HHI=@:-B%H%                                      0	+H@%M9=@HI@95+H%C9                                       0	'HQSH:@@@=<-HMH@                                         &#	7CMOC795.-=IM= #                                         #IMSOOIMQMIMQMH#                                           7HOSQMQOSOOSM9                                             '=OOQOSOQOSMH'                                               	9HQSMSOOIMC:                                               	+@MQSOSM979+                                                -MMSOOI$++                                                GSOSOM:                                                 #9OSMSMC+                                                 &-MOSOSH.                                                 * COSOMM+                                               	 7IOMOB 	                                               	  .HMC'	                                                                                                       7%                                                         =.          %'                                                =='       %.7%                                               7H=7!       %.79)                                               7HE9'       +:E7(                                             ++:=9+       .EC7+7                                           7=E=+9:        +:H97+ +7%                                       +:@=7.        '+9+ +7:E7+                                   +:+%+7B.%       '- +7+79B7'                                 +: +%+7%            7C:  %:+                                 + !:+%           ++G@9))                                 79:7%           '+BB7'                                '97+%             '+7B                                      .+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               6*                     060                                     26*                   0<0#                                 <6& 0<0#                 020& <0                              0<6* 020                06A<06&&                             &666&0A<0              &<AAAA0 0&                       00*  &6<66A<6              0AAAA0&*60*                   	 0A6& *06AAAA<&            *<A<AAA0<0&              	#0A6*6<AAAAAA&            0AAAAA<<6&     	 	#0A62AAAA<AA0           &<<GGAAAA0 *<&#	0*6AA<AAAAA<6           0AGKG<AAA<<0*&666##6<AA<AAAAA0           0AGNGAAAA<6*&		  0666*66AAAAAA<<*           <<GHKAA<<6*#  	   *06662AAAAA<AA0#           0AGGNGA<0*&9'    		    %#06AAA<A<AAAA6            06AGHGA66&7'           '+*66AAAAAAAA6*            #6AGGGA<07-'      				     .7&06AA<AAAA26#             06AGGGA6#+'!      7	     %79*06AAAAA66*              #0<AGG<<#'%     H@ '      +7#*6AAAA<6*#               #06AAAA*#       C SN H7 +'     %%#*6AAA26*&                 #0<AAA6#*     	7S+@OCQ@7 =1+   %#*06AA66*#%                 #06<<6*#*    =QN+=HIH29=:1     #*06A666*#-%              -	:-#6660*#* 79HH799G9====9-  #*0660*#&2-%               -5-:-%&060&#7B=:12-7:997-2-'#*060*#&-:--%               -:.:55-%%#0*#-7+2E9+797'9C<##*#& %7:--%                '-<55-:5-%%!   '7@2EMS9'7+:OHC-##%(7:--(%                 '--:5-5:-(% .--HS9-9MH5!   %-:--(!                  %--255:--'!  =:6CIFHC5(! %--%%!                    %--55-5-6=H; %C( /'% %!%                       %-(:5--%9;J )  D;'                             %+5--% 7PR : PJ#		                              %%%%@.'JPR;C;JPD-H 	                                -R=7CJ;CHC;D?-:D5	                               #-;R9HIIHIICC9:;'                               &&		2;CI:9III99B6-                                 #-CHIH9H:@C92%#                                    &&9CHHIHHHBB9:59<!	#                                     0&!CS:9BHHICB=9:599-#&                                     &09HM97==BB=9:59%H'#                                      *#CQ%M=7=BB9:59M%H9%#                                       #&'H9'SM=7=9559HNH= ##                                        &'HQOQIE9:-9HMSC#                                         #&+7HQQIMQOMOSH7 ##                                           &#+CQOQOQOQMSHI%#                                             #=OSOSOSQQMH7                                               7MOSOOQIEH7%#                                                 	 HMOSOSH.+%                                                   9MMQQOO9                                                     @HOQQO=                                                   	$=OQOQH+                                                  $HOQQM7                                                  9OOOH                                                   #7HOM7	                                                    &# 7=+                                                     #&                                                         (#*                                                         ++   '!                                                      +7%   %'!                                                      79.%  %'.'                                                      9=='  '.9'                                                      9H=.  .:>)                                                     +@CC9  79G9.                                                    7GH@9' 9?BC9)                                                  7=C=:9- '99BG>5.                                              +-+'+7'! ')97+ '+(                                            1977+' !% ! )%'+79(                                          += %9+'!   !+- .9(                                         . 9+%    '7=7.+                                          	)+%!   ''.C')                                         		'%       ''7:!                                                         !                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   0<0                                                            060# 0<0                                   66                  0<0& A<&                                   0<0                06A0<A6&                                066 &06&              #6AAAAA0                                 &0<6 &<0&             06AAA<<00<AA<0                            &6660<0&            #6A<AAAAAAA<0&                      <6* &06<<<<0            0<AAAAAAA<6&&                       0<606<AAAAA0&          #6AAGAAA<A0&            	            &66<6A<AAAA<&          0<GKGA<AA<<<A<<60&     		           *  &6<AAAAA<AA0          0AGNGAAAAA<A<<6*&                 0<0* *62AAAAAA<6          <<GHKGAAAAA<66*#                   &666606AAA<AAAA0          0AAGMGAA<A<66*                  &662<AAAAAAAA<&          06AGGG:AA<06*       	         06AAA<AAA<AA0&          #6AAGGGAA66&#     	        &06AAAAAAAA<*            06AAGGAA0*&    	       *6AAA<AAA<0#            #06AA<AA<&  5 	+	-	%     #02AAAA<<6*              #0<AAAA<0 HOHIHM 7 9<%	 #*6AA<A<6*#               #06AA<A0&  	2MQIOMH9(C97%#*6AAA<6*#                 #0<AAA<0   	7=MMMMINCBH@(  	#*6AA<6*#                   #06AAA0&     OMH@HHHCCH=.   #*06666&#                      #66A<0&   	=M=9:@HCH@977+.(  &&0600&#                         &60&&	'7792+7=H9:2'+7'&#0*#                            		&#+.+BH'7979I-  	                             		  	7CMS- 9OCH%   	                            '   	79'>S-OC%((	    	                            +:+ 	9C; >C-;7-	  +=7.%                       -+   +=7% 	7HJ )  D9:#	# %79(                    (5-+  +97  	+GR 1 PH-#	 +-'79-2                +	-2-+2 +:  &+ @JP;:;RJB%%H 		# 7%7@27-	(             -(-5--+:+72P@+HI;=C=;I9%-J2 7.=2--.	%2             75%555--9:+-;R=@HIIIIIH@5;/-	 ':---:-%5%             (5555.5-+:'-;EH99IIF99H7/-	 %+-55-56.-%             +55-<555-+%	-@HIH5I9IIC:-#  -2:-:5--%              %-2:-55-:%%+GHCI@HBCG@92	  --255.2-%              %-7-55-:--' 	 7979=EHHCCH@95-=2	  +555-<--(                %--:.5-5<'! -HH79=HCCC=9<-9=2  -7-5---%%                %-7-<555-2% #HQ%I79=HH=7--9(I.#  %-57--%(                  %--:-:-:-   -HH%QN7>C=95-IO%H'#  %(---(%                   %---5-5-2   &.MQOOIG>99HMOOM=    %%-%%                     %--555-(   #-CSOOMOQMIOQO7'	#                               %+65-+!    &9HOOSMOQQQOOO9                                  %%%(      # CMSOQQQQOSMH.#                                            #9HMOQQOQMMI7                                               9HQQQQLCH7                                                 9MQOI.9+                                                	 .MQQM:                                                 7OSOOM%	                                                 9QOQQI'	                                               	 #+MOQOH%                                                 *HMOO9	                                                 &9IH9'		                                                  #& '''                                                 '   &6                                                      7''       '+                                                  97(      '+7'                                                 @9.(     '+7:+                                                 H@7'    +799+                                                9HG9.%    799G9                                                 7H==7'   '79H=7                                                 .@B9:.%  +9GC9.                                                 )99:7%   +:997)                                                 '.97' '+797((                                                 ').' % +7+7'(                                                 77++1.% +-+'                                                   '=+-7+% ++(+%                                                   '. 79% +%!%                                                   '+7'  %                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              60                   02                                         6<&                 06&                                      62 &66               0<0 <<0                                   6A< &<0#             0<0&A<0&                                   &6A<066&             6<<A<0& 0A6                             6A6 &6A<A<0#           06AAA0& 0A<0                             66A60&<AAA0&           6AAA<<00A<0&                             &6<<<<AA<A<0          02AAAAA<A<0& &6                        60  &6<AAAAAAA6          6AAGGAA<A0&0A6&                     02A6*00<A<AAAAA0          AAAKGAAAAA<A6&&                     &66AAAAAAAAA<AA6          <AGNAAAAAAA6&&                     &66AAA<AAAAAA6*          6AGKK<AAAA<&&                        06AAAAAAA<AA6#          0<AKNGAA<<6                          &06AAAA<AAA2*           #6AGHG<AA<&                       *62AAAAAA66            06AGGGAA<0                    #06A<AAA<6*             #06AGGAAA0*&         9=         *6AAAAA66*              #0<AA<AA<0&        +OM+=+7+%     #02AAAA26*#                #06AAA<A<0#      -OI+=H92     *66<AA66*                  #*66AAAA<0&    9MHHMMHCH++     #*06<<66&#                     #*6<A<A<0#& =SHH9B@CC=H+:+   ##*066&##                        #&6<A660*##==+=777G9.1=1+ *#*&##                             &&0*## 7.2%29+6-797- #                                     2MH%-'9C2 %                                     -=MSO(@MH:-                                   7+-HQ@I.--%                                 72; %C( /C-                               9J ) JC5                              =R 7 PB1#                            #H+HJP;9;RJB%%H-                            -R92IH;?C?;C=%-J-                            #;R9HHIHIHICB-;/#                              -; H99HIC9:H7/- %                            	  29NCB:C?=HC:2 %'                            %'!  +HCHFBCBFFB9-  '. 22                        +7(  #9B5=BCHFIFCB9<':- %'+ --.!-               %+%79 ++%  ##-O H9=CHHIHB9-%: +2 '7 7-.<5	--               ---+'79+%  *HS% I.==HCC97'9 %N+ .+7-555- 55-               !55<5%(=' 0-HC'OO79C=75%GM(H+# 791-<5-5-5.%              --5-5-%% *-HMOQHHB=HCMSOH.%# :7-.5-555-<              - %55555+%  #1=MQQOHMIOQOMC' 7+<55555-:-              -2 -25.5--% *=HQQQMQQQMOMI:# -725-5-5-:-%              --:--5-555:%% *%=OQQQOOMQMI@7 :+5.5555552               -55.5-55-5-%( #+=QQQQOI.9=7# +-<5555-<-%                --<5555555-%  +MOQOQI:$+  '5-:-<.5-%                 --:.5-5-5-:    #+HQQQMH7    -:-5-:--(                  --<5555555   *#+BQOOM9   -2555-<'                    --555-5-2   &#&+HSOC2    --25--%                      +5-555-%    #COH9     (--55%                        +--<-(%     #7I@+      %%+((                           -(%%       '7'                                                                                                         %                                                        +92%    ''7                                               7C97%  ''79%                                                 %:@91% (9E7'                                                 '5@=1 +=7)$                                                 (:=.'.)$                                                   '.% (%                                                     + +(!                                                      =7 =7(                                                      +B  9'!                                                        +    (                                                           '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      0<0#                                       <6&                 00*&&                                       &<6&               00*0<<6&                                 6A0  &<0&             0<00A<0&&                                 &6A60&6<&            0AAA<<0&&                                   &6A<0<A0&           6A<A<0&&                                0<6  &<AAAA<&          0AAGGAA<0<<00                            6A26 60<<AAA0          6<GKGAA<<<6660                           &6A66<<AAA<A6          6AGNAAAA<0&#*&                            &6AA<AAAAAA2          0AGKG<AA0&                            &<6  *6AAAAA<AA6          0<GKGGAAAAAAA66                       00<6*06AAA<AAAA6          #<AKNGAAAAA660&                       &066A2AA<AAAAA66           0<GKG<A<A60*#                         &066AAAAAAAA26*           #<AGGGAA6&#          C9      H9'       #066AAAAAA666            06AGGA<*&            HS>   B:'        *06<AAAA266*             #06AAA2*#          C7 MS9 =9' %+!      #*02AAA666*              #066AA0&&        QOO7HMM:HMH=+       #*06AA266*                #066<60*&      MHMQMCHI9HFB9.''%    #*06AA666*                  #*66600&&&    9+=HHMHCHICCG9     *062<<66&                     ##*060*&&''+H==CH@9:C:'   #&*0666&#                          #&*##'-E9.7B9-.9@9- &&*0&#                                  12-'.95%(-<!'##                                   +-QC')(9MC72                                      -HMOH'9MHH=7%                                   7+-=OHCB5-79%                                 ++; .C( /+95                               %7J '  D:C%                              =R 9 R9F*                             -H'9JR;B;RJH:%5H%                            -P=-CC;HHI;CH:-%J-                              %;R9HHCIIHIFH-%;/%                               #-;7H9:CHI99C:(/-                                  #&'-ICB9I99HG@9%                                  &&-CHII?CCHB=9--                                  **+B5>CHHIHHBB9-(%	                                  #*2LC:9CHHHBB9-%7C:-#                                  #*&HO%H99CHCB9-%7M99<#                                   #*-HH%MI79BB95-HIH%H9#                                   #&-=QQMM9CCC9COQH'H@%#                                   &-HOOOMOSOOMOQIB@'                                     9QOSOOQOSOOQIC7                                      +CSOSOQQOQQIH> 		                                      7OOSOSOSMIIG)	                                 .7=2.  =HSOQOOOH=7%%%                              '79BH9-7!# 9HOSOQOOI'%9.%                            '7@@H929+'!&#+9HOSOQO=%'+9.'                           %7EHC997('$#&+:MQOQOC'7CH..'                           7=HHH@9'' #&+MQQQM7	'7GC@.(%                           9BNMIHC:+  & =QOOH+ 	'9C=9('                           7BHHHI=@:$   *& +NMH7 	+9:'%                           !9=NHHH@+   #&  +H=+ +.%                            79BHB=:+      #                                 !99B=7+            +-''!                             7:99' %           2E97)!%                               '+'+''          -==79('                                '.77.+!!          '  +:+.%                                 !.=B(.+'!        %(.   9+!!                                  ))9).+!        '.7($                                          '.(.         +792%                                             '%          79B=.                                      --     +'           79=C9%                                     5(-   '+++           9CCG9'                                  	555+  +:++           @C@9+'                                  -	55--- +7:+'          9G>9@7+                                .55-55-- +77+          9=7G+-2%		%                            -.5555555'+7=1          79E2-5-%(-                            %<5.5-5-52919-          +7---55-%2-                            !-5555555-29=+          .+5-5-55(-5%                             %<5.5-5-5+79%          '--75555.5-!                             !-5555555-77           %-55-<5-<--                               %<5.5-5-5++           -:-55-5--%                               !-<555555.+           :-55.55-%%                                %-25.5-<.(            --:-<--%%                                 !(-<5555-%            (5-5--%%                                   !(-25.2%             !-5-((!                                     !(-<-%%              !((!                                        !%-%%                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          000                                       0#                  00<0&                                       60#                00<0&6A<                                  06 &<0&              06<A0<A<&                                  6A0 &6*&            066A<AA<&                               &0  0<A00<0&            62AAAA<* *0*                            060  0<AAA<0&          06AGGAA<<6A60                            0<00 0<<AA<6&          0AGGG<AAA66*#                            &6<6<0<AAAA<0          <AGNGAAA6*#                               &6AAAAAAAA<0          0AGKKGA66 062*                       0<0  0<AA<AA<A<&          06AKNGAA6<AAA60                       00<600<AAAAAAA0&          #6AAHGAAAA6<60#                       &066<<A<AAAAA<6           &<AGGGAA266#                 92       &06<<AAAAA<<6&            #0<AGAA<6*&           IO@  H97 %       &06<AAA<A<6&#             #06AAA<6&&         M@ HSBNH@' %7+     &00AAAA<6&#               #0<AA<6*&        MCNMMOOHBG@97'%    &06A<A<6&#                 #06AA60&&       =7@MBHHFICC9+      &06AAA<6&#                   #*6<<00&*&      HOBHHCFCCG@7-+    #06A<<66&#                      #&0600&*&   9SMM=HCHG@@:792% *6<<66&                           ##*&&&#SIO==@HC=97+(. &&*0&#&                                &H7M=7+:@=92'-  &##&                                       H9++HC'9:+'9H7' &                                       	7HMSH'+'@MHB                                          	-HMSI'@OHC-                                       	H-7ISIHC92-                                     	+H; )I. /H%	                                    		=J )  DC&	                                  	9R 5 P9		                                  	-H+9JP;C;RJ:%H-                                 	-R9+GC;IIC;9='-J-	                                #	-;R9HFHIIHCHC<;/-	                                ##		-;=H99BHC:=E7/-                                  **#	2=HFC:I:=B=:'                                    ##=Q99BHHCICCB::-                                     C(7I99BHHIC=::%=N%                                   

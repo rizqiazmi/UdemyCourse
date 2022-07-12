@@ -1,0 +1,1836 @@
+*/
+
+#ifndef EGL_EXT_surface_CTA861_3_metadata
+#define EGL_EXT_surface_CTA861_3_metadata 1
+#define EGL_CTA861_3_MAX_CONTENT_LIGHT_LEVEL_EXT 0x3360
+#define EGL_CTA861_3_MAX_FRAME_AVERAGE_LEVEL_EXT 0x3361
+#endif /* EGL_EXT_surface_CTA861_3_metadata */
+
+#ifndef EGL_EXT_surface_SMPTE2086_metadata
+#define EGL_EXT_surface_SMPTE2086_metadata 1
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RX_EXT 0x3341
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_RY_EXT 0x3342
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GX_EXT 0x3343
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_GY_EXT 0x3344
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BX_EXT 0x3345
+#define EGL_SMPTE2086_DISPLAY_PRIMARY_BY_EXT 0x3346
+#define EGL_SMPTE2086_WHITE_POINT_X_EXT   0x3347
+#define EGL_SMPTE2086_WHITE_POINT_Y_EXT   0x3348
+#define EGL_SMPTE2086_MAX_LUMINANCE_EXT   0x3349
+#define EGL_SMPTE2086_MIN_LUMINANCE_EXT   0x334A
+#define EGL_METADATA_SCALING_EXT          50000
+#endif /* EGL_EXT_surface_SMPTE2086_metadata */
+
+#ifndef EGL_EXT_swap_buffers_with_damage
+#define EGL_EXT_swap_buffers_with_damage 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSWITHDAMAGEEXTPROC) (EGLDisplay dpy, EGLSurface surface, const EGLint *rects, EGLint n_rects);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffersWithDamageEXT (EGLDisplay dpy, EGLSurface surface, const EGLint *rects, EGLint n_rects);
+#endif
+#endif /* EGL_EXT_swap_buffers_with_damage */
+
+#ifndef EGL_EXT_sync_reuse
+#define EGL_EXT_sync_reuse 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLUNSIGNALSYNCEXTPROC) (EGLDisplay dpy, EGLSync sync, const EGLAttrib *attrib_list);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglUnsignalSyncEXT (EGLDisplay dpy, EGLSync sync, const EGLAttrib *attrib_list);
+#endif
+#endif /* EGL_EXT_sync_reuse */
+
+#ifndef EGL_EXT_yuv_surface
+#define EGL_EXT_yuv_surface 1
+#define EGL_YUV_ORDER_EXT                 0x3301
+#define EGL_YUV_NUMBER_OF_PLANES_EXT      0x3311
+#define EGL_YUV_SUBSAMPLE_EXT             0x3312
+#define EGL_YUV_DEPTH_RANGE_EXT           0x3317
+#define EGL_YUV_CSC_STANDARD_EXT          0x330A
+#define EGL_YUV_PLANE_BPP_EXT             0x331A
+#define EGL_YUV_BUFFER_EXT                0x3300
+#define EGL_YUV_ORDER_YUV_EXT             0x3302
+#define EGL_YUV_ORDER_YVU_EXT             0x3303
+#define EGL_YUV_ORDER_YUYV_EXT            0x3304
+#define EGL_YUV_ORDER_UYVY_EXT            0x3305
+#define EGL_YUV_ORDER_YVYU_EXT            0x3306
+#define EGL_YUV_ORDER_VYUY_EXT            0x3307
+#define EGL_YUV_ORDER_AYUV_EXT            0x3308
+#define EGL_YUV_SUBSAMPLE_4_2_0_EXT       0x3313
+#define EGL_YUV_SUBSAMPLE_4_2_2_EXT       0x3314
+#define EGL_YUV_SUBSAMPLE_4_4_4_EXT       0x3315
+#define EGL_YUV_DEPTH_RANGE_LIMITED_EXT   0x3318
+#define EGL_YUV_DEPTH_RANGE_FULL_EXT      0x3319
+#define EGL_YUV_CSC_STANDARD_601_EXT      0x330B
+#define EGL_YUV_CSC_STANDARD_709_EXT      0x330C
+#define EGL_YUV_CSC_STANDARD_2020_EXT     0x330D
+#define EGL_YUV_PLANE_BPP_0_EXT           0x331B
+#define EGL_YUV_PLANE_BPP_8_EXT           0x331C
+#define EGL_YUV_PLANE_BPP_10_EXT          0x331D
+#endif /* EGL_EXT_yuv_surface */
+
+#ifndef EGL_HI_clientpixmap
+#define EGL_HI_clientpixmap 1
+struct EGLClientPixmapHI {
+    void  *pData;
+    EGLint iWidth;
+    EGLint iHeight;
+    EGLint iStride;
+};
+#define EGL_CLIENT_PIXMAP_POINTER_HI      0x8F74
+typedef EGLSurface (EGLAPIENTRYP PFNEGLCREATEPIXMAPSURFACEHIPROC) (EGLDisplay dpy, EGLConfig config, struct EGLClientPixmapHI *pixmap);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLSurface EGLAPIENTRY eglCreatePixmapSurfaceHI (EGLDisplay dpy, EGLConfig config, struct EGLClientPixmapHI *pixmap);
+#endif
+#endif /* EGL_HI_clientpixmap */
+
+#ifndef EGL_HI_colorformats
+#define EGL_HI_colorformats 1
+#define EGL_COLOR_FORMAT_HI               0x8F70
+#define EGL_COLOR_RGB_HI                  0x8F71
+#define EGL_COLOR_RGBA_HI                 0x8F72
+#define EGL_COLOR_ARGB_HI                 0x8F73
+#endif /* EGL_HI_colorformats */
+
+#ifndef EGL_IMG_context_priority
+#define EGL_IMG_context_priority 1
+#define EGL_CONTEXT_PRIORITY_LEVEL_IMG    0x3100
+#define EGL_CONTEXT_PRIORITY_HIGH_IMG     0x3101
+#define EGL_CONTEXT_PRIORITY_MEDIUM_IMG   0x3102
+#define EGL_CONTEXT_PRIORITY_LOW_IMG      0x3103
+#endif /* EGL_IMG_context_priority */
+
+#ifndef EGL_IMG_image_plane_attribs
+#define EGL_IMG_image_plane_attribs 1
+#define EGL_NATIVE_BUFFER_MULTIPLANE_SEPARATE_IMG 0x3105
+#define EGL_NATIVE_BUFFER_PLANE_OFFSET_IMG 0x3106
+#endif /* EGL_IMG_image_plane_attribs */
+
+#ifndef EGL_MESA_drm_image
+#define EGL_MESA_drm_image 1
+#define EGL_DRM_BUFFER_FORMAT_MESA        0x31D0
+#define EGL_DRM_BUFFER_USE_MESA           0x31D1
+#define EGL_DRM_BUFFER_FORMAT_ARGB32_MESA 0x31D2
+#define EGL_DRM_BUFFER_MESA               0x31D3
+#define EGL_DRM_BUFFER_STRIDE_MESA        0x31D4
+#define EGL_DRM_BUFFER_USE_SCANOUT_MESA   0x00000001
+#define EGL_DRM_BUFFER_USE_SHARE_MESA     0x00000002
+#define EGL_DRM_BUFFER_USE_CURSOR_MESA    0x00000004
+typedef EGLImageKHR (EGLAPIENTRYP PFNEGLCREATEDRMIMAGEMESAPROC) (EGLDisplay dpy, const EGLint *attrib_list);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDRMIMAGEMESAPROC) (EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLImageKHR EGLAPIENTRY eglCreateDRMImageMESA (EGLDisplay dpy, const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglExportDRMImageMESA (EGLDisplay dpy, EGLImageKHR image, EGLint *name, EGLint *handle, EGLint *stride);
+#endif
+#endif /* EGL_MESA_drm_image */
+
+#ifndef EGL_MESA_image_dma_buf_export
+#define EGL_MESA_image_dma_buf_export 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDMABUFIMAGEQUERYMESAPROC) (EGLDisplay dpy, EGLImageKHR image, int *fourcc, int *num_planes, EGLuint64KHR *modifiers);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLEXPORTDMABUFIMAGEMESAPROC) (EGLDisplay dpy, EGLImageKHR image, int *fds, EGLint *strides, EGLint *offsets);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglExportDMABUFImageQueryMESA (EGLDisplay dpy, EGLImageKHR image, int *fourcc, int *num_planes, EGLuint64KHR *modifiers);
+EGLAPI EGLBoolean EGLAPIENTRY eglExportDMABUFImageMESA (EGLDisplay dpy, EGLImageKHR image, int *fds, EGLint *strides, EGLint *offsets);
+#endif
+#endif /* EGL_MESA_image_dma_buf_export */
+
+#ifndef EGL_MESA_platform_gbm
+#define EGL_MESA_platform_gbm 1
+#define EGL_PLATFORM_GBM_MESA             0x31D7
+#endif /* EGL_MESA_platform_gbm */
+
+#ifndef EGL_MESA_platform_surfaceless
+#define EGL_MESA_platform_surfaceless 1
+#define EGL_PLATFORM_SURFACELESS_MESA     0x31DD
+#endif /* EGL_MESA_platform_surfaceless */
+
+#ifndef EGL_MESA_query_driver
+#define EGL_MESA_query_driver 1
+typedef char *(EGLAPIENTRYP PFNEGLGETDISPLAYDRIVERCONFIGPROC) (EGLDisplay dpy);
+typedef const char *(EGLAPIENTRYP PFNEGLGETDISPLAYDRIVERNAMEPROC) (EGLDisplay dpy);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI char *EGLAPIENTRY eglGetDisplayDriverConfig (EGLDisplay dpy);
+EGLAPI const char *EGLAPIENTRY eglGetDisplayDriverName (EGLDisplay dpy);
+#endif
+#endif /* EGL_MESA_query_driver */
+
+#ifndef EGL_NOK_swap_region
+#define EGL_NOK_swap_region 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGIONNOKPROC) (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint *rects);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffersRegionNOK (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint *rects);
+#endif
+#endif /* EGL_NOK_swap_region */
+
+#ifndef EGL_NOK_swap_region2
+#define EGL_NOK_swap_region2 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSWAPBUFFERSREGION2NOKPROC) (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint *rects);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffersRegion2NOK (EGLDisplay dpy, EGLSurface surface, EGLint numRects, const EGLint *rects);
+#endif
+#endif /* EGL_NOK_swap_region2 */
+
+#ifndef EGL_NOK_texture_from_pixmap
+#define EGL_NOK_texture_from_pixmap 1
+#define EGL_Y_INVERTED_NOK                0x307F
+#endif /* EGL_NOK_texture_from_pixmap */
+
+#ifndef EGL_NV_3dvision_surface
+#define EGL_NV_3dvision_surface 1
+#define EGL_AUTO_STEREO_NV                0x3136
+#endif /* EGL_NV_3dvision_surface */
+
+#ifndef EGL_NV_context_priority_realtime
+#define EGL_NV_context_priority_realtime 1
+#define EGL_CONTEXT_PRIORITY_REALTIME_NV  0x3357
+#endif /* EGL_NV_context_priority_realtime */
+
+#ifndef EGL_NV_coverage_sample
+#define EGL_NV_coverage_sample 1
+#define EGL_COVERAGE_BUFFERS_NV           0x30E0
+#define EGL_COVERAGE_SAMPLES_NV           0x30E1
+#endif /* EGL_NV_coverage_sample */
+
+#ifndef EGL_NV_coverage_sample_resolve
+#define EGL_NV_coverage_sample_resolve 1
+#define EGL_COVERAGE_SAMPLE_RESOLVE_NV    0x3131
+#define EGL_COVERAGE_SAMPLE_RESOLVE_DEFAULT_NV 0x3132
+#define EGL_COVERAGE_SAMPLE_RESOLVE_NONE_NV 0x3133
+#endif /* EGL_NV_coverage_sample_resolve */
+
+#ifndef EGL_NV_cuda_event
+#define EGL_NV_cuda_event 1
+#define EGL_CUDA_EVENT_HANDLE_NV          0x323B
+#define EGL_SYNC_CUDA_EVENT_NV            0x323C
+#define EGL_SYNC_CUDA_EVENT_COMPLETE_NV   0x323D
+#endif /* EGL_NV_cuda_event */
+
+#ifndef EGL_NV_depth_nonlinear
+#define EGL_NV_depth_nonlinear 1
+#define EGL_DEPTH_ENCODING_NV             0x30E2
+#define EGL_DEPTH_ENCODING_NONE_NV        0
+#define EGL_DEPTH_ENCODING_NONLINEAR_NV   0x30E3
+#endif /* EGL_NV_depth_nonlinear */
+
+#ifndef EGL_NV_device_cuda
+#define EGL_NV_device_cuda 1
+#define EGL_CUDA_DEVICE_NV                0x323A
+#endif /* EGL_NV_device_cuda */
+
+#ifndef EGL_NV_native_query
+#define EGL_NV_native_query 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYNATIVEDISPLAYNVPROC) (EGLDisplay dpy, EGLNativeDisplayType *display_id);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYNATIVEWINDOWNVPROC) (EGLDisplay dpy, EGLSurface surf, EGLNativeWindowType *window);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYNATIVEPIXMAPNVPROC) (EGLDisplay dpy, EGLSurface surf, EGLNativePixmapType *pixmap);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryNativeDisplayNV (EGLDisplay dpy, EGLNativeDisplayType *display_id);
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryNativeWindowNV (EGLDisplay dpy, EGLSurface surf, EGLNativeWindowType *window);
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryNativePixmapNV (EGLDisplay dpy, EGLSurface surf, EGLNativePixmapType *pixmap);
+#endif
+#endif /* EGL_NV_native_query */
+
+#ifndef EGL_NV_post_convert_rounding
+#define EGL_NV_post_convert_rounding 1
+#endif /* EGL_NV_post_convert_rounding */
+
+#ifndef EGL_NV_post_sub_buffer
+#define EGL_NV_post_sub_buffer 1
+#define EGL_POST_SUB_BUFFER_SUPPORTED_NV  0x30BE
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLPOSTSUBBUFFERNVPROC) (EGLDisplay dpy, EGLSurface surface, EGLint x, EGLint y, EGLint width, EGLint height);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglPostSubBufferNV (EGLDisplay dpy, EGLSurface surface, EGLint x, EGLint y, EGLint width, EGLint height);
+#endif
+#endif /* EGL_NV_post_sub_buffer */
+
+#ifndef EGL_NV_quadruple_buffer
+#define EGL_NV_quadruple_buffer 1
+#define EGL_QUADRUPLE_BUFFER_NV           0x3231
+#endif /* EGL_NV_quadruple_buffer */
+
+#ifndef EGL_NV_robustness_video_memory_purge
+#define EGL_NV_robustness_video_memory_purge 1
+#define EGL_GENERATE_RESET_ON_VIDEO_MEMORY_PURGE_NV 0x334C
+#endif /* EGL_NV_robustness_video_memory_purge */
+
+#ifndef EGL_NV_stream_consumer_eglimage
+#define EGL_NV_stream_consumer_eglimage 1
+#define EGL_STREAM_CONSUMER_IMAGE_NV      0x3373
+#define EGL_STREAM_IMAGE_ADD_NV           0x3374
+#define EGL_STREAM_IMAGE_REMOVE_NV        0x3375
+#define EGL_STREAM_IMAGE_AVAILABLE_NV     0x3376
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSTREAMIMAGECONSUMERCONNECTNVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLint num_modifiers, EGLuint64KHR *modifiers, EGLAttrib *attrib_list);
+typedef EGLint (EGLAPIENTRYP PFNEGLQUERYSTREAMCONSUMEREVENTNVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLTime timeout, EGLenum *event, EGLAttrib *aux);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSTREAMACQUIREIMAGENVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLImage *pImage, EGLSync sync);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSTREAMRELEASEIMAGENVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLImage image, EGLSync sync);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglStreamImageConsumerConnectNV (EGLDisplay dpy, EGLStreamKHR stream, EGLint num_modifiers, EGLuint64KHR *modifiers, EGLAttrib *attrib_list);
+EGLAPI EGLint EGLAPIENTRY eglQueryStreamConsumerEventNV (EGLDisplay dpy, EGLStreamKHR stream, EGLTime timeout, EGLenum *event, EGLAttrib *aux);
+EGLAPI EGLBoolean EGLAPIENTRY eglStreamAcquireImageNV (EGLDisplay dpy, EGLStreamKHR stream, EGLImage *pImage, EGLSync sync);
+EGLAPI EGLBoolean EGLAPIENTRY eglStreamReleaseImageNV (EGLDisplay dpy, EGLStreamKHR stream, EGLImage image, EGLSync sync);
+#endif
+#endif /* EGL_NV_stream_consumer_eglimage */
+
+#ifndef EGL_NV_stream_consumer_gltexture_yuv
+#define EGL_NV_stream_consumer_gltexture_yuv 1
+#define EGL_YUV_PLANE0_TEXTURE_UNIT_NV    0x332C
+#define EGL_YUV_PLANE1_TEXTURE_UNIT_NV    0x332D
+#define EGL_YUV_PLANE2_TEXTURE_UNIT_NV    0x332E
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSTREAMCONSUMERGLTEXTUREEXTERNALATTRIBSNVPROC) (EGLDisplay dpy, EGLStreamKHR stream, const EGLAttrib *attrib_list);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglStreamConsumerGLTextureExternalAttribsNV (EGLDisplay dpy, EGLStreamKHR stream, const EGLAttrib *attrib_list);
+#endif
+#endif /* EGL_NV_stream_consumer_gltexture_yuv */
+
+#ifndef EGL_NV_stream_cross_display
+#define EGL_NV_stream_cross_display 1
+#define EGL_STREAM_CROSS_DISPLAY_NV       0x334E
+#endif /* EGL_NV_stream_cross_display */
+
+#ifndef EGL_NV_stream_cross_object
+#define EGL_NV_stream_cross_object 1
+#define EGL_STREAM_CROSS_OBJECT_NV        0x334D
+#endif /* EGL_NV_stream_cross_object */
+
+#ifndef EGL_NV_stream_cross_partition
+#define EGL_NV_stream_cross_partition 1
+#define EGL_STREAM_CROSS_PARTITION_NV     0x323F
+#endif /* EGL_NV_stream_cross_partition */
+
+#ifndef EGL_NV_stream_cross_process
+#define EGL_NV_stream_cross_process 1
+#define EGL_STREAM_CROSS_PROCESS_NV       0x3245
+#endif /* EGL_NV_stream_cross_process */
+
+#ifndef EGL_NV_stream_cross_system
+#define EGL_NV_stream_cross_system 1
+#define EGL_STREAM_CROSS_SYSTEM_NV        0x334F
+#endif /* EGL_NV_stream_cross_system */
+
+#ifndef EGL_NV_stream_dma
+#define EGL_NV_stream_dma 1
+#define EGL_STREAM_DMA_NV                 0x3371
+#define EGL_STREAM_DMA_SERVER_NV          0x3372
+#endif /* EGL_NV_stream_dma */
+
+#ifndef EGL_NV_stream_fifo_next
+#define EGL_NV_stream_fifo_next 1
+#define EGL_PENDING_FRAME_NV              0x3329
+#define EGL_STREAM_TIME_PENDING_NV        0x332A
+#endif /* EGL_NV_stream_fifo_next */
+
+#ifndef EGL_NV_stream_fifo_synchronous
+#define EGL_NV_stream_fifo_synchronous 1
+#define EGL_STREAM_FIFO_SYNCHRONOUS_NV    0x3336
+#endif /* EGL_NV_stream_fifo_synchronous */
+
+#ifndef EGL_NV_stream_flush
+#define EGL_NV_stream_flush 1
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSTREAMFLUSHNVPROC) (EGLDisplay dpy, EGLStreamKHR stream);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglStreamFlushNV (EGLDisplay dpy, EGLStreamKHR stream);
+#endif
+#endif /* EGL_NV_stream_flush */
+
+#ifndef EGL_NV_stream_frame_limits
+#define EGL_NV_stream_frame_limits 1
+#define EGL_PRODUCER_MAX_FRAME_HINT_NV    0x3337
+#define EGL_CONSUMER_MAX_FRAME_HINT_NV    0x3338
+#endif /* EGL_NV_stream_frame_limits */
+
+#ifndef EGL_NV_stream_metadata
+#define EGL_NV_stream_metadata 1
+#define EGL_MAX_STREAM_METADATA_BLOCKS_NV 0x3250
+#define EGL_MAX_STREAM_METADATA_BLOCK_SIZE_NV 0x3251
+#define EGL_MAX_STREAM_METADATA_TOTAL_SIZE_NV 0x3252
+#define EGL_PRODUCER_METADATA_NV          0x3253
+#define EGL_CONSUMER_METADATA_NV          0x3254
+#define EGL_PENDING_METADATA_NV           0x3328
+#define EGL_METADATA0_SIZE_NV             0x3255
+#define EGL_METADATA1_SIZE_NV             0x3256
+#define EGL_METADATA2_SIZE_NV             0x3257
+#define EGL_METADATA3_SIZE_NV             0x3258
+#define EGL_METADATA0_TYPE_NV             0x3259
+#define EGL_METADATA1_TYPE_NV             0x325A
+#define EGL_METADATA2_TYPE_NV             0x325B
+#define EGL_METADATA3_TYPE_NV             0x325C
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYDISPLAYATTRIBNVPROC) (EGLDisplay dpy, EGLint attribute, EGLAttrib *value);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSETSTREAMMETADATANVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLint n, EGLint offset, EGLint size, const void *data);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYSTREAMMETADATANVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLenum name, EGLint n, EGLint offset, EGLint size, void *data);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryDisplayAttribNV (EGLDisplay dpy, EGLint attribute, EGLAttrib *value);
+EGLAPI EGLBoolean EGLAPIENTRY eglSetStreamMetadataNV (EGLDisplay dpy, EGLStreamKHR stream, EGLint n, EGLint offset, EGLint size, const void *data);
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryStreamMetadataNV (EGLDisplay dpy, EGLStreamKHR stream, EGLenum name, EGLint n, EGLint offset, EGLint size, void *data);
+#endif
+#endif /* EGL_NV_stream_metadata */
+
+#ifndef EGL_NV_stream_origin
+#define EGL_NV_stream_origin 1
+#define EGL_STREAM_FRAME_ORIGIN_X_NV      0x3366
+#define EGL_STREAM_FRAME_ORIGIN_Y_NV      0x3367
+#define EGL_STREAM_FRAME_MAJOR_AXIS_NV    0x3368
+#define EGL_CONSUMER_AUTO_ORIENTATION_NV  0x3369
+#define EGL_PRODUCER_AUTO_ORIENTATION_NV  0x336A
+#define EGL_LEFT_NV                       0x336B
+#define EGL_RIGHT_NV                      0x336C
+#define EGL_TOP_NV                        0x336D
+#define EGL_BOTTOM_NV                     0x336E
+#define EGL_X_AXIS_NV                     0x336F
+#define EGL_Y_AXIS_NV                     0x3370
+#endif /* EGL_NV_stream_origin */
+
+#ifndef EGL_NV_stream_remote
+#define EGL_NV_stream_remote 1
+#define EGL_STREAM_STATE_INITIALIZING_NV  0x3240
+#define EGL_STREAM_TYPE_NV                0x3241
+#define EGL_STREAM_PROTOCOL_NV            0x3242
+#define EGL_STREAM_ENDPOINT_NV            0x3243
+#define EGL_STREAM_LOCAL_NV               0x3244
+#define EGL_STREAM_PRODUCER_NV            0x3247
+#define EGL_STREAM_CONSUMER_NV            0x3248
+#define EGL_STREAM_PROTOCOL_FD_NV         0x3246
+#endif /* EGL_NV_stream_remote */
+
+#ifndef EGL_NV_stream_reset
+#define EGL_NV_stream_reset 1
+#define EGL_SUPPORT_RESET_NV              0x3334
+#define EGL_SUPPORT_REUSE_NV              0x3335
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLRESETSTREAMNVPROC) (EGLDisplay dpy, EGLStreamKHR stream);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglResetStreamNV (EGLDisplay dpy, EGLStreamKHR stream);
+#endif
+#endif /* EGL_NV_stream_reset */
+
+#ifndef EGL_NV_stream_socket
+#define EGL_NV_stream_socket 1
+#define EGL_STREAM_PROTOCOL_SOCKET_NV     0x324B
+#define EGL_SOCKET_HANDLE_NV              0x324C
+#define EGL_SOCKET_TYPE_NV                0x324D
+#endif /* EGL_NV_stream_socket */
+
+#ifndef EGL_NV_stream_socket_inet
+#define EGL_NV_stream_socket_inet 1
+#define EGL_SOCKET_TYPE_INET_NV           0x324F
+#endif /* EGL_NV_stream_socket_inet */
+
+#ifndef EGL_NV_stream_socket_unix
+#define EGL_NV_stream_socket_unix 1
+#define EGL_SOCKET_TYPE_UNIX_NV           0x324E
+#endif /* EGL_NV_stream_socket_unix */
+
+#ifndef EGL_NV_stream_sync
+#define EGL_NV_stream_sync 1
+#define EGL_SYNC_NEW_FRAME_NV             0x321F
+typedef EGLSyncKHR (EGLAPIENTRYP PFNEGLCREATESTREAMSYNCNVPROC) (EGLDisplay dpy, EGLStreamKHR stream, EGLenum type, const EGLint *attrib_list);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLSyncKHR EGLAPIENTRY eglCreateStreamSyncNV (EGLDisplay dpy, EGLStreamKHR stream, EGLenum type, const EGLint *attrib_list);
+#endif
+#endif /* EGL_NV_stream_sync */
+
+#ifndef EGL_NV_sync
+#define EGL_NV_sync 1
+typedef void *EGLSyncNV;
+typedef khronos_utime_nanoseconds_t EGLTimeNV;
+#ifdef KHRONOS_SUPPORT_INT64
+#define EGL_SYNC_PRIOR_COMMANDS_COMPLETE_NV 0x30E6
+#define EGL_SYNC_STATUS_NV                0x30E7
+#define EGL_SIGNALED_NV                   0x30E8
+#define EGL_UNSIGNALED_NV                 0x30E9
+#define EGL_SYNC_FLUSH_COMMANDS_BIT_NV    0x0001
+#define EGL_FOREVER_NV                    0xFFFFFFFFFFFFFFFFull
+#define EGL_ALREADY_SIGNALED_NV           0x30EA
+#define EGL_TIMEOUT_EXPIRED_NV            0x30EB
+#define EGL_CONDITION_SATISFIED_NV        0x30EC
+#define EGL_SYNC_TYPE_NV                  0x30ED
+#define EGL_SYNC_CONDITION_NV             0x30EE
+#define EGL_SYNC_FENCE_NV                 0x30EF
+#define EGL_NO_SYNC_NV                    EGL_CAST(EGLSyncNV,0)
+typedef EGLSyncNV (EGLAPIENTRYP PFNEGLCREATEFENCESYNCNVPROC) (EGLDisplay dpy, EGLenum condition, const EGLint *attrib_list);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLDESTROYSYNCNVPROC) (EGLSyncNV sync);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLFENCENVPROC) (EGLSyncNV sync);
+typedef EGLint (EGLAPIENTRYP PFNEGLCLIENTWAITSYNCNVPROC) (EGLSyncNV sync, EGLint flags, EGLTimeNV timeout);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLSIGNALSYNCNVPROC) (EGLSyncNV sync, EGLenum mode);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLGETSYNCATTRIBNVPROC) (EGLSyncNV sync, EGLint attribute, EGLint *value);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLSyncNV EGLAPIENTRY eglCreateFenceSyncNV (EGLDisplay dpy, EGLenum condition, const EGLint *attrib_list);
+EGLAPI EGLBoolean EGLAPIENTRY eglDestroySyncNV (EGLSyncNV sync);
+EGLAPI EGLBoolean EGLAPIENTRY eglFenceNV (EGLSyncNV sync);
+EGLAPI EGLint EGLAPIENTRY eglClientWaitSyncNV (EGLSyncNV sync, EGLint flags, EGLTimeNV timeout);
+EGLAPI EGLBoolean EGLAPIENTRY eglSignalSyncNV (EGLSyncNV sync, EGLenum mode);
+EGLAPI EGLBoolean EGLAPIENTRY eglGetSyncAttribNV (EGLSyncNV sync, EGLint attribute, EGLint *value);
+#endif
+#endif /* KHRONOS_SUPPORT_INT64 */
+#endif /* EGL_NV_sync */
+
+#ifndef EGL_NV_system_time
+#define EGL_NV_system_time 1
+typedef khronos_utime_nanoseconds_t EGLuint64NV;
+#ifdef KHRONOS_SUPPORT_INT64
+typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMEFREQUENCYNVPROC) (void);
+typedef EGLuint64NV (EGLAPIENTRYP PFNEGLGETSYSTEMTIMENVPROC) (void);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeFrequencyNV (void);
+EGLAPI EGLuint64NV EGLAPIENTRY eglGetSystemTimeNV (void);
+#endif
+#endif /* KHRONOS_SUPPORT_INT64 */
+#endif /* EGL_NV_system_time */
+
+#ifndef EGL_NV_triple_buffer
+#define EGL_NV_triple_buffer 1
+#define EGL_TRIPLE_BUFFER_NV              0x3230
+#endif /* EGL_NV_triple_buffer */
+
+#ifndef EGL_TIZEN_image_native_buffer
+#define EGL_TIZEN_image_native_buffer 1
+#define EGL_NATIVE_BUFFER_TIZEN           0x32A0
+#endif /* EGL_TIZEN_image_native_buffer */
+
+#ifndef EGL_TIZEN_image_native_surface
+#define EGL_TIZEN_image_native_surface 1
+#define EGL_NATIVE_SURFACE_TIZEN          0x32A1
+#endif /* EGL_TIZEN_image_native_surface */
+
+#ifndef EGL_WL_bind_wayland_display
+#define EGL_WL_bind_wayland_display 1
+#define PFNEGLBINDWAYLANDDISPLAYWL PFNEGLBINDWAYLANDDISPLAYWLPROC
+#define PFNEGLUNBINDWAYLANDDISPLAYWL PFNEGLUNBINDWAYLANDDISPLAYWLPROC
+#define PFNEGLQUERYWAYLANDBUFFERWL PFNEGLQUERYWAYLANDBUFFERWLPROC
+struct wl_display;
+struct wl_resource;
+#define EGL_WAYLAND_BUFFER_WL             0x31D5
+#define EGL_WAYLAND_PLANE_WL              0x31D6
+#define EGL_TEXTURE_Y_U_V_WL              0x31D7
+#define EGL_TEXTURE_Y_UV_WL               0x31D8
+#define EGL_TEXTURE_Y_XUXV_WL             0x31D9
+#define EGL_TEXTURE_EXTERNAL_WL           0x31DA
+#define EGL_WAYLAND_Y_INVERTED_WL         0x31DB
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLBINDWAYLANDDISPLAYWLPROC) (EGLDisplay dpy, struct wl_display *display);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLUNBINDWAYLANDDISPLAYWLPROC) (EGLDisplay dpy, struct wl_display *display);
+typedef EGLBoolean (EGLAPIENTRYP PFNEGLQUERYWAYLANDBUFFERWLPROC) (EGLDisplay dpy, struct wl_resource *buffer, EGLint attribute, EGLint *value);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI EGLBoolean EGLAPIENTRY eglBindWaylandDisplayWL (EGLDisplay dpy, struct wl_display *display);
+EGLAPI EGLBoolean EGLAPIENTRY eglUnbindWaylandDisplayWL (EGLDisplay dpy, struct wl_display *display);
+EGLAPI EGLBoolean EGLAPIENTRY eglQueryWaylandBufferWL (EGLDisplay dpy, struct wl_resource *buffer, EGLint attribute, EGLint *value);
+#endif
+#endif /* EGL_WL_bind_wayland_display */
+
+#ifndef EGL_WL_create_wayland_buffer_from_image
+#define EGL_WL_create_wayland_buffer_from_image 1
+#define PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWL PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWLPROC
+struct wl_buffer;
+typedef struct wl_buffer *(EGLAPIENTRYP PFNEGLCREATEWAYLANDBUFFERFROMIMAGEWLPROC) (EGLDisplay dpy, EGLImageKHR image);
+#ifdef EGL_EGLEXT_PROTOTYPES
+EGLAPI struct wl_buffer *EGLAPIENTRY eglCreateWaylandBufferFromImageWL (EGLDisplay dpy, EGLImageKHR image);
+#endif
+#endif /* EGL_WL_create_wayland_buffer_from_image */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __eglext_h_ */
+
+#endif /* _MSC_VER */
+                                                                                                                       /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_hints.h
+ *
+ *  Official documentation for SDL configuration variables
+ *
+ *  This file contains functions to set and get configuration hints,
+ *  as well as listing each of them alphabetically.
+ *
+ *  The convention for naming hints is SDL_HINT_X, where "SDL_X" is
+ *  the environment variable that can be used to override the default.
+ *
+ *  In general these hints are just that - they may or may not be
+ *  supported or applicable on any given platform, but they provide
+ *  a way for an application or user to give the library a hint as
+ *  to how they would like the library to work.
+ */
+
+#ifndef SDL_hints_h_
+#define SDL_hints_h_
+
+#include "SDL_stdinc.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ *  \brief  A variable controlling whether the Android / iOS built-in
+ *  accelerometer should be listed as a joystick device.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - The accelerometer is not listed as a joystick
+ *    "1"       - The accelerometer is available as a 3 axis joystick (the default).
+ */
+#define SDL_HINT_ACCELEROMETER_AS_JOYSTICK "SDL_ACCELEROMETER_AS_JOYSTICK"
+
+/**
+ *  \brief Specify the behavior of Alt+Tab while the keyboard is grabbed.
+ *
+ * By default, SDL emulates Alt+Tab functionality while the keyboard is grabbed
+ * and your window is full-screen. This prevents the user from getting stuck in
+ * your application if you've enabled keyboard grab.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - SDL will not handle Alt+Tab. Your application is responsible
+                 for handling Alt+Tab while the keyboard is grabbed.
+ *   "1"       - SDL will minimize your window when Alt+Tab is pressed (default)
+*/
+#define SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED "SDL_ALLOW_ALT_TAB_WHILE_GRABBED"
+
+/**
+ *  \brief If set to "0" then never set the top most bit on a SDL Window, even if the video mode expects it.
+ *      This is a debugging aid for developers and not expected to be used by end users. The default is "1"
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - don't allow topmost
+ *    "1"       - allow topmost
+ */
+#define SDL_HINT_ALLOW_TOPMOST "SDL_ALLOW_TOPMOST"
+
+/**
+ * \brief Android APK expansion main file version. Should be a string number like "1", "2" etc.
+ *
+ * Must be set together with SDL_HINT_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION.
+ *
+ * If both hints were set then SDL_RWFromFile() will look into expansion files
+ * after a given relative path was not found in the internal storage and assets.
+ *
+ * By default this hint is not set and the APK expansion files are not searched.
+ */
+#define SDL_HINT_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION "SDL_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION"
+ 
+/**
+ * \brief Android APK expansion patch file version. Should be a string number like "1", "2" etc.
+ *
+ * Must be set together with SDL_HINT_ANDROID_APK_EXPANSION_MAIN_FILE_VERSION.
+ *
+ * If both hints were set then SDL_RWFromFile() will look into expansion files
+ * after a given relative path was not found in the internal storage and assets.
+ *
+ * By default this hint is not set and the APK expansion files are not searched.
+ */
+#define SDL_HINT_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION "SDL_ANDROID_APK_EXPANSION_PATCH_FILE_VERSION"
+
+/**
+ * \brief A variable to control whether the event loop will block itself when the app is paused.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Non blocking.
+ *   "1"       - Blocking. (default)
+ *
+ * The value should be set before SDL is initialized.
+ */
+#define SDL_HINT_ANDROID_BLOCK_ON_PAUSE "SDL_ANDROID_BLOCK_ON_PAUSE"
+
+/**
+ * \brief A variable to control whether SDL will pause audio in background
+ *        (Requires SDL_ANDROID_BLOCK_ON_PAUSE as "Non blocking")
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Non paused.
+ *   "1"       - Paused. (default)
+ *
+ * The value should be set before SDL is initialized.
+ */
+#define SDL_HINT_ANDROID_BLOCK_ON_PAUSE_PAUSEAUDIO "SDL_ANDROID_BLOCK_ON_PAUSE_PAUSEAUDIO"
+
+/**
+ * \brief A variable to control whether we trap the Android back button to handle it manually.
+ *        This is necessary for the right mouse button to work on some Android devices, or
+ *        to be able to trap the back button for use in your code reliably.  If set to true,
+ *        the back button will show up as an SDL_KEYDOWN / SDL_KEYUP pair with a keycode of 
+ *        SDL_SCANCODE_AC_BACK.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Back button will be handled as usual for system. (default)
+ *   "1"       - Back button will be trapped, allowing you to handle the key press
+ *               manually.  (This will also let right mouse click work on systems 
+ *               where the right mouse button functions as back.)
+ *
+ * The value of this hint is used at runtime, so it can be changed at any time.
+ */
+#define SDL_HINT_ANDROID_TRAP_BACK_BUTTON "SDL_ANDROID_TRAP_BACK_BUTTON"
+
+/**
+ *  \brief Specify an application name.
+ * 
+ * This hint lets you specify the application name sent to the OS when
+ * required. For example, this will often appear in volume control applets for
+ * audio streams, and in lists of applications which are inhibiting the
+ * screensaver.  You should use a string that describes your program ("My Game
+ * 2: The Revenge")
+ *
+ * Setting this to "" or leaving it unset will have SDL use a reasonable
+ * default: probably the application's name or "SDL Application" if SDL
+ * doesn't have any better information.
+ *
+ * Note that, for audio streams, this can be overridden with
+ * SDL_HINT_AUDIO_DEVICE_APP_NAME.
+ *
+ * On targets where this is not supported, this hint does nothing.
+ */
+#define SDL_HINT_APP_NAME "SDL_APP_NAME"
+
+/**
+ *  \brief  A variable controlling whether controllers used with the Apple TV
+ *  generate UI events.
+ *
+ * When UI events are generated by controller input, the app will be
+ * backgrounded when the Apple TV remote's menu button is pressed, and when the
+ * pause or B buttons on gamepads are pressed.
+ *
+ * More information about properly making use of controllers for the Apple TV
+ * can be found here:
+ * https://developer.apple.com/tvos/human-interface-guidelines/remote-and-controllers/
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Controller input does not generate UI events (the default).
+ *    "1"       - Controller input generates UI events.
+ */
+#define SDL_HINT_APPLE_TV_CONTROLLER_UI_EVENTS "SDL_APPLE_TV_CONTROLLER_UI_EVENTS"
+
+/**
+ * \brief  A variable controlling whether the Apple TV remote's joystick axes
+ *         will automatically match the rotation of the remote.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Remote orientation does not affect joystick axes (the default).
+ *    "1"       - Joystick axes are based on the orientation of the remote.
+ */
+#define SDL_HINT_APPLE_TV_REMOTE_ALLOW_ROTATION "SDL_APPLE_TV_REMOTE_ALLOW_ROTATION"
+
+/**
+ *  \brief  A variable controlling the audio category on iOS and Mac OS X
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "ambient"     - Use the AVAudioSessionCategoryAmbient audio category, will be muted by the phone mute switch (default)
+ *    "playback"    - Use the AVAudioSessionCategoryPlayback category
+ *
+ *  For more information, see Apple's documentation:
+ *  https://developer.apple.com/library/content/documentation/Audio/Conceptual/AudioSessionProgrammingGuide/AudioSessionCategoriesandModes/AudioSessionCategoriesandModes.html
+ */
+#define SDL_HINT_AUDIO_CATEGORY   "SDL_AUDIO_CATEGORY"
+
+/**
+ *  \brief Specify an application name for an audio device.
+ *
+ * Some audio backends (such as PulseAudio) allow you to describe your audio
+ * stream. Among other things, this description might show up in a system
+ * control panel that lets the user adjust the volume on specific audio
+ * streams instead of using one giant master volume slider.
+ *
+ * This hints lets you transmit that information to the OS. The contents of
+ * this hint are used while opening an audio device. You should use a string
+ * that describes your program ("My Game 2: The Revenge")
+ *
+ * Setting this to "" or leaving it unset will have SDL use a reasonable
+ * default: this will be the name set with SDL_HINT_APP_NAME, if that hint is
+ * set. Otherwise, it'll probably the application's name or "SDL Application"
+ * if SDL doesn't have any better information.
+ *
+ * On targets where this is not supported, this hint does nothing.
+ */
+#define SDL_HINT_AUDIO_DEVICE_APP_NAME "SDL_AUDIO_DEVICE_APP_NAME"
+
+/**
+ *  \brief Specify an application name for an audio device.
+ *
+ * Some audio backends (such as PulseAudio) allow you to describe your audio
+ * stream. Among other things, this description might show up in a system
+ * control panel that lets the user adjust the volume on specific audio
+ * streams instead of using one giant master volume slider.
+ *
+ * This hints lets you transmit that information to the OS. The contents of
+ * this hint are used while opening an audio device. You should use a string
+ * that describes your what your program is playing ("audio stream" is
+ * probably sufficient in many cases, but this could be useful for something
+ * like "team chat" if you have a headset playing VoIP audio separately).
+ *
+ * Setting this to "" or leaving it unset will have SDL use a reasonable
+ * default: "audio stream" or something similar.
+ *
+ * On targets where this is not supported, this hint does nothing.
+ */
+#define SDL_HINT_AUDIO_DEVICE_STREAM_NAME "SDL_AUDIO_DEVICE_STREAM_NAME"
+
+/**
+ *  \brief Specify an application role for an audio device.
+ *
+ * Some audio backends (such as Pipewire) allow you to describe the role of
+ * your audio stream. Among other things, this description might show up in
+ * a system control panel or software for displaying and manipulating media
+ * playback/capture graphs.
+ *
+ * This hints lets you transmit that information to the OS. The contents of
+ * this hint are used while opening an audio device. You should use a string
+ * that describes your what your program is playing (Game, Music, Movie,
+ * etc...).
+ *
+ * Setting this to "" or leaving it unset will have SDL use a reasonable
+ * default: "Game" or something similar.
+ *
+ * On targets where this is not supported, this hint does nothing.
+ */
+#define SDL_HINT_AUDIO_DEVICE_STREAM_ROLE "SDL_AUDIO_DEVICE_STREAM_ROLE"
+
+/**
+ *  \brief  A variable controlling speed/quality tradeoff of audio resampling.
+ *
+ *  If available, SDL can use libsamplerate ( http://www.mega-nerd.com/SRC/ )
+ *  to handle audio resampling. There are different resampling modes available
+ *  that produce different levels of quality, using more CPU.
+ *
+ *  If this hint isn't specified to a valid setting, or libsamplerate isn't
+ *  available, SDL will use the default, internal resampling algorithm.
+ *
+ *  Note that this is currently only applicable to resampling audio that is
+ *  being written to a device for playback or audio being read from a device
+ *  for capture. SDL_AudioCVT always uses the default resampler (although this
+ *  might change for SDL 2.1).
+ *
+ *  This hint is currently only checked at audio subsystem initialization.
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "0" or "default" - Use SDL's internal resampling (Default when not set - low quality, fast)
+ *    "1" or "fast"    - Use fast, slightly higher quality resampling, if available
+ *    "2" or "medium"  - Use medium quality resampling, if available
+ *    "3" or "best"    - Use high quality resampling, if available
+ */
+#define SDL_HINT_AUDIO_RESAMPLING_MODE   "SDL_AUDIO_RESAMPLING_MODE"
+
+/**
+ *  \brief  A variable controlling whether SDL updates joystick state when getting input events
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "0"     - You'll call SDL_JoystickUpdate() manually
+ *    "1"     - SDL will automatically call SDL_JoystickUpdate() (default)
+ *
+ *  This hint can be toggled on and off at runtime.
+ */
+#define SDL_HINT_AUTO_UPDATE_JOYSTICKS  "SDL_AUTO_UPDATE_JOYSTICKS"
+
+/**
+ *  \brief  A variable controlling whether SDL updates sensor state when getting input events
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "0"     - You'll call SDL_SensorUpdate() manually
+ *    "1"     - SDL will automatically call SDL_SensorUpdate() (default)
+ *
+ *  This hint can be toggled on and off at runtime.
+ */
+#define SDL_HINT_AUTO_UPDATE_SENSORS    "SDL_AUTO_UPDATE_SENSORS"
+
+/**
+ *  \brief Prevent SDL from using version 4 of the bitmap header when saving BMPs.
+ *
+ * The bitmap header version 4 is required for proper alpha channel support and
+ * SDL will use it when required. Should this not be desired, this hint can
+ * force the use of the 40 byte header version which is supported everywhere.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Surfaces with a colorkey or an alpha channel are saved to a
+ *               32-bit BMP file with an alpha mask. SDL will use the bitmap
+ *               header version 4 and set the alpha mask accordingly.
+ *   "1"       - Surfaces with a colorkey or an alpha channel are saved to a
+ *               32-bit BMP file without an alpha mask. The alpha channel data
+ *               will be in the file, but applications are going to ignore it.
+ *
+ * The default value is "0".
+ */
+#define SDL_HINT_BMP_SAVE_LEGACY_FORMAT "SDL_BMP_SAVE_LEGACY_FORMAT"
+
+/**
+ *  \brief Override for SDL_GetDisplayUsableBounds()
+ *
+ *  If set, this hint will override the expected results for
+ *  SDL_GetDisplayUsableBounds() for display index 0. Generally you don't want
+ *  to do this, but this allows an embedded system to request that some of the
+ *  screen be reserved for other uses when paired with a well-behaved
+ *  application.
+ *
+ *  The contents of this hint must be 4 comma-separated integers, the first
+ *  is the bounds x, then y, width and height, in that order.
+ */
+#define SDL_HINT_DISPLAY_USABLE_BOUNDS "SDL_DISPLAY_USABLE_BOUNDS"
+
+/**
+ *  \brief Disable giving back control to the browser automatically
+ *  when running with asyncify
+ *
+ * With -s ASYNCIFY, SDL2 calls emscripten_sleep during operations
+ * such as refreshing the screen or polling events.
+ *
+ * This hint only applies to the emscripten platform
+ *
+ * The variable can be set to the following values:
+ *    "0"       - Disable emscripten_sleep calls (if you give back browser control manually or use asyncify for other purposes)
+ *    "1"       - Enable emscripten_sleep calls (the default)
+ */
+#define SDL_HINT_EMSCRIPTEN_ASYNCIFY   "SDL_EMSCRIPTEN_ASYNCIFY"
+
+/**
+ *  \brief override the binding element for keyboard inputs for Emscripten builds
+ *
+ * This hint only applies to the emscripten platform
+ *
+ * The variable can be one of
+ *    "#window"      - The javascript window object (this is the default)
+ *    "#document"    - The javascript document object
+ *    "#screen"      - the javascript window.screen object
+ *    "#canvas"      - the WebGL canvas element
+ *    any other string without a leading # sign applies to the element on the page with that ID.
+ */
+#define SDL_HINT_EMSCRIPTEN_KEYBOARD_ELEMENT   "SDL_EMSCRIPTEN_KEYBOARD_ELEMENT"
+
+/**
+ *  \brief  A variable that controls whether Steam Controllers should be exposed using the SDL joystick and game controller APIs
+ *
+ *  The variable can be set to the following values:
+ *    "0"       - Do not scan for Steam Controllers
+ *    "1"       - Scan for Steam Controllers (the default)
+ *
+ *  The default value is "1".  This hint must be set before initializing the joystick subsystem.
+ */
+#define SDL_HINT_ENABLE_STEAM_CONTROLLERS "SDL_ENABLE_STEAM_CONTROLLERS"
+
+/**
+ *  \brief  A variable controlling whether SDL logs all events pushed onto its internal queue.
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "0"     - Don't log any events (default)
+ *    "1"     - Log all events except mouse and finger motion, which are pretty spammy.
+ *    "2"     - Log all events.
+ *
+ *  This is generally meant to be used to debug SDL itself, but can be useful
+ *  for application developers that need better visibility into what is going
+ *  on in the event queue. Logged events are sent through SDL_Log(), which
+ *  means by default they appear on stdout on most platforms or maybe
+ *  OutputDebugString() on Windows, and can be funneled by the app with
+ *  SDL_LogSetOutputFunction(), etc.
+ *
+ *  This hint can be toggled on and off at runtime, if you only need to log
+ *  events for a small subset of program execution.
+ */
+#define SDL_HINT_EVENT_LOGGING   "SDL_EVENT_LOGGING"
+
+/**
+ *  \brief  A variable controlling whether raising the window should be done more forcefully
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - No forcing (the default)
+ *    "1"       - Extra level of forcing
+ *
+ *  At present, this is only an issue under MS Windows, which makes it nearly impossible to
+ *  programmatically move a window to the foreground, for "security" reasons. See
+ *  http://stackoverflow.com/a/34414846 for a discussion.
+ */
+#define SDL_HINT_FORCE_RAISEWINDOW    "SDL_HINT_FORCE_RAISEWINDOW"
+
+/**
+ *  \brief  A variable controlling how 3D acceleration is used to accelerate the SDL screen surface.
+ *
+ *  SDL can try to accelerate the SDL screen surface by using streaming
+ *  textures with a 3D rendering engine.  This variable controls whether and
+ *  how this is done.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable 3D acceleration
+ *    "1"       - Enable 3D acceleration, using the default renderer.
+ *    "X"       - Enable 3D acceleration, using X where X is one of the valid rendering drivers.  (e.g. "direct3d", "opengl", etc.)
+ *
+ *  By default SDL tries to make a best guess for each platform whether
+ *  to use acceleration or not.
+ */
+#define SDL_HINT_FRAMEBUFFER_ACCELERATION   "SDL_FRAMEBUFFER_ACCELERATION"
+
+/**
+ *  \brief  A variable that lets you manually hint extra gamecontroller db entries.
+ *
+ *  The variable should be newline delimited rows of gamecontroller config data, see SDL_gamecontroller.h
+ *
+ *  This hint must be set before calling SDL_Init(SDL_INIT_GAMECONTROLLER)
+ *  You can update mappings after the system is initialized with SDL_GameControllerMappingForGUID() and SDL_GameControllerAddMapping()
+ */
+#define SDL_HINT_GAMECONTROLLERCONFIG "SDL_GAMECONTROLLERCONFIG"
+
+/**
+ *  \brief  A variable that lets you provide a file with extra gamecontroller db entries.
+ *
+ *  The file should contain lines of gamecontroller config data, see SDL_gamecontroller.h
+ *
+ *  This hint must be set before calling SDL_Init(SDL_INIT_GAMECONTROLLER)
+ *  You can update mappings after the system is initialized with SDL_GameControllerMappingForGUID() and SDL_GameControllerAddMapping()
+ */
+#define SDL_HINT_GAMECONTROLLERCONFIG_FILE "SDL_GAMECONTROLLERCONFIG_FILE"
+
+/**
+ *  \brief  A variable that overrides the automatic controller type detection
+ *
+ *  The variable should be comma separated entries, in the form: VID/PID=type
+ *
+ *  The VID and PID should be hexadecimal with exactly 4 digits, e.g. 0x00fd
+ *
+ *  The type should be one of:
+ *      Xbox360
+ *      XboxOne
+ *      PS3
+ *      PS4
+ *      PS5
+ *      SwitchPro
+ *
+ *  This hint affects what driver is used, and must be set before calling SDL_Init(SDL_INIT_GAMECONTROLLER)
+ */
+#define SDL_HINT_GAMECONTROLLERTYPE "SDL_GAMECONTROLLERTYPE"
+
+/**
+ *  \brief  A variable containing a list of devices to skip when scanning for game controllers.
+ *
+ *  The format of the string is a comma separated list of USB VID/PID pairs
+ *  in hexadecimal form, e.g.
+ *
+ *      0xAAAA/0xBBBB,0xCCCC/0xDDDD
+ *
+ *  The variable can also take the form of @file, in which case the named
+ *  file will be loaded and interpreted as the value of the variable.
+ */
+#define SDL_HINT_GAMECONTROLLER_IGNORE_DEVICES "SDL_GAMECONTROLLER_IGNORE_DEVICES"
+
+/**
+ *  \brief  If set, all devices will be skipped when scanning for game controllers except for the ones listed in this variable.
+ *
+ *  The format of the string is a comma separated list of USB VID/PID pairs
+ *  in hexadecimal form, e.g.
+ *
+ *      0xAAAA/0xBBBB,0xCCCC/0xDDDD
+ *
+ *  The variable can also take the form of @file, in which case the named
+ *  file will be loaded and interpreted as the value of the variable.
+ */
+#define SDL_HINT_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT "SDL_GAMECONTROLLER_IGNORE_DEVICES_EXCEPT"
+
+/**
+ *  \brief  If set, game controller face buttons report their values according to their labels instead of their positional layout.
+ * 
+ *  For example, on Nintendo Switch controllers, normally you'd get:
+ *
+ *      (Y)
+ *  (X)     (B)
+ *      (A)
+ *
+ *  but if this hint is set, you'll get:
+ *
+ *      (X)
+ *  (Y)     (A)
+ *      (B)
+ *
+ *  The variable can be set to the following values:
+ *    "0"       - Report the face buttons by position, as though they were on an Xbox controller.
+ *    "1"       - Report the face buttons by label instead of position
+ *
+ *  The default value is "1".  This hint may be set at any time.
+ */
+#define SDL_HINT_GAMECONTROLLER_USE_BUTTON_LABELS "SDL_GAMECONTROLLER_USE_BUTTON_LABELS"
+
+/**
+ *  \brief  A variable controlling whether grabbing input grabs the keyboard
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Grab will affect only the mouse
+ *    "1"       - Grab will affect mouse and keyboard
+ *
+ *  By default SDL will not grab the keyboard so system shortcuts still work.
+ */
+#define SDL_HINT_GRAB_KEYBOARD              "SDL_GRAB_KEYBOARD"
+
+/**
+ *  \brief  A variable controlling whether the idle timer is disabled on iOS.
+ *
+ *  When an iOS app does not receive touches for some time, the screen is
+ *  dimmed automatically. For games where the accelerometer is the only input
+ *  this is problematic. This functionality can be disabled by setting this
+ *  hint.
+ *
+ *  As of SDL 2.0.4, SDL_EnableScreenSaver() and SDL_DisableScreenSaver()
+ *  accomplish the same thing on iOS. They should be preferred over this hint.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Enable idle timer
+ *    "1"       - Disable idle timer
+ */
+#define SDL_HINT_IDLE_TIMER_DISABLED "SDL_IOS_IDLE_TIMER_DISABLED"
+
+/**
+ * \brief A variable to control whether certain IMEs should handle text editing internally instead of sending SDL_TEXTEDITING events.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - SDL_TEXTEDITING events are sent, and it is the application's
+ *               responsibility to render the text from these events and 
+ *               differentiate it somehow from committed text. (default)
+ *   "1"       - If supported by the IME then SDL_TEXTEDITING events are not sent, 
+ *               and text that is being composed will be rendered in its own UI.
+ */
+#define SDL_HINT_IME_INTERNAL_EDITING "SDL_IME_INTERNAL_EDITING"
+
+/**
+ * \brief A variable to control whether certain IMEs should show native UI components (such as the Candidate List) instead of suppressing them.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Native UI components are not display. (default)
+ *   "1"       - Native UI components are displayed.
+ */
+#define SDL_HINT_IME_SHOW_UI "SDL_IME_SHOW_UI"
+
+/**
+ * \brief A variable to control if extended IME text support is enabled.
+ * If enabled then SDL_TextEditingExtEvent will be issued if the text would be truncated otherwise.
+ * Additionally SDL_TextInputEvent will be dispatched multiple times so that it is not truncated.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - Legacy behavior. Text can be truncated, no heap allocations. (default)
+ *   "1"       - Modern behavior.
+ */
+#define SDL_HINT_IME_SUPPORT_EXTENDED_TEXT "SDL_IME_SUPPORT_EXTENDED_TEXT"
+
+/**
+ * \brief  A variable controlling whether the home indicator bar on iPhone X
+ *         should be hidden.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - The indicator bar is not hidden (default for windowed applications)
+ *    "1"       - The indicator bar is hidden and is shown when the screen is touched (useful for movie playback applications)
+ *    "2"       - The indicator bar is dim and the first swipe makes it visible and the second swipe performs the "home" action (default for fullscreen applications)
+ */
+#define SDL_HINT_IOS_HIDE_HOME_INDICATOR "SDL_IOS_HIDE_HOME_INDICATOR"
+
+/**
+ *  \brief  A variable that lets you enable joystick (and gamecontroller) events even when your app is in the background.
+ *
+ *  The variable can be set to the following values:
+ *    "0"       - Disable joystick & gamecontroller input events when the
+ *                application is in the background.
+ *    "1"       - Enable joystick & gamecontroller input events when the
+ *                application is in the background.
+ *
+ *  The default value is "0".  This hint may be set at any time.
+ */
+#define SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS "SDL_JOYSTICK_ALLOW_BACKGROUND_EVENTS"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI joystick drivers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI drivers are not used
+ *    "1"       - HIDAPI drivers are used (the default)
+ *
+ *  This variable is the default for all drivers, but can be overridden by the hints for specific drivers below.
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI "SDL_JOYSTICK_HIDAPI"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for Nintendo GameCube controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_GAMECUBE "SDL_JOYSTICK_HIDAPI_GAMECUBE"
+
+/**
+ *  \brief  A variable controlling whether "low_frequency_rumble" and "high_frequency_rumble" is used to implement
+ *          the GameCube controller's 3 rumble modes, Stop(0), Rumble(1), and StopHard(2)
+ *          this is useful for applications that need full compatibility for things like ADSR envelopes.
+ *          Stop is implemented by setting "low_frequency_rumble" to "0" and "high_frequency_rumble" ">0"
+ *          Rumble is both at any arbitrary value,
+ *          StopHard is implemented by setting both "low_frequency_rumble" and "high_frequency_rumble" to "0"
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Normal rumble behavior is behavior is used (default)
+ *    "1"       - Proper GameCube controller rumble behavior is used
+ *
+ */
+#define SDL_HINT_JOYSTICK_GAMECUBE_RUMBLE_BRAKE "SDL_JOYSTICK_GAMECUBE_RUMBLE_BRAKE"
+
+ /**
+  *  \brief  A variable controlling whether Switch Joy-Cons should be treated the same as Switch Pro Controllers when using the HIDAPI driver.
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - basic Joy-Con support with no analog input (the default)
+  *    "1"       - Joy-Cons treated as half full Pro Controllers with analog inputs and sensors
+  *
+  *  This does not combine Joy-Cons into a single controller. That's up to the user.
+  */
+#define SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS "SDL_JOYSTICK_HIDAPI_JOY_CONS"
+
+ /**
+  *  \brief  A variable controlling whether the HIDAPI driver for Amazon Luna controllers connected via Bluetooth should be used.
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - HIDAPI driver is not used
+  *    "1"       - HIDAPI driver is used
+  *
+  *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+  */
+#define SDL_HINT_JOYSTICK_HIDAPI_LUNA "SDL_JOYSTICK_HIDAPI_LUNA"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for PS4 controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_PS4 "SDL_JOYSTICK_HIDAPI_PS4"
+
+/**
+ *  \brief  A variable controlling whether extended input reports should be used for PS4 controllers when using the HIDAPI driver.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - extended reports are not enabled (the default)
+ *    "1"       - extended reports
+ *
+ *  Extended input reports allow rumble on Bluetooth PS4 controllers, but
+ *  break DirectInput handling for applications that don't use SDL.
+ *
+ *  Once extended reports are enabled, they can not be disabled without
+ *  power cycling the controller.
+ *
+ *  For compatibility with applications written for versions of SDL prior
+ *  to the introduction of PS5 controller support, this value will also
+ *  control the state of extended reports on PS5 controllers when the
+ *  SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE hint is not explicitly set.
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE "SDL_JOYSTICK_HIDAPI_PS4_RUMBLE"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for PS5 controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_PS5 "SDL_JOYSTICK_HIDAPI_PS5"
+
+/**
+ *  \brief  A variable controlling whether the player LEDs should be lit to indicate which player is associated with a PS5 controller.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - player LEDs are not enabled
+ *    "1"       - player LEDs are enabled (the default)
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_PS5_PLAYER_LED "SDL_JOYSTICK_HIDAPI_PS5_PLAYER_LED"
+
+/**
+ *  \brief  A variable controlling whether extended input reports should be used for PS5 controllers when using the HIDAPI driver.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - extended reports are not enabled (the default)
+ *    "1"       - extended reports
+ *
+ *  Extended input reports allow rumble on Bluetooth PS5 controllers, but
+ *  break DirectInput handling for applications that don't use SDL.
+ *
+ *  Once extended reports are enabled, they can not be disabled without
+ *  power cycling the controller.
+ *
+ *  For compatibility with applications written for versions of SDL prior
+ *  to the introduction of PS5 controller support, this value defaults to
+ *  the value of SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE.
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE "SDL_JOYSTICK_HIDAPI_PS5_RUMBLE"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for Google Stadia controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_STADIA "SDL_JOYSTICK_HIDAPI_STADIA"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for Steam Controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used for Steam Controllers, which requires Bluetooth access
+ *                and may prompt the user for permission on iOS and Android.
+ *
+ *  The default is "0"
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_STEAM "SDL_JOYSTICK_HIDAPI_STEAM"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for Nintendo Switch controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_SWITCH "SDL_JOYSTICK_HIDAPI_SWITCH"
+
+/**
+ *  \brief  A variable controlling whether the Home button LED should be turned on when a Nintendo Switch controller is opened
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - home button LED is turned off
+ *    "1"       - home button LED is turned on
+ *
+ *  By default the Home button LED state is not changed.
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_SWITCH_HOME_LED "SDL_JOYSTICK_HIDAPI_SWITCH_HOME_LED"
+
+/**
+ *  \brief  A variable controlling whether the HIDAPI driver for XBox controllers should be used.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - HIDAPI driver is not used
+ *    "1"       - HIDAPI driver is used
+ *
+ *  The default is "0" on Windows, otherwise the value of SDL_HINT_JOYSTICK_HIDAPI
+ */
+#define SDL_HINT_JOYSTICK_HIDAPI_XBOX   "SDL_JOYSTICK_HIDAPI_XBOX"
+
+ /**
+  *  \brief  A variable controlling whether the RAWINPUT joystick drivers should be used for better handling XInput-capable devices.
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - RAWINPUT drivers are not used
+  *    "1"       - RAWINPUT drivers are used (the default)
+  */
+#define SDL_HINT_JOYSTICK_RAWINPUT "SDL_JOYSTICK_RAWINPUT"
+
+ /**
+  *  \brief  A variable controlling whether the RAWINPUT driver should pull correlated data from XInput.
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - RAWINPUT driver will only use data from raw input APIs
+  *    "1"       - RAWINPUT driver will also pull data from XInput, providing
+  *                better trigger axes, guide button presses, and rumble support
+  *                for Xbox controllers
+  *
+  *  The default is "1".  This hint applies to any joysticks opened after setting the hint.
+  */
+#define SDL_HINT_JOYSTICK_RAWINPUT_CORRELATE_XINPUT   "SDL_JOYSTICK_RAWINPUT_CORRELATE_XINPUT"
+
+ /**
+  *  \brief  A variable controlling whether the ROG Chakram mice should show up as joysticks
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - ROG Chakram mice do not show up as joysticks (the default)
+  *    "1"       - ROG Chakram mice show up as joysticks
+  */
+#define SDL_HINT_JOYSTICK_ROG_CHAKRAM "SDL_JOYSTICK_ROG_CHAKRAM"
+
+ /**
+  *  \brief  A variable controlling whether a separate thread should be used
+  *          for handling joystick detection and raw input messages on Windows
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - A separate thread is not used (the default)
+  *    "1"       - A separate thread is used for handling raw input messages
+  *
+  */
+#define SDL_HINT_JOYSTICK_THREAD "SDL_JOYSTICK_THREAD"
+
+/**
+ * \brief Determines whether SDL enforces that DRM master is required in order
+ *        to initialize the KMSDRM video backend.
+ *
+ * The DRM subsystem has a concept of a "DRM master" which is a DRM client that
+ * has the ability to set planes, set cursor, etc. When SDL is DRM master, it
+ * can draw to the screen using the SDL rendering APIs. Without DRM master, SDL
+ * is still able to process input and query attributes of attached displays,
+ * but it cannot change display state or draw to the screen directly.
+ *
+ * In some cases, it can be useful to have the KMSDRM backend even if it cannot
+ * be used for rendering. An app may want to use SDL for input processing while
+ * using another rendering API (such as an MMAL overlay on Raspberry Pi) or
+ * using its own code to render to DRM overlays that SDL doesn't support.
+ *
+ * This hint must be set before initializing the video subsystem.
+ *
+ * This variable can be set to the following values:
+ *    "0"       - SDL will allow usage of the KMSDRM backend without DRM master
+ *    "1"       - SDL Will require DRM master to use the KMSDRM backend (default)
+ */
+#define SDL_HINT_KMSDRM_REQUIRE_DRM_MASTER      "SDL_KMSDRM_REQUIRE_DRM_MASTER"
+
+ /**
+  *  \brief  A comma separated list of devices to open as joysticks
+  *
+  *  This variable is currently only used by the Linux joystick driver.
+  */
+#define SDL_HINT_JOYSTICK_DEVICE "SDL_JOYSTICK_DEVICE"
+
+ /**
+  *  \brief  A variable controlling whether to use the classic /dev/input/js* joystick interface or the newer /dev/input/event* joystick interface on Linux
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - Use /dev/input/event*
+  *    "1"       - Use /dev/input/js*
+  *
+  *  By default the /dev/input/event* interfaces are used
+  */
+#define SDL_HINT_LINUX_JOYSTICK_CLASSIC "SDL_LINUX_JOYSTICK_CLASSIC"
+
+ /**
+  *  \brief  A variable controlling whether joysticks on Linux adhere to their HID-defined deadzones or return unfiltered values.
+  *
+  *  This variable can be set to the following values:
+  *    "0"       - Return unfiltered joystick axis values (the default)
+  *    "1"       - Return axis values with deadzones taken into account
+  */
+#define SDL_HINT_LINUX_JOYSTICK_DEADZONES "SDL_LINUX_JOYSTICK_DEADZONES"
+
+/**
+*  \brief  When set don't force the SDL app to become a foreground process
+*
+*  This hint only applies to Mac OS X.
+*
+*/
+#define SDL_HINT_MAC_BACKGROUND_APP    "SDL_MAC_BACKGROUND_APP"
+
+/**
+ *  \brief A variable that determines whether ctrl+click should generate a right-click event on Mac
+ *
+ *  If present, holding ctrl while left clicking will generate a right click
+ *  event when on Mac.
+ */
+#define SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK "SDL_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK"
+
+/**
+ *  \brief  A variable setting the double click radius, in pixels.
+ */
+#define SDL_HINT_MOUSE_DOUBLE_CLICK_RADIUS    "SDL_MOUSE_DOUBLE_CLICK_RADIUS"
+
+/**
+ *  \brief  A variable setting the double click time, in milliseconds.
+ */
+#define SDL_HINT_MOUSE_DOUBLE_CLICK_TIME    "SDL_MOUSE_DOUBLE_CLICK_TIME"
+
+/**
+ *  \brief Allow mouse click events when clicking to focus an SDL window
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Ignore mouse clicks that activate a window
+ *    "1"       - Generate events for mouse clicks that activate a window
+ *
+ *  By default SDL will ignore mouse clicks that activate a window
+ */
+#define SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH "SDL_MOUSE_FOCUS_CLICKTHROUGH"
+
+/**
+ *  \brief  A variable setting the speed scale for mouse motion, in floating point, when the mouse is not in relative mode
+ */
+#define SDL_HINT_MOUSE_NORMAL_SPEED_SCALE    "SDL_MOUSE_NORMAL_SPEED_SCALE"
+
+/**
+ *  \brief  A variable controlling whether relative mouse mode constrains the mouse to the center of the window
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Relative mouse mode constrains the mouse to the window
+ *    "1"       - Relative mouse mode constrains the mouse to the center of the window
+ *
+ *  Constraining to the center of the window works better for FPS games and when the
+ *  application is running over RDP. Constraining to the whole window works better
+ *  for 2D games and increases the chance that the mouse will be in the correct
+ *  position when using high DPI mice.
+ *
+ *  By default SDL will constrain the mouse to the center of the window
+ */
+#define SDL_HINT_MOUSE_RELATIVE_MODE_CENTER    "SDL_MOUSE_RELATIVE_MODE_CENTER"
+
+/**
+ *  \brief  A variable controlling whether relative mouse mode is implemented using mouse warping
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Relative mouse mode uses raw input
+ *    "1"       - Relative mouse mode uses mouse warping
+ *
+ *  By default SDL will use raw input for relative mouse mode
+ */
+#define SDL_HINT_MOUSE_RELATIVE_MODE_WARP    "SDL_MOUSE_RELATIVE_MODE_WARP"
+
+/**
+ *  \brief  A variable controlling whether relative mouse motion is affected by renderer scaling
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Relative motion is unaffected by DPI or renderer's logical size
+ *    "1"       - Relative motion is scaled according to DPI scaling and logical size
+ *
+ *  By default relative mouse deltas are affected by DPI and renderer scaling
+ */
+#define SDL_HINT_MOUSE_RELATIVE_SCALING "SDL_MOUSE_RELATIVE_SCALING"
+
+/**
+ *  \brief  A variable setting the scale for mouse motion, in floating point, when the mouse is in relative mode
+ */
+#define SDL_HINT_MOUSE_RELATIVE_SPEED_SCALE    "SDL_MOUSE_RELATIVE_SPEED_SCALE"
+
+/**
+ *  \brief  A variable controlling whether mouse events should generate synthetic touch events
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Mouse events will not generate touch events (default for desktop platforms)
+ *    "1"       - Mouse events will generate touch events (default for mobile platforms, such as Android and iOS)
+ */
+#define SDL_HINT_MOUSE_TOUCH_EVENTS    "SDL_MOUSE_TOUCH_EVENTS"
+
+/**
+ *  \brief  A variable controlling whether the mouse is captured while mouse buttons are pressed
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - The mouse is not captured while mouse buttons are pressed
+ *    "1"       - The mouse is captured while mouse buttons are pressed
+ *
+ *  By default the mouse is captured while mouse buttons are pressed so if the mouse is dragged
+ *  outside the window, the application continues to receive mouse events until the button is
+ *  released.
+ */
+#define SDL_HINT_MOUSE_AUTO_CAPTURE    "SDL_MOUSE_AUTO_CAPTURE"
+
+/**
+ *  \brief Tell SDL not to catch the SIGINT or SIGTERM signals.
+ *
+ * This hint only applies to Unix-like platforms, and should set before
+ * any calls to SDL_Init()
+ *
+ * The variable can be set to the following values:
+ *   "0"       - SDL will install a SIGINT and SIGTERM handler, and when it
+ *               catches a signal, convert it into an SDL_QUIT event.
+ *   "1"       - SDL will not install a signal handler at all.
+ */
+#define SDL_HINT_NO_SIGNAL_HANDLERS   "SDL_NO_SIGNAL_HANDLERS"
+
+/**
+ *  \brief  A variable controlling what driver to use for OpenGL ES contexts.
+ *
+ *  On some platforms, currently Windows and X11, OpenGL drivers may support
+ *  creating contexts with an OpenGL ES profile. By default SDL uses these
+ *  profiles, when available, otherwise it attempts to load an OpenGL ES
+ *  library, e.g. that provided by the ANGLE project. This variable controls
+ *  whether SDL follows this default behaviour or will always load an
+ *  OpenGL ES library.
+ *
+ *  Circumstances where this is useful include
+ *  - Testing an app with a particular OpenGL ES implementation, e.g ANGLE,
+ *    or emulator, e.g. those from ARM, Imagination or Qualcomm.
+ *  - Resolving OpenGL ES function addresses at link time by linking with
+ *    the OpenGL ES library instead of querying them at run time with
+ *    SDL_GL_GetProcAddress().
+ *
+ *  Caution: for an application to work with the default behaviour across
+ *  different OpenGL drivers it must query the OpenGL ES function
+ *  addresses at run time using SDL_GL_GetProcAddress().
+ *
+ *  This variable is ignored on most platforms because OpenGL ES is native
+ *  or not supported.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Use ES profile of OpenGL, if available. (Default when not set.)
+ *    "1"       - Load OpenGL ES library using the default library names.
+ *
+ */
+#define SDL_HINT_OPENGL_ES_DRIVER   "SDL_OPENGL_ES_DRIVER"
+
+/**
+ *  \brief  A variable controlling which orientations are allowed on iOS/Android.
+ *
+ *  In some circumstances it is necessary to be able to explicitly control
+ *  which UI orientations are allowed.
+ *
+ *  This variable is a space delimited list of the following values:
+ *    "LandscapeLeft", "LandscapeRight", "Portrait" "PortraitUpsideDown"
+ */
+#define SDL_HINT_ORIENTATIONS "SDL_IOS_ORIENTATIONS"
+
+/**
+ *  \brief  A variable controlling the use of a sentinel event when polling the event queue
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable poll sentinels
+ *    "1"       - Enable poll sentinels
+ *
+ *  When polling for events, SDL_PumpEvents is used to gather new events from devices.
+ *  If a device keeps producing new events between calls to SDL_PumpEvents, a poll loop will
+ *  become stuck until the new events stop.
+ *  This is most noticable when moving a high frequency mouse.
+ *
+ *  By default, poll sentinels are enabled.
+ */
+#define SDL_HINT_POLL_SENTINEL "SDL_POLL_SENTINEL"
+
+/**
+ *  \brief Override for SDL_GetPreferredLocales()
+ *
+ *  If set, this will be favored over anything the OS might report for the
+ *  user's preferred locales. Changing this hint at runtime will not generate
+ *  a SDL_LOCALECHANGED event (but if you can change the hint, you can push
+ *  your own event, if you want).
+ *
+ *  The format of this hint is a comma-separated list of language and locale,
+ *  combined with an underscore, as is a common format: "en_GB". Locale is
+ *  optional: "en". So you might have a list like this: "en_GB,jp,es_PT"
+ */
+#define SDL_HINT_PREFERRED_LOCALES "SDL_PREFERRED_LOCALES"
+
+/**
+ *  \brief  A variable describing the content orientation on QtWayland-based platforms.
+ *
+ *  On QtWayland platforms, windows are rotated client-side to allow for custom
+ *  transitions. In order to correctly position overlays (e.g. volume bar) and
+ *  gestures (e.g. events view, close/minimize gestures), the system needs to
+ *  know in which orientation the application is currently drawing its contents.
+ *
+ *  This does not cause the window to be rotated or resized, the application
+ *  needs to take care of drawing the content in the right orientation (the
+ *  framebuffer is always in portrait mode).
+ *
+ *  This variable can be one of the following values:
+ *    "primary" (default), "portrait", "landscape", "inverted-portrait", "inverted-landscape"
+ */
+#define SDL_HINT_QTWAYLAND_CONTENT_ORIENTATION "SDL_QTWAYLAND_CONTENT_ORIENTATION"
+
+/**
+ *  \brief  Flags to set on QtWayland windows to integrate with the native window manager.
+ *
+ *  On QtWayland platforms, this hint controls the flags to set on the windows.
+ *  For example, on Sailfish OS "OverridesSystemGestures" disables swipe gestures.
+ *
+ *  This variable is a space-separated list of the following values (empty = no flags):
+ *    "OverridesSystemGestures", "StaysOnTop", "BypassWindowManager"
+ */
+#define SDL_HINT_QTWAYLAND_WINDOW_FLAGS "SDL_QTWAYLAND_WINDOW_FLAGS"
+
+/**
+ *  \brief  A variable controlling whether the 2D render API is compatible or efficient.
+ *
+ *  This variable can be set to the following values:
+ *
+ *    "0"     - Don't use batching to make rendering more efficient.
+ *    "1"     - Use batching, but might cause problems if app makes its own direct OpenGL calls.
+ *
+ *  Up to SDL 2.0.9, the render API would draw immediately when requested. Now
+ *  it batches up draw requests and sends them all to the GPU only when forced
+ *  to (during SDL_RenderPresent, when changing render targets, by updating a
+ *  texture that the batch needs, etc). This is significantly more efficient,
+ *  but it can cause problems for apps that expect to render on top of the
+ *  render API's output. As such, SDL will disable batching if a specific
+ *  render backend is requested (since this might indicate that the app is
+ *  planning to use the underlying graphics API directly). This hint can
+ *  be used to explicitly request batching in this instance. It is a contract
+ *  that you will either never use the underlying graphics API directly, or
+ *  if you do, you will call SDL_RenderFlush() before you do so any current
+ *  batch goes to the GPU before your work begins. Not following this contract
+ *  will result in undefined behavior.
+ */
+#define SDL_HINT_RENDER_BATCHING  "SDL_RENDER_BATCHING"
+
+/**
+ *  \brief  A variable controlling how the 2D render API renders lines
+ *
+ *  This variable can be set to the following values:
+ *    "0"     - Use the default line drawing method (Bresenham's line algorithm as of SDL 2.0.20)
+ *    "1"     - Use the driver point API using Bresenham's line algorithm (correct, draws many points)
+ *    "2"     - Use the driver line API (occasionally misses line endpoints based on hardware driver quirks, was the default before 2.0.20)
+ *    "3"     - Use the driver geometry API (correct, draws thicker diagonal lines)
+ *
+ *  This variable should be set when the renderer is created.
+ */
+#define SDL_HINT_RENDER_LINE_METHOD "SDL_RENDER_LINE_METHOD"
+
+/**
+ *  \brief  A variable controlling whether to enable Direct3D 11+'s Debug Layer.
+ *
+ *  This variable does not have any effect on the Direct3D 9 based renderer.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable Debug Layer use
+ *    "1"       - Enable Debug Layer use
+ *
+ *  By default, SDL does not use Direct3D Debug Layer.
+ */
+#define SDL_HINT_RENDER_DIRECT3D11_DEBUG    "SDL_RENDER_DIRECT3D11_DEBUG"
+
+/**
+ *  \brief  A variable controlling whether the Direct3D device is initialized for thread-safe operations.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Thread-safety is not enabled (faster)
+ *    "1"       - Thread-safety is enabled
+ *
+ *  By default the Direct3D device is created with thread-safety disabled.
+ */
+#define SDL_HINT_RENDER_DIRECT3D_THREADSAFE "SDL_RENDER_DIRECT3D_THREADSAFE"
+
+/**
+ *  \brief  A variable specifying which render driver to use.
+ *
+ *  If the application doesn't pick a specific renderer to use, this variable
+ *  specifies the name of the preferred renderer.  If the preferred renderer
+ *  can't be initialized, the normal default renderer is used.
+ *
+ *  This variable is case insensitive and can be set to the following values:
+ *    "direct3d"
+ *    "opengl"
+ *    "opengles2"
+ *    "opengles"
+ *    "metal"
+ *    "software"
+ *
+ *  The default varies by platform, but it's the first one in the list that
+ *  is available on the current platform.
+ */
+#define SDL_HINT_RENDER_DRIVER              "SDL_RENDER_DRIVER"
+
+/**
+ *  \brief  A variable controlling the scaling policy for SDL_RenderSetLogicalSize.
+ *
+ *  This variable can be set to the following values:
+ *    "0" or "letterbox" - Uses letterbox/sidebars to fit the entire rendering on screen
+ *    "1" or "overscan"  - Will zoom the rendering so it fills the entire screen, allowing edges to be drawn offscreen
+ *
+ *  By default letterbox is used
+ */
+#define SDL_HINT_RENDER_LOGICAL_SIZE_MODE       "SDL_RENDER_LOGICAL_SIZE_MODE"
+
+/**
+ *  \brief  A variable controlling whether the OpenGL render driver uses shaders if they are available.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable shaders
+ *    "1"       - Enable shaders
+ *
+ *  By default shaders are used if OpenGL supports them.
+ */
+#define SDL_HINT_RENDER_OPENGL_SHADERS      "SDL_RENDER_OPENGL_SHADERS"
+
+/**
+ *  \brief  A variable controlling the scaling quality
+ *
+ *  This variable can be set to the following values:
+ *    "0" or "nearest" - Nearest pixel sampling
+ *    "1" or "linear"  - Linear filtering (supported by OpenGL and Direct3D)
+ *    "2" or "best"    - Currently this is the same as "linear"
+ *
+ *  By default nearest pixel sampling is used
+ */
+#define SDL_HINT_RENDER_SCALE_QUALITY       "SDL_RENDER_SCALE_QUALITY"
+
+/**
+ *  \brief  A variable controlling whether updates to the SDL screen surface should be synchronized with the vertical refresh, to avoid tearing.
+ *
+ *  This variable can be set to the following values:
+ *    "0"       - Disable vsync
+ *    "1"       - Enable vsync
+ *
+ *  By default SDL does not sync screen surface updates with vertical refresh.
+ */
+#define SDL_HINT_RENDER_VSYNC               "SDL_RENDER_VSYNC"
+
+ /**
+ * \brief A variable to control whether the return key on the soft keyboard
+ *        should hide the soft keyboard on Android and iOS.
+ *
+ * The variable can be set to the following values:
+ *   "0"       - The return key will be handled as a key event. This is the behaviour of SDL <= 2.0.3. (default)
+ *   "1"       - The return key will hide the keyboard.
+ *
+ * The value of this hint is used at runtime, so it can be changed at any time.
+ */
+#define SDL_HINT_RETURN_KEY_HIDES_IME "SDL_RETURN_KEY_HIDES_IME"
+
+/**
+ * \brief Tell SDL which Dispmanx layer to use on a Raspberry PI
+ *
+ * Also known as Z-order. The variable can take a negative or positive value.
+ * The default is 10000.
+ */
+#define SDL_HINT_RPI_VIDEO_LAYER           "SDL_RPI_VIDEO_LAYER"
+
+/**
+ *  \brief Specify an "activity name" for screensaver inhibition.
+ *
+ * Some platforms, notably Linux desktops, list the applications which are
+ * inhibiting the screensaver or other power-saving features.
+ *
+ * This hint lets you specify the "activity name" sent to the OS when
+ * SDL_DisableScreenSaver() is used (or the screensaver is automatically
+ * disabled). The contents of this hint are used when the screensaver is
+ * disabled. You should use a string that describes what your program is doing
+ * (and, therefore, why the screensaver is disabled).  For example, "Playing a
+ * game" or "Watching a video".
+ * 
+ * Setting this to "" or leaving it unset will have SDL use a reasonable
+ * default: "Playing a game" or something similar.
+ *
+ * On targets where this is not supported, this hint does nothing.
+ */
+#define SDL_HINT_SCREENSAVER_INHIBIT_ACTIVITY_NAME "SDL_SCREENSAVER_INHIBIT_ACTIVITY_NAME"
+
+/**
+ *  \brief Specifies whether SDL_THREAD_PRIORITY_TIME_CRITICAL should be treated as realtime.
+ *
+ *  On some platforms, like Linux, a realtime priority thread may be subject to restrictions
+ *  that require special handling by the application. This hint exists to let SDL know that
+ *  the app is prepared to handle said restrictions.
+ * 
+ *  On Linux, SDL will apply the following configuration to any thread that becomes realtime:
+ *   * The SCHED_RESET_ON_FORK bit will be set on the scheduling policy,
+ *   * An RLIMIT_RTTIME budget will be configured to the rtkit specified limit.
+ *     * Exceeding this limit will result in the kernel sending SIGKILL to the app,
+ *     * Refer to the man pages for more information.
+ * 
+ *  This variable can be set to the following values:
+ *    "0"       - default platform specific behaviour
+ *    "1"       - Force SDL_THREAD_PRIORITY_TIME_CRITICAL to a realtime scheduling policy
+ */
+#define SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL "SDL_THREAD_FORCE_REALTIME_TIME_CRITICAL"
+
+/**
+*  \brief  A string specifying additional information to use with SDL_SetThreadPriority.
+*
+*  By default SDL_SetThreadPriority will make appropriate system changes in order to
+*  apply a thread priority.  For example on systems using pthreads the scheduler policy
+*  is changed automatically to a policy that works well with a given priority.
+*  Code which has specific requirements can override SDL's default behavior with this hint.
+*
+*  pthread hint values are "current",

@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1651886025 source:c:\users\rizqi\desktop\c++\latihan 33\overloading constructors\main.cpp
+	<iostream>
+	"Person.h"
+
+1651885995 c:\users\rizqi\desktop\c++\latihan 33\overloading constructors\person.h
+	<iostream>
+
+1651885556 source:c:\users\rizqi\desktop\c++\latihan 33\overloading constructors\person.cpp
+	<sstream>
+	"Person.h"
+

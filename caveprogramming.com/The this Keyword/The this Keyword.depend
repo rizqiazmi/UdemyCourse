@@ -1,0 +1,12 @@
+# depslib dependency file v1.0
+1651889129 source:c:\users\rizqi\desktop\c++\latihan 34\the this keyword\main.cpp
+	<iostream>
+	"Person.h"
+
+1651887138 c:\users\rizqi\desktop\c++\latihan 34\the this keyword\person.h
+	<iostream>
+
+1651887471 source:c:\users\rizqi\desktop\c++\latihan 34\the this keyword\person.cpp
+	"Person.h"
+	<sstream>
+

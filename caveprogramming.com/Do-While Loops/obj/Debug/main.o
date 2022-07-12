@@ -1,0 +1,1727 @@
+ SDL_Rect structure or NULL for the entire
+ *                rendering target
+ * \param angle an angle in degrees that indicates the rotation that will be
+ *              applied to dstrect, rotating it in a clockwise direction
+ * \param center a pointer to a point indicating the point around which
+ *               dstrect will be rotated (if NULL, rotation will be done
+ *               around `dstrect.w / 2`, `dstrect.h / 2`)
+ * \param flip a SDL_RendererFlip value stating which flipping actions should
+ *             be performed on the texture
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RenderCopy
+ * \sa SDL_SetTextureAlphaMod
+ * \sa SDL_SetTextureBlendMode
+ * \sa SDL_SetTextureColorMod
+ */
+extern DECLSPEC int SDLCALL SDL_RenderCopyEx(SDL_Renderer * renderer,
+                                           SDL_Texture * texture,
+                                           const SDL_Rect * srcrect,
+                                           const SDL_Rect * dstrect,
+                                           const double angle,
+                                           const SDL_Point *center,
+                                           const SDL_RendererFlip flip);
+
+
+/**
+ * Draw a point on the current rendering target at subpixel precision.
+ *
+ * \param renderer The renderer which should draw a point.
+ * \param x The x coordinate of the point.
+ * \param y The y coordinate of the point.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawPointF(SDL_Renderer * renderer,
+                                                 float x, float y);
+
+/**
+ * Draw multiple points on the current rendering target at subpixel precision.
+ *
+ * \param renderer The renderer which should draw multiple points.
+ * \param points The points to draw
+ * \param count The number of points to draw
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawPointsF(SDL_Renderer * renderer,
+                                                  const SDL_FPoint * points,
+                                                  int count);
+
+/**
+ * Draw a line on the current rendering target at subpixel precision.
+ *
+ * \param renderer The renderer which should draw a line.
+ * \param x1 The x coordinate of the start point.
+ * \param y1 The y coordinate of the start point.
+ * \param x2 The x coordinate of the end point.
+ * \param y2 The y coordinate of the end point.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawLineF(SDL_Renderer * renderer,
+                                                float x1, float y1, float x2, float y2);
+
+/**
+ * Draw a series of connected lines on the current rendering target at
+ * subpixel precision.
+ *
+ * \param renderer The renderer which should draw multiple lines.
+ * \param points The points along the lines
+ * \param count The number of points, drawing count-1 lines
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawLinesF(SDL_Renderer * renderer,
+                                                 const SDL_FPoint * points,
+                                                 int count);
+
+/**
+ * Draw a rectangle on the current rendering target at subpixel precision.
+ *
+ * \param renderer The renderer which should draw a rectangle.
+ * \param rect A pointer to the destination rectangle, or NULL to outline the
+ *             entire rendering target.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawRectF(SDL_Renderer * renderer,
+                                                const SDL_FRect * rect);
+
+/**
+ * Draw some number of rectangles on the current rendering target at subpixel
+ * precision.
+ *
+ * \param renderer The renderer which should draw multiple rectangles.
+ * \param rects A pointer to an array of destination rectangles.
+ * \param count The number of rectangles.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderDrawRectsF(SDL_Renderer * renderer,
+                                                 const SDL_FRect * rects,
+                                                 int count);
+
+/**
+ * Fill a rectangle on the current rendering target with the drawing color at
+ * subpixel precision.
+ *
+ * \param renderer The renderer which should fill a rectangle.
+ * \param rect A pointer to the destination rectangle, or NULL for the entire
+ *             rendering target.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderFillRectF(SDL_Renderer * renderer,
+                                                const SDL_FRect * rect);
+
+/**
+ * Fill some number of rectangles on the current rendering target with the
+ * drawing color at subpixel precision.
+ *
+ * \param renderer The renderer which should fill multiple rectangles.
+ * \param rects A pointer to an array of destination rectangles.
+ * \param count The number of rectangles.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderFillRectsF(SDL_Renderer * renderer,
+                                                 const SDL_FRect * rects,
+                                                 int count);
+
+/**
+ * Copy a portion of the texture to the current rendering target at subpixel
+ * precision.
+ *
+ * \param renderer The renderer which should copy parts of a texture.
+ * \param texture The source texture.
+ * \param srcrect A pointer to the source rectangle, or NULL for the entire
+ *                texture.
+ * \param dstrect A pointer to the destination rectangle, or NULL for the
+ *                entire rendering target.
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderCopyF(SDL_Renderer * renderer,
+                                            SDL_Texture * texture,
+                                            const SDL_Rect * srcrect,
+                                            const SDL_FRect * dstrect);
+
+/**
+ * Copy a portion of the source texture to the current rendering target, with
+ * rotation and flipping, at subpixel precision.
+ *
+ * \param renderer The renderer which should copy parts of a texture.
+ * \param texture The source texture.
+ * \param srcrect A pointer to the source rectangle, or NULL for the entire
+ *                texture.
+ * \param dstrect A pointer to the destination rectangle, or NULL for the
+ *                entire rendering target.
+ * \param angle An angle in degrees that indicates the rotation that will be
+ *              applied to dstrect, rotating it in a clockwise direction
+ * \param center A pointer to a point indicating the point around which
+ *               dstrect will be rotated (if NULL, rotation will be done
+ *               around dstrect.w/2, dstrect.h/2).
+ * \param flip An SDL_RendererFlip value stating which flipping actions should
+ *             be performed on the texture
+ * \return 0 on success, or -1 on error
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderCopyExF(SDL_Renderer * renderer,
+                                            SDL_Texture * texture,
+                                            const SDL_Rect * srcrect,
+                                            const SDL_FRect * dstrect,
+                                            const double angle,
+                                            const SDL_FPoint *center,
+                                            const SDL_RendererFlip flip);
+
+/**
+ * Render a list of triangles, optionally using a texture and indices into the
+ * vertex array Color and alpha modulation is done per vertex
+ * (SDL_SetTextureColorMod and SDL_SetTextureAlphaMod are ignored).
+ *
+ * \param renderer The rendering context.
+ * \param texture (optional) The SDL texture to use.
+ * \param vertices Vertices.
+ * \param num_vertices Number of vertices.
+ * \param indices (optional) An array of integer indices into the 'vertices'
+ *                array, if NULL all vertices will be rendered in sequential
+ *                order.
+ * \param num_indices Number of indices.
+ * \return 0 on success, or -1 if the operation is not supported
+ *
+ * \since This function is available since SDL 2.0.18.
+ *
+ * \sa SDL_RenderGeometryRaw
+ * \sa SDL_Vertex
+ */
+extern DECLSPEC int SDLCALL SDL_RenderGeometry(SDL_Renderer *renderer,
+                                               SDL_Texture *texture,
+                                               const SDL_Vertex *vertices, int num_vertices,
+                                               const int *indices, int num_indices);
+
+/**
+ * Render a list of triangles, optionally using a texture and indices into the
+ * vertex arrays Color and alpha modulation is done per vertex
+ * (SDL_SetTextureColorMod and SDL_SetTextureAlphaMod are ignored).
+ *
+ * \param renderer The rendering context.
+ * \param texture (optional) The SDL texture to use.
+ * \param xy Vertex positions
+ * \param xy_stride Byte size to move from one element to the next element
+ * \param color Vertex colors (as SDL_Color)
+ * \param color_stride Byte size to move from one element to the next element
+ * \param uv Vertex normalized texture coordinates
+ * \param uv_stride Byte size to move from one element to the next element
+ * \param num_vertices Number of vertices.
+ * \param indices (optional) An array of indices into the 'vertices' arrays,
+ *                if NULL all vertices will be rendered in sequential order.
+ * \param num_indices Number of indices.
+ * \param size_indices Index size: 1 (byte), 2 (short), 4 (int)
+ * \return 0 on success, or -1 if the operation is not supported
+ *
+ * \since This function is available since SDL 2.0.18.
+ *
+ * \sa SDL_RenderGeometry
+ * \sa SDL_Vertex
+ */
+extern DECLSPEC int SDLCALL SDL_RenderGeometryRaw(SDL_Renderer *renderer,
+                                               SDL_Texture *texture,
+                                               const float *xy, int xy_stride,
+                                               const SDL_Color *color, int color_stride,
+                                               const float *uv, int uv_stride,
+                                               int num_vertices,
+                                               const void *indices, int num_indices, int size_indices);
+
+/**
+ * Read pixels from the current rendering target to an array of pixels.
+ *
+ * **WARNING**: This is a very slow operation, and should not be used
+ * frequently. If you're using this on the main rendering target, it should be
+ * called after rendering and before SDL_RenderPresent().
+ *
+ * `pitch` specifies the number of bytes between rows in the destination
+ * `pixels` data. This allows you to write to a subrectangle or have padded
+ * rows in the destination. Generally, `pitch` should equal the number of
+ * pixels per row in the `pixels` data times the number of bytes per pixel,
+ * but it might contain additional padding (for example, 24bit RGB Windows
+ * Bitmap data pads all rows to multiples of 4 bytes).
+ *
+ * \param renderer the rendering context
+ * \param rect an SDL_Rect structure representing the area to read, or NULL
+ *             for the entire render target
+ * \param format an SDL_PixelFormatEnum value of the desired format of the
+ *               pixel data, or 0 to use the format of the rendering target
+ * \param pixels a pointer to the pixel data to copy into
+ * \param pitch the pitch of the `pixels` parameter
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderReadPixels(SDL_Renderer * renderer,
+                                                 const SDL_Rect * rect,
+                                                 Uint32 format,
+                                                 void *pixels, int pitch);
+
+/**
+ * Update the screen with any rendering performed since the previous call.
+ *
+ * SDL's rendering functions operate on a backbuffer; that is, calling a
+ * rendering function such as SDL_RenderDrawLine() does not directly put a
+ * line on the screen, but rather updates the backbuffer. As such, you compose
+ * your entire scene and *present* the composed backbuffer to the screen as a
+ * complete picture.
+ *
+ * Therefore, when using SDL's rendering API, one does all drawing intended
+ * for the frame, and then calls this function once per frame to present the
+ * final drawing to the user.
+ *
+ * The backbuffer should be considered invalidated after each present; do not
+ * assume that previous contents will exist between frames. You are strongly
+ * encouraged to call SDL_RenderClear() to initialize the backbuffer before
+ * starting each new frame's drawing, even if you plan to overwrite every
+ * pixel.
+ *
+ * \param renderer the rendering context
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RenderClear
+ * \sa SDL_RenderDrawLine
+ * \sa SDL_RenderDrawLines
+ * \sa SDL_RenderDrawPoint
+ * \sa SDL_RenderDrawPoints
+ * \sa SDL_RenderDrawRect
+ * \sa SDL_RenderDrawRects
+ * \sa SDL_RenderFillRect
+ * \sa SDL_RenderFillRects
+ * \sa SDL_SetRenderDrawBlendMode
+ * \sa SDL_SetRenderDrawColor
+ */
+extern DECLSPEC void SDLCALL SDL_RenderPresent(SDL_Renderer * renderer);
+
+/**
+ * Destroy the specified texture.
+ *
+ * Passing NULL or an otherwise invalid texture will set the SDL error message
+ * to "Invalid texture".
+ *
+ * \param texture the texture to destroy
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateTexture
+ * \sa SDL_CreateTextureFromSurface
+ */
+extern DECLSPEC void SDLCALL SDL_DestroyTexture(SDL_Texture * texture);
+
+/**
+ * Destroy the rendering context for a window and free associated textures.
+ *
+ * \param renderer the rendering context
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateRenderer
+ */
+extern DECLSPEC void SDLCALL SDL_DestroyRenderer(SDL_Renderer * renderer);
+
+/**
+ * Force the rendering context to flush any pending commands to the underlying
+ * rendering API.
+ *
+ * You do not need to (and in fact, shouldn't) call this function unless you
+ * are planning to call into OpenGL/Direct3D/Metal/whatever directly in
+ * addition to using an SDL_Renderer.
+ *
+ * This is for a very-specific case: if you are using SDL's render API, you
+ * asked for a specific renderer backend (OpenGL, Direct3D, etc), you set
+ * SDL_HINT_RENDER_BATCHING to "1", and you plan to make OpenGL/D3D/whatever
+ * calls in addition to SDL render API calls. If all of this applies, you
+ * should call SDL_RenderFlush() between calls to SDL's render API and the
+ * low-level API you're using in cooperation.
+ *
+ * In all other cases, you can ignore this function. This is only here to get
+ * maximum performance out of a specific situation. In all other cases, SDL
+ * will do the right thing, perhaps at a performance loss.
+ *
+ * This function is first available in SDL 2.0.10, and is not needed in 2.0.9
+ * and earlier, as earlier versions did not queue rendering commands at all,
+ * instead flushing them to the OS immediately.
+ *
+ * \param renderer the rendering context
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderFlush(SDL_Renderer * renderer);
+
+
+/**
+ * Bind an OpenGL/ES/ES2 texture to the current context.
+ *
+ * This is for use with OpenGL instructions when rendering OpenGL primitives
+ * directly.
+ *
+ * If not NULL, `texw` and `texh` will be filled with the width and height
+ * values suitable for the provided texture. In most cases, both will be 1.0,
+ * however, on systems that support the GL_ARB_texture_rectangle extension,
+ * these values will actually be the pixel width and height used to create the
+ * texture, so this factor needs to be taken into account when providing
+ * texture coordinates to OpenGL.
+ *
+ * You need a renderer to create an SDL_Texture, therefore you can only use
+ * this function with an implicit OpenGL context from SDL_CreateRenderer(),
+ * not with your own OpenGL context. If you need control over your OpenGL
+ * context, you need to write your own texture-loading methods.
+ *
+ * Also note that SDL may upload RGB textures as BGR (or vice-versa), and
+ * re-order the color channels in the shaders phase, so the uploaded texture
+ * may have swapped color channels.
+ *
+ * \param texture the texture to bind to the current OpenGL/ES/ES2 context
+ * \param texw a pointer to a float value which will be filled with the
+ *             texture width or NULL if you don't need that value
+ * \param texh a pointer to a float value which will be filled with the
+ *             texture height or NULL if you don't need that value
+ * \returns 0 on success, or -1 if the operation is not supported; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_MakeCurrent
+ * \sa SDL_GL_UnbindTexture
+ */
+extern DECLSPEC int SDLCALL SDL_GL_BindTexture(SDL_Texture *texture, float *texw, float *texh);
+
+/**
+ * Unbind an OpenGL/ES/ES2 texture from the current context.
+ *
+ * See SDL_GL_BindTexture() for examples on how to use these functions
+ *
+ * \param texture the texture to unbind from the current OpenGL/ES/ES2 context
+ * \returns 0 on success, or -1 if the operation is not supported
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_BindTexture
+ * \sa SDL_GL_MakeCurrent
+ */
+extern DECLSPEC int SDLCALL SDL_GL_UnbindTexture(SDL_Texture *texture);
+
+/**
+ * Get the CAMetalLayer associated with the given Metal renderer.
+ *
+ * This function returns `void *`, so SDL doesn't have to include Metal's
+ * headers, but it can be safely cast to a `CAMetalLayer *`.
+ *
+ * \param renderer The renderer to query
+ * \returns a `CAMetalLayer *` on success, or NULL if the renderer isn't a
+ *          Metal renderer
+ *
+ * \since This function is available since SDL 2.0.8.
+ *
+ * \sa SDL_RenderGetMetalCommandEncoder
+ */
+extern DECLSPEC void *SDLCALL SDL_RenderGetMetalLayer(SDL_Renderer * renderer);
+
+/**
+ * Get the Metal command encoder for the current frame
+ *
+ * This function returns `void *`, so SDL doesn't have to include Metal's
+ * headers, but it can be safely cast to an `id<MTLRenderCommandEncoder>`.
+ *
+ * Note that as of SDL 2.0.18, this will return NULL if Metal refuses to give
+ * SDL a drawable to render to, which might happen if the window is
+ * hidden/minimized/offscreen. This doesn't apply to command encoders for
+ * render targets, just the window's backbacker. Check your return values!
+ *
+ * \param renderer The renderer to query
+ * \returns an `id<MTLRenderCommandEncoder>` on success, or NULL if the
+ *          renderer isn't a Metal renderer or there was an error.
+ *
+ * \since This function is available since SDL 2.0.8.
+ *
+ * \sa SDL_RenderGetMetalLayer
+ */
+extern DECLSPEC void *SDLCALL SDL_RenderGetMetalCommandEncoder(SDL_Renderer * renderer);
+
+/**
+ * Toggle VSync of the given renderer.
+ *
+ * \param renderer The renderer to toggle
+ * \param vsync 1 for on, 0 for off. All other values are reserved
+ * \returns a 0 int on success, or non-zero on failure
+ *
+ * \since This function is available since SDL 2.0.18.
+ */
+extern DECLSPEC int SDLCALL SDL_RenderSetVSync(SDL_Renderer* renderer, int vsync);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_render_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                          /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_rwops.h
+ *
+ *  This file provides a general interface for SDL to read and write
+ *  data streams.  It can easily be extended to files, memory, etc.
+ */
+
+#ifndef SDL_rwops_h_
+#define SDL_rwops_h_
+
+#include "SDL_stdinc.h"
+#include "SDL_error.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* RWops Types */
+#define SDL_RWOPS_UNKNOWN   0U  /**< Unknown stream type */
+#define SDL_RWOPS_WINFILE   1U  /**< Win32 file */
+#define SDL_RWOPS_STDFILE   2U  /**< Stdio file */
+#define SDL_RWOPS_JNIFILE   3U  /**< Android asset */
+#define SDL_RWOPS_MEMORY    4U  /**< Memory stream */
+#define SDL_RWOPS_MEMORY_RO 5U  /**< Read-Only memory stream */
+#if defined(__VITA__)
+#define SDL_RWOPS_VITAFILE  6U  /**< Vita file */
+#endif
+
+/**
+ * This is the read/write operation structure -- very basic.
+ */
+typedef struct SDL_RWops
+{
+    /**
+     *  Return the size of the file in this rwops, or -1 if unknown
+     */
+    Sint64 (SDLCALL * size) (struct SDL_RWops * context);
+
+    /**
+     *  Seek to \c offset relative to \c whence, one of stdio's whence values:
+     *  RW_SEEK_SET, RW_SEEK_CUR, RW_SEEK_END
+     *
+     *  \return the final offset in the data stream, or -1 on error.
+     */
+    Sint64 (SDLCALL * seek) (struct SDL_RWops * context, Sint64 offset,
+                             int whence);
+
+    /**
+     *  Read up to \c maxnum objects each of size \c size from the data
+     *  stream to the area pointed at by \c ptr.
+     *
+     *  \return the number of objects read, or 0 at error or end of file.
+     */
+    size_t (SDLCALL * read) (struct SDL_RWops * context, void *ptr,
+                             size_t size, size_t maxnum);
+
+    /**
+     *  Write exactly \c num objects each of size \c size from the area
+     *  pointed at by \c ptr to data stream.
+     *
+     *  \return the number of objects written, or 0 at error or end of file.
+     */
+    size_t (SDLCALL * write) (struct SDL_RWops * context, const void *ptr,
+                              size_t size, size_t num);
+
+    /**
+     *  Close and free an allocated SDL_RWops structure.
+     *
+     *  \return 0 if successful or -1 on write error when flushing data.
+     */
+    int (SDLCALL * close) (struct SDL_RWops * context);
+
+    Uint32 type;
+    union
+    {
+#if defined(__ANDROID__)
+        struct
+        {
+            void *asset;
+        } androidio;
+#elif defined(__WIN32__)
+        struct
+        {
+            SDL_bool append;
+            void *h;
+            struct
+            {
+                void *data;
+                size_t size;
+                size_t left;
+            } buffer;
+        } windowsio;
+#elif defined(__VITA__)
+        struct
+        {
+            int h;
+            struct
+            {
+                void *data;
+                size_t size;
+                size_t left;
+            } buffer;
+        } vitaio;
+#endif
+
+#ifdef HAVE_STDIO_H
+        struct
+        {
+            SDL_bool autoclose;
+            FILE *fp;
+        } stdio;
+#endif
+        struct
+        {
+            Uint8 *base;
+            Uint8 *here;
+            Uint8 *stop;
+        } mem;
+        struct
+        {
+            void *data1;
+            void *data2;
+        } unknown;
+    } hidden;
+
+} SDL_RWops;
+
+
+/**
+ *  \name RWFrom functions
+ *
+ *  Functions to create SDL_RWops structures from various data streams.
+ */
+/* @{ */
+
+/**
+ * Use this function to create a new SDL_RWops structure for reading from
+ * and/or writing to a named file.
+ *
+ * The `mode` string is treated roughly the same as in a call to the C
+ * library's fopen(), even if SDL doesn't happen to use fopen() behind the
+ * scenes.
+ *
+ * Available `mode` strings:
+ *
+ * - "r": Open a file for reading. The file must exist.
+ * - "w": Create an empty file for writing. If a file with the same name
+ *   already exists its content is erased and the file is treated as a new
+ *   empty file.
+ * - "a": Append to a file. Writing operations append data at the end of the
+ *   file. The file is created if it does not exist.
+ * - "r+": Open a file for update both reading and writing. The file must
+ *   exist.
+ * - "w+": Create an empty file for both reading and writing. If a file with
+ *   the same name already exists its content is erased and the file is
+ *   treated as a new empty file.
+ * - "a+": Open a file for reading and appending. All writing operations are
+ *   performed at the end of the file, protecting the previous content to be
+ *   overwritten. You can reposition (fseek, rewind) the internal pointer to
+ *   anywhere in the file for reading, but writing operations will move it
+ *   back to the end of file. The file is created if it does not exist.
+ *
+ * **NOTE**: In order to open a file as a binary file, a "b" character has to
+ * be included in the `mode` string. This additional "b" character can either
+ * be appended at the end of the string (thus making the following compound
+ * modes: "rb", "wb", "ab", "r+b", "w+b", "a+b") or be inserted between the
+ * letter and the "+" sign for the mixed modes ("rb+", "wb+", "ab+").
+ * Additional characters may follow the sequence, although they should have no
+ * effect. For example, "t" is sometimes appended to make explicit the file is
+ * a text file.
+ *
+ * This function supports Unicode filenames, but they must be encoded in UTF-8
+ * format, regardless of the underlying operating system.
+ *
+ * As a fallback, SDL_RWFromFile() will transparently open a matching filename
+ * in an Android app's `assets`.
+ *
+ * Closing the SDL_RWops will close the file handle SDL is holding internally.
+ *
+ * \param file a UTF-8 string representing the filename to open
+ * \param mode an ASCII string representing the mode to be used for opening
+ *             the file.
+ * \returns a pointer to the SDL_RWops structure that is created, or NULL on
+ *          failure; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWtell
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC SDL_RWops *SDLCALL SDL_RWFromFile(const char *file,
+                                                  const char *mode);
+
+#ifdef HAVE_STDIO_H
+
+extern DECLSPEC SDL_RWops *SDLCALL SDL_RWFromFP(FILE * fp, SDL_bool autoclose);
+
+#else
+
+/**
+ * Use this function to create an SDL_RWops structure from a standard I/O file
+ * pointer (stdio.h's `FILE*`).
+ *
+ * This function is not available on Windows, since files opened in an
+ * application on that platform cannot be used by a dynamically linked
+ * library.
+ *
+ * On some platforms, the first parameter is a `void*`, on others, it's a
+ * `FILE*`, depending on what system headers are available to SDL. It is
+ * always intended to be the `FILE*` type from the C runtime's stdio.h.
+ *
+ * \param fp the `FILE*` that feeds the SDL_RWops stream
+ * \param autoclose SDL_TRUE to close the `FILE*` when closing the SDL_RWops,
+ *                  SDL_FALSE to leave the `FILE*` open when the RWops is
+ *                  closed
+ * \returns a pointer to the SDL_RWops structure that is created, or NULL on
+ *          failure; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWtell
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC SDL_RWops *SDLCALL SDL_RWFromFP(void * fp,
+                                                SDL_bool autoclose);
+#endif
+
+/**
+ * Use this function to prepare a read-write memory buffer for use with
+ * SDL_RWops.
+ *
+ * This function sets up an SDL_RWops struct based on a memory area of a
+ * certain size, for both read and write access.
+ *
+ * This memory buffer is not copied by the RWops; the pointer you provide must
+ * remain valid until you close the stream. Closing the stream will not free
+ * the original buffer.
+ *
+ * If you need to make sure the RWops never writes to the memory buffer, you
+ * should use SDL_RWFromConstMem() with a read-only buffer of memory instead.
+ *
+ * \param mem a pointer to a buffer to feed an SDL_RWops stream
+ * \param size the buffer size, in bytes
+ * \returns a pointer to a new SDL_RWops structure, or NULL if it fails; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWtell
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC SDL_RWops *SDLCALL SDL_RWFromMem(void *mem, int size);
+
+/**
+ * Use this function to prepare a read-only memory buffer for use with RWops.
+ *
+ * This function sets up an SDL_RWops struct based on a memory area of a
+ * certain size. It assumes the memory area is not writable.
+ *
+ * Attempting to write to this RWops stream will report an error without
+ * writing to the memory buffer.
+ *
+ * This memory buffer is not copied by the RWops; the pointer you provide must
+ * remain valid until you close the stream. Closing the stream will not free
+ * the original buffer.
+ *
+ * If you need to write to a memory buffer, you should use SDL_RWFromMem()
+ * with a writable buffer of memory instead.
+ *
+ * \param mem a pointer to a read-only buffer to feed an SDL_RWops stream
+ * \param size the buffer size, in bytes
+ * \returns a pointer to a new SDL_RWops structure, or NULL if it fails; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWtell
+ */
+extern DECLSPEC SDL_RWops *SDLCALL SDL_RWFromConstMem(const void *mem,
+                                                      int size);
+
+/* @} *//* RWFrom functions */
+
+
+/**
+ * Use this function to allocate an empty, unpopulated SDL_RWops structure.
+ *
+ * Applications do not need to use this function unless they are providing
+ * their own SDL_RWops implementation. If you just need a SDL_RWops to
+ * read/write a common data source, you should use the built-in
+ * implementations in SDL, like SDL_RWFromFile() or SDL_RWFromMem(), etc.
+ *
+ * You must free the returned pointer with SDL_FreeRW(). Depending on your
+ * operating system and compiler, there may be a difference between the
+ * malloc() and free() your program uses and the versions SDL calls
+ * internally. Trying to mix the two can cause crashing such as segmentation
+ * faults. Since all SDL_RWops must free themselves when their **close**
+ * method is called, all SDL_RWops must be allocated through this function, so
+ * they can all be freed correctly with SDL_FreeRW().
+ *
+ * \returns a pointer to the allocated memory on success, or NULL on failure;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_FreeRW
+ */
+extern DECLSPEC SDL_RWops *SDLCALL SDL_AllocRW(void);
+
+/**
+ * Use this function to free an SDL_RWops structure allocated by
+ * SDL_AllocRW().
+ *
+ * Applications do not need to use this function unless they are providing
+ * their own SDL_RWops implementation. If you just need a SDL_RWops to
+ * read/write a common data source, you should use the built-in
+ * implementations in SDL, like SDL_RWFromFile() or SDL_RWFromMem(), etc, and
+ * call the **close** method on those SDL_RWops pointers when you are done
+ * with them.
+ *
+ * Only use SDL_FreeRW() on pointers returned by SDL_AllocRW(). The pointer is
+ * invalid as soon as this function returns. Any extra memory allocated during
+ * creation of the SDL_RWops is not freed by SDL_FreeRW(); the programmer must
+ * be responsible for managing that memory in their **close** method.
+ *
+ * \param area the SDL_RWops structure to be freed
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AllocRW
+ */
+extern DECLSPEC void SDLCALL SDL_FreeRW(SDL_RWops * area);
+
+#define RW_SEEK_SET 0       /**< Seek from the beginning of data */
+#define RW_SEEK_CUR 1       /**< Seek relative to current read point */
+#define RW_SEEK_END 2       /**< Seek relative to the end of data */
+
+/**
+ * Use this function to get the size of the data stream in an SDL_RWops.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context the SDL_RWops to get the size of the data stream from
+ * \returns the size of the data stream in the SDL_RWops on success, -1 if
+ *          unknown or a negative error code on failure; call SDL_GetError()
+ *          for more information.
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC Sint64 SDLCALL SDL_RWsize(SDL_RWops *context);
+
+/**
+ * Seek within an SDL_RWops data stream.
+ *
+ * This function seeks to byte `offset`, relative to `whence`.
+ *
+ * `whence` may be any of the following values:
+ *
+ * - `RW_SEEK_SET`: seek from the beginning of data
+ * - `RW_SEEK_CUR`: seek relative to current read point
+ * - `RW_SEEK_END`: seek relative to the end of data
+ *
+ * If this stream can not seek, it will return -1.
+ *
+ * SDL_RWseek() is actually a wrapper function that calls the SDL_RWops's
+ * `seek` method appropriately, to simplify application development.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context a pointer to an SDL_RWops structure
+ * \param offset an offset in bytes, relative to **whence** location; can be
+ *               negative
+ * \param whence any of `RW_SEEK_SET`, `RW_SEEK_CUR`, `RW_SEEK_END`
+ * \returns the final offset in the data stream after the seek or -1 on error.
+ *
+ * \since This function is available since SDL 2.0.10.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWtell
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC Sint64 SDLCALL SDL_RWseek(SDL_RWops *context,
+                                          Sint64 offset, int whence);
+
+/**
+ * Determine the current read/write offset in an SDL_RWops data stream.
+ *
+ * SDL_RWtell is actually a wrapper function that calls the SDL_RWops's `seek`
+ * method, with an offset of 0 bytes from `RW_SEEK_CUR`, to simplify
+ * application development.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context a SDL_RWops data stream object from which to get the current
+ *                offset
+ * \returns the current offset in the stream, or -1 if the information can not
+ *          be determined.
+ *
+ * \since This function is available since SDL 2.0.10.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC Sint64 SDLCALL SDL_RWtell(SDL_RWops *context);
+
+/**
+ * Read from a data source.
+ *
+ * This function reads up to `maxnum` objects each of size `size` from the
+ * data source to the area pointed at by `ptr`. This function may read less
+ * objects than requested. It will return zero when there has been an error or
+ * the data stream is completely read.
+ *
+ * SDL_RWread() is actually a function wrapper that calls the SDL_RWops's
+ * `read` method appropriately, to simplify application development.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context a pointer to an SDL_RWops structure
+ * \param ptr a pointer to a buffer to read data into
+ * \param size the size of each object to read, in bytes
+ * \param maxnum the maximum number of objects to be read
+ * \returns the number of objects read, or 0 at error or end of file; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.10.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWseek
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC size_t SDLCALL SDL_RWread(SDL_RWops *context,
+                                          void *ptr, size_t size,
+                                          size_t maxnum);
+
+/**
+ * Write to an SDL_RWops data stream.
+ *
+ * This function writes exactly `num` objects each of size `size` from the
+ * area pointed at by `ptr` to the stream. If this fails for any reason, it'll
+ * return less than `num` to demonstrate how far the write progressed. On
+ * success, it returns `num`.
+ *
+ * SDL_RWwrite is actually a function wrapper that calls the SDL_RWops's
+ * `write` method appropriately, to simplify application development.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context a pointer to an SDL_RWops structure
+ * \param ptr a pointer to a buffer containing data to write
+ * \param size the size of an object to write, in bytes
+ * \param num the number of objects to write
+ * \returns the number of objects written, which will be less than **num** on
+ *          error; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.10.
+ *
+ * \sa SDL_RWclose
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ */
+extern DECLSPEC size_t SDLCALL SDL_RWwrite(SDL_RWops *context,
+                                           const void *ptr, size_t size,
+                                           size_t num);
+
+/**
+ * Close and free an allocated SDL_RWops structure.
+ *
+ * SDL_RWclose() closes and cleans up the SDL_RWops stream. It releases any
+ * resources used by the stream and frees the SDL_RWops itself with
+ * SDL_FreeRW(). This returns 0 on success, or -1 if the stream failed to
+ * flush to its output (e.g. to disk).
+ *
+ * Note that if this fails to flush the stream to disk, this function reports
+ * an error, but the SDL_RWops is still invalid once this function returns.
+ *
+ * Prior to SDL 2.0.10, this function was a macro.
+ *
+ * \param context SDL_RWops structure to close
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.10.
+ *
+ * \sa SDL_RWFromConstMem
+ * \sa SDL_RWFromFile
+ * \sa SDL_RWFromFP
+ * \sa SDL_RWFromMem
+ * \sa SDL_RWread
+ * \sa SDL_RWseek
+ * \sa SDL_RWwrite
+ */
+extern DECLSPEC int SDLCALL SDL_RWclose(SDL_RWops *context);
+
+/**
+ * Load all the data from an SDL data stream.
+ *
+ * The data is allocated with a zero byte at the end (null terminated) for
+ * convenience. This extra byte is not included in the value reported via
+ * `datasize`.
+ *
+ * The data should be freed with SDL_free().
+ *
+ * \param src the SDL_RWops to read all available data from
+ * \param datasize if not NULL, will store the number of bytes read
+ * \param freesrc if non-zero, calls SDL_RWclose() on `src` before returning
+ * \returns the data, or NULL if there was an error.
+ *
+ * \since This function is available since SDL 2.0.6.
+ */
+extern DECLSPEC void *SDLCALL SDL_LoadFile_RW(SDL_RWops *src,
+                                              size_t *datasize,
+                                              int freesrc);
+
+/**
+ * Load all the data from a file path.
+ *
+ * The data is allocated with a zero byte at the end (null terminated) for
+ * convenience. This extra byte is not included in the value reported via
+ * `datasize`.
+ *
+ * The data should be freed with SDL_free().
+ *
+ * Prior to SDL 2.0.10, this function was a macro wrapping around
+ * SDL_LoadFile_RW.
+ *
+ * \param file the path to read all available data from
+ * \param datasize if not NULL, will store the number of bytes read
+ * \returns the data, or NULL if there was an error.
+ *
+ * \since This function is available since SDL 2.0.10.
+ */
+extern DECLSPEC void *SDLCALL SDL_LoadFile(const char *file, size_t *datasize);
+
+/**
+ *  \name Read endian functions
+ *
+ *  Read an item of the specified endianness and return in native format.
+ */
+/* @{ */
+
+/**
+ * Use this function to read a byte from an SDL_RWops.
+ *
+ * \param src the SDL_RWops to read from
+ * \returns the read byte on success or 0 on failure; call SDL_GetError() for
+ *          more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteU8
+ */
+extern DECLSPEC Uint8 SDLCALL SDL_ReadU8(SDL_RWops * src);
+
+/**
+ * Use this function to read 16 bits of little-endian data from an SDL_RWops
+ * and return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 16 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadBE16
+ */
+extern DECLSPEC Uint16 SDLCALL SDL_ReadLE16(SDL_RWops * src);
+
+/**
+ * Use this function to read 16 bits of big-endian data from an SDL_RWops and
+ * return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 16 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadLE16
+ */
+extern DECLSPEC Uint16 SDLCALL SDL_ReadBE16(SDL_RWops * src);
+
+/**
+ * Use this function to read 32 bits of little-endian data from an SDL_RWops
+ * and return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 32 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadBE32
+ */
+extern DECLSPEC Uint32 SDLCALL SDL_ReadLE32(SDL_RWops * src);
+
+/**
+ * Use this function to read 32 bits of big-endian data from an SDL_RWops and
+ * return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 32 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadLE32
+ */
+extern DECLSPEC Uint32 SDLCALL SDL_ReadBE32(SDL_RWops * src);
+
+/**
+ * Use this function to read 64 bits of little-endian data from an SDL_RWops
+ * and return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 64 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadBE64
+ */
+extern DECLSPEC Uint64 SDLCALL SDL_ReadLE64(SDL_RWops * src);
+
+/**
+ * Use this function to read 64 bits of big-endian data from an SDL_RWops and
+ * return in native format.
+ *
+ * SDL byteswaps the data only if necessary, so the data returned will be in
+ * the native byte order.
+ *
+ * \param src the stream from which to read data
+ * \returns 64 bits of data in the native byte order of the platform.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadLE64
+ */
+extern DECLSPEC Uint64 SDLCALL SDL_ReadBE64(SDL_RWops * src);
+/* @} *//* Read endian functions */
+
+/**
+ *  \name Write endian functions
+ *
+ *  Write an item of native format to the specified endianness.
+ */
+/* @{ */
+
+/**
+ * Use this function to write a byte to an SDL_RWops.
+ *
+ * \param dst the SDL_RWops to write to
+ * \param value the byte value to write
+ * \returns 1 on success or 0 on failure; call SDL_GetError() for more
+ *          information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_ReadU8
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteU8(SDL_RWops * dst, Uint8 value);
+
+/**
+ * Use this function to write 16 bits in native format to a SDL_RWops as
+ * little-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in little-endian
+ * format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteBE16
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteLE16(SDL_RWops * dst, Uint16 value);
+
+/**
+ * Use this function to write 16 bits in native format to a SDL_RWops as
+ * big-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in big-endian format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteLE16
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteBE16(SDL_RWops * dst, Uint16 value);
+
+/**
+ * Use this function to write 32 bits in native format to a SDL_RWops as
+ * little-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in little-endian
+ * format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteBE32
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteLE32(SDL_RWops * dst, Uint32 value);
+
+/**
+ * Use this function to write 32 bits in native format to a SDL_RWops as
+ * big-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in big-endian format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteLE32
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteBE32(SDL_RWops * dst, Uint32 value);
+
+/**
+ * Use this function to write 64 bits in native format to a SDL_RWops as
+ * little-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in little-endian
+ * format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteBE64
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteLE64(SDL_RWops * dst, Uint64 value);
+
+/**
+ * Use this function to write 64 bits in native format to a SDL_RWops as
+ * big-endian data.
+ *
+ * SDL byteswaps the data only if necessary, so the application always
+ * specifies native format, and the data written will be in big-endian format.
+ *
+ * \param dst the stream to which data will be written
+ * \param value the data to be written, in native format
+ * \returns 1 on successful write, 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_WriteLE64
+ */
+extern DECLSPEC size_t SDLCALL SDL_WriteBE64(SDL_RWops * dst, Uint64 value);
+/* @} *//* Write endian functions */
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_rwops_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                             /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_scancode.h
+ *
+ *  Defines keyboard scancodes.
+ */
+
+#ifndef SDL_scancode_h_
+#define SDL_scancode_h_
+
+#include "SDL_stdinc.h"
+
+/**
+ *  \brief The SDL keyboard scancode representation.
+ *
+ *  Values of this type are used to represent keyboard keys, among other places
+ *  in the \link SDL_Keysym::scancode key.keysym.scancode \endlink field of the
+ *  SDL_Event structure.
+ *
+ *  The values in this enumeration are based on the USB usage page standard:
+ *  https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
+ */
+typedef enum
+{
+    SDL_SCANCODE_UNKNOWN = 0,
+
+    /**
+     *  \name Usage page 0x07
+     *
+     *  These values are from usage page 0x07 (USB keyboard page).
+     */
+    /* @{ */
+
+    SDL_SCANCODE_A = 4,
+    SDL_SCANCODE_B = 5,
+    SDL_SCANCODE_C = 6,
+    SDL_SCANCODE_D = 7,
+    SDL_SCANCODE_E = 8,
+    SDL_SCANCODE_F = 9,
+    SDL_SCANCODE_G = 10,
+    SDL_SCANCODE_H = 11,
+    SDL_SCANCODE_I = 12,
+    SDL_SCANCODE_J = 13,
+    SDL_SCANCODE_K = 14,
+    SDL_SCANCODE_L = 15,
+    SDL_SCANCODE_M = 16,
+    SDL_SCANCODE_N = 17,
+    SDL_SCANCODE_O = 18,
+    SDL_SCANCODE_P = 19,
+    SDL_SCANCODE_Q = 20,
+    SDL_SCANCODE_R = 21,
+    SDL_SCANCODE_S = 22,
+    SDL_SCANCODE_T = 23,
+    SDL_SCANCODE_U = 24,
+    SDL_SCANCODE_V = 25,
+    SDL_SCANCODE_W = 26,
+    SDL_SCANCODE_X = 27,
+    SDL_SCANCODE_Y = 28,
+    SDL_SCANCODE_Z = 29,
+
+    SDL_SCANCODE_1 = 30,
+    SDL_SCANCODE_2 = 31,
+    SDL_SCANCODE_3 = 32,
+    SDL_SCANCODE_4 = 33,
+    SDL_SCANCODE_5 = 34,
+    SDL_SCANCODE_6 = 35,
+    SDL_SCANCODE_7 = 36,
+    SDL_SCANCODE_8 = 37,
+    SDL_SCANCODE_9 = 38,
+    SDL_SCANCODE_0 = 39,
+
+    SDL_SCANCODE_RETURN = 40,
+    SDL_SCANCODE_ESCAPE = 41,
+    SDL_SCANCODE_BACKSPACE = 42,
+    SDL_SCANCODE_TAB = 43,
+    SDL_SCANCODE_SPACE = 44,
+
+    SDL_SCANCODE_MINUS = 45,
+    SDL_SCANCODE_EQUALS = 46,
+    SDL_SCANCODE_LEFTBRACKET = 47,
+    SDL_SCANCODE_RIGHTBRACKET = 48,
+    SDL_SCANCODE_BACKSLASH = 49, /**< Located at the lower left of the return
+                                  *   key on ISO keyboards and at the right end
+                                  *   of the QWERTY row on ANSI keyboards.
+                                  *   Produces REVERSE SOLIDUS (backslash) and
+                                  *   VERTICAL LINE in a US layout, REVERSE
+                                  *   SOLIDUS and VERTICAL LINE in a UK Mac
+                                  *   layout, NUMBER SIGN and TILDE in a UK
+                                  *   Windows layout, DOLLAR SIGN and POUND SIGN
+                                  *   in a Swiss German layout, NUMBER SIGN and
+                                  *   APOSTROPHE in a German layout, GRAVE
+                                  *   ACCENT and POUND SIGN in a French Mac
+                                  *   layout, and ASTERISK and MICRO SIGN in a
+                                  *   French Windows layout.
+                                  */
+    SDL_SCANCODE_NONUSHASH = 50, /**< ISO USB keyboards actually use this code
+                                  *   instead of 49 for the same key, but all
+                                  *   OSes I've seen treat the two codes
+                                  *   identically. So, as an implementor, unless
+                                  *   your keyboard generates both of those
+                                  *   codes and your OS treats them differently,
+                                  *   you should generate SDL_SCANCODE_BACKSLASH
+                                  *   instead of this code. As a user, you
+                                  *   should not rely on this code because SDL
+                                  *   will never generate it with most (all?)
+                                  *   keyboards.
+                                  */
+    SDL_SCANCODE_SEMICOLON = 51,
+    SDL_SCANCODE_APOSTROPHE = 52,
+    SDL_SCANCODE_GRAVE = 53, /**< Located in the top left corner (on both ANSI
+                              *   and ISO keyboards). Produces GRAVE ACCENT and
+                              *   TILDE in a US Windows layout and in US and UK
+                              *   Mac layouts on ANSI keyboards, GRAVE ACCENT
+                              *   and NOT SIGN in a UK Windows layout, SECTION
+                              *   SIGN and PLUS-MINUS SIGN in US and UK Mac
+                              *   layouts on ISO keyboards, SECTION SIGN and
+                              *   DEGREE SIGN in a Swiss German layout (Mac:
+                              *   only on ISO keyboards), CIRCUMFLEX ACCENT and
+                              *   DEGREE SIGN in a German layout (Mac: only on
+                              *   ISO keyboards), SUPERSCRIPT TWO and TILDE in a
+                              *   French Windows layout, COMMERCIAL AT and
+                              *   NUMBER SIGN in a French Mac layout on ISO
+                              *   keyboards, and LESS-THAN SIGN and GREATER-THAN
+                              *   SIGN in a Swiss German, German, or French Mac
+                              *   layout on ANSI keyboards.
+                              */
+    SDL_SCANCODE_COMMA = 54,
+    SDL_SCANCODE_PERIOD = 55,
+    SDL_SCANCODE_SLASH = 56,
+
+    SDL_SCANCODE_CAPSLOCK = 57,
+
+    SDL_SCANCODE_F1 = 58,
+    SDL_SCANCODE_F2 = 59,
+    SDL_SCANCODE_F3 = 60,
+    SDL_SCANCODE_F4 = 61,
+    SDL_SCANCODE_F5 = 62,
+    SDL_SCANCODE_F6 = 63,
+    SDL_SCANCODE_F7 = 64,
+    SDL_SCANCODE_F8 = 65,
+    SDL_SCANCODE_F9 = 66,
+    SDL_SCANCODE_F10 = 67,
+    SDL_SCANCODE_F11 = 68,
+    SDL_SCANCODE_F12 = 69,
+
+    SDL_SCANCODE_PRINTSCREEN = 70,
+    SDL_SCANCODE_SCROLLLOCK = 71,
+    SDL_SCANCODE_PAUSE = 72,
+    SDL_SCANCODE_INSERT = 73, /**< insert on PC, help on some Mac keyboards (but
+                                   does send code 73, not 117) */
+    SDL_SCANCODE_HOME = 74,
+    SDL_SCANCODE_PAGEUP = 75,
+    SDL_SCANCODE_DELETE = 76,
+    SDL_SCANCODE_END = 77,
+    SDL_SCANCODE_PAGEDOWN = 78,
+    SDL_SCANCODE_RIGHT = 79,
+    SDL_SCANCODE_LEFT = 80,
+    SDL_SCANCODE_DOWN = 81,
+    SDL_SCANCODE_UP = 82,
+
+    SDL_SCANCODE_NUMLOCKCLEAR = 83, /**< num lock on PC, clear on Mac keyboards
+                                     */
+    SDL_SCANCODE_KP_DIVIDE = 84,
+    SDL_SCANCODE_KP_MULTIPLY = 85,
+    SDL_SCANCODE_KP_MINUS = 86,
+    SDL_SCANCODE_KP_PLUS = 87,
+    SDL_SCANCODE_KP_ENTER = 88,
+    SDL_SCANCODE_KP_1 = 89,
+    SDL_SCANCODE_KP_2 = 90,
+    SDL_SCANCODE_KP_3 = 91,
+    SDL_SCANCODE_KP_4 = 92,
+    SDL_SCANCODE_KP_5 = 93,
+    SDL_SCANCODE_KP_6 = 94,
+    SDL_SCANCODE_KP_7 = 95,
+    SDL_SCANCODE_KP_8 = 96,
+    SDL_SCANCODE_KP_9 = 97,
+    SDL_SCANCODE_KP_0 = 98,
+    SDL_SCANCODE_KP_PERIOD = 99,
+
+    SDL_SCANCODE_NONUSBACKSLASH = 100, /**< This is the additional key that ISO
+                                        *   keyboards have over ANSI ones,
+                                        *   located between left shift and Y.
+                                        *   Produces GRAVE ACCENT and TILDE in a
+                                        *   US or UK Mac layout, REVERSE SOLIDUS
+                                        *   (backslash) and VERTICAL LINE in a
+                                        *   US or UK Windows layout, and
+                                        *   LESS-THAN SIGN and GREATER-THAN SIGN
+                                        *   in a Swiss German, German, or French
+                                        *   layout. */
+    SDL_SCANCODE_APPLICATION = 101, /**< windows contextual menu, compose */
+    SDL_SCANCODE_POWER = 102, /**< The USB document says this is a status flag,
+                               *   not a physical key - but some Mac keyboards
+                               *   do have a power key. */
+    SDL_SCANCODE_KP_EQUALS = 103,
+    SDL_SCANCODE_F13 = 104,
+    SDL_SCANCODE_F14 = 105,
+    SDL_SCANCODE_F15 = 106,
+    SDL_SCANCODE_F16 = 107,
+    SDL_SCANCODE_F17 = 108,
+    SDL_SCANCODE_F18 = 109,
+    SDL_SCANCODE_F19 = 110,
+    SDL_SCANCODE_F20 = 111,
+    SDL_SCANCODE_F21 = 112,
+    SDL_SCANCODE_F22 = 113,
+    SDL_SCANCODE_F23 = 114,
+    SDL_SCANCODE_F24 = 115,
+    SDL_SCANCODE_EXECUTE = 116,
+    SDL_SCANCODE_HELP = 117,
+    SDL_SCANCODE_MENU = 118,
+    SDL_SCANCODE_SELECT = 119,
+    SDL_SCANCODE_STOP = 120,
+    SDL_SCANCODE_AGAIN = 121,   /**< redo */
+    SDL_SCANCODE_UNDO = 122,
+    SDL_SCANCODE_CUT = 123,
+    SDL_SCANCODE_COPY = 124,
+    SDL_SCANCODE_PASTE = 125,
+    SDL_SCANCODE_FIND = 126,
+    SDL_SCANCODE_MUTE = 127,
+    SDL_SCANCODE_VOLUMEUP = 128,
+    SDL_SCANCODE_VOLUMEDOWN = 129,
+/* not sure whether there's a reason to enable these */
+/*     SDL_SCANCODE_LOCKINGCAPSLOCK = 130,  */
+/*     SDL_SCANCODE_LOCKINGNUMLOCK = 131, */
+/*     SDL_SCANCODE_LOCKINGSCROLLLOCK = 132, */
+    SDL_SCANCODE_KP_COMMA = 133,
+    SDL_SCANCODE_KP_EQUALSAS400 = 134,
+
+    SDL_SCANCODE_INTERNATIONAL1 = 135, /**< used on Asian keyboards, see
+                                            footnotes in USB doc */
+    SDL_SCANCODE_INTERNATIONAL2 = 136,
+    SDL_SCANCODE_INTERNATIONAL3 = 137, /**< Yen */
+    SDL_SCANCODE_INTERNATIONAL4 = 138,
+    SDL_SCANCODE_INTERNATIONAL5 = 139,
+    SDL_SCANCODE_INTERNATIONAL6 = 140,
+    SDL_SCANCODE_INTERNATIONAL7 = 141,
+    SDL_SCANCODE_INTERNATIONAL8 = 142,
+    SDL_SCANCODE_INTERNATIONAL9 = 143,
+    SDL_SCANCODE_LANG1 = 144, /**< Hangul/English toggle */
+    SDL_SCANCODE_LANG2 = 145, /**< Hanja conversion */
+    SDL_SCANCODE_LANG3 = 146, /**< Katakana */
+    SDL_SCANCODE_LANG4 = 147, /**< Hiragana */
+    SDL_SCANCODE_LANG5 = 148, /**< Zenkaku/Hankaku */
+    SDL_SCANCODE_LANG6 = 149, /**< reserved */
+    SDL_SCANCODE_LANG7 = 150, /**< reserved */
+    SDL_SCANCODE_LANG8 = 151, /**< reserved */
+    SDL_SCANCODE_LANG9 = 152, /**< reserved */
+
+    SDL_SCANCODE_ALTERASE = 153, /**< Erase-Eaze */
+    SDL_SCANCODE_SYSREQ = 154,
+    SDL_SCANCODE_CANCEL = 155,
+    SDL_SCANCODE_CLEAR = 156,
+    SDL_SCANCODE_PRIOR = 157,
+    SDL_SCANCODE_RETURN2 = 158,
+    SDL_SCANCODE_SEPARATOR = 159,
+    SDL_SCANCODE_OUT = 160,
+    SDL_SCANCODE_OPER = 161,
+    SDL_SCANCODE_CLEARAGAIN = 162,
+    SDL_SCANCODE_CRSEL = 163,
+    SDL_SCANCODE_EXSEL = 164,
+
+    SDL_SCANCODE_KP_00 = 176,
+    SDL_SCANCODE_KP_000 = 177,
+    SDL_SCANCODE_THOUSANDSSEPARATOR = 178,
+    SDL_SCANCODE_DECIMALSEPARATOR = 179,
+    SDL_SCANCODE_CURRENCYUNIT = 180,
+    SDL_SCANCODE_CURRENCYSUBUNIT = 181,
+    SDL_SCANCODE_KP_LEFTPAREN = 182,
+    SDL_SCANCODE_KP_RIGHTPAREN = 183,
+    SDL_SCANCODE_KP_LEFTBRACE = 184,
+    SDL_SCANCODE_KP_RIGHTBRACE = 185,
+    SDL_SCANCODE_KP_TAB = 186,
+    SDL_SCANCODE_KP_BACKSPACE = 187,
+    SDL_SCANCODE_KP_A = 188,
+    SDL_SCANCODE_KP_B = 189,
+    SDL_SCANCODE_KP_C = 190,
+    SDL_SCANCODE_KP_D = 191,
+    SDL_SCANCODE_KP_E = 192,
+    SDL_SCANCODE_KP_F = 193,
+    SDL_SCANCODE_KP_XOR = 194,
+    SDL_SCANCODE_KP_POWER = 195,
+    SDL_SCANCODE_KP_PERCENT = 196,
+    SDL_SCANCODE_KP_LESS = 197,
+    SDL_SCANCODE_KP_GREATER = 198,
+    SDL_SCANCODE_KP_AMPERSAND = 199,
+    SDL_SCANCODE_KP_DBLAMPERSAND = 200,
+    SDL_SCANCODE_KP_VERTICALBAR = 201,
+    SDL_SCANCODE_KP_DBLVERTICALBAR = 202,
+    SDL_SCANCODE_KP_COLON = 203,
+    SDL_SCANCODE_KP_HASH = 204,
+    SDL_SCANCODE_KP_SPACE = 205,
+    SDL_SCANCODE_KP_AT = 206,
+    SDL_SCANCODE_KP_EXCLAM = 207,
+    SDL_SCANCODE_KP_MEMSTORE = 208,
+    SDL_SCANCODE_KP_MEMRECALL = 209,
+    SDL_SCANCODE_KP_MEMCLEAR = 210,
+    SDL_SCANCODE_KP_MEMADD = 211,
+    SDL_SCANCODE_KP_MEMSUBTRACT = 212,
+    SDL_SCANCODE_KP_MEMMULTIPLY = 213,
+    SDL_SCANCODE_KP_MEMDIVIDE = 214,
+    SDL_SCANCODE_KP_PLUSMINUS = 215,
+    SDL_SCANCODE_KP_CLEAR = 216,
+    SDL_SCANCODE_KP_CLEARENTRY = 217,
+    SDL_SCANCODE_KP_BINARY = 218,
+    SDL_SCANCODE_KP_OCTAL = 219,
+    SDL_SCANCODE_KP_DECIMAL = 220,
+    SDL_SCANCODE_KP_HEXADECIMAL = 221,
+
+    SDL_SCANCODE_LCTRL = 224,
+    SDL_SCANCODE_LSHIFT = 225,
+    SDL_SCANCODE_LALT = 226, /**< alt, option */
+    SDL_SCANCODE_LGUI = 227, /**< windows, command (apple), meta */
+    SDL_SCANCODE_RCTRL = 228,
+    SDL_SCANCODE_RSHIFT = 229,
+    SDL_SCANCODE_RALT = 230, /**< alt gr, option */
+    SDL_SCANCODE_RGUI = 231, /**< windows, command (apple), meta */
+
+    SDL_SCANCODE_MODE = 257,    /**< I'm not sure if this is really not covered
+                                 *   by any of the above, but since there's a
+                                 *   special KMOD_MODE for it I'm adding it here
+                                 */
+
+    /* @} *//* Usage page 0x07 */
+
+    /**
+     *  \name Usage page 0x0C
+     *
+     *  These values are mapped from usage page 0x0C (USB consumer page).
+     */
+    /* @{ */
+
+    SDL_SCANCODE_AUDIONEXT = 258,
+    SDL_SCANCODE_AUDIOPREV = 259,
+    SDL_SCANCODE_AUDIOSTOP = 260,
+    SDL_SCANCODE_AUDIOPLAY = 261,
+    SDL_SCANCODE_AUDIOMUTE = 262,
+    SDL_SCANCODE_MEDIASELECT = 263,
+    SDL_SCANCODE_WWW = 264,
+    SDL_SCANCODE_MAIL = 265,
+    SDL_SCANCODE_CALCULATOR = 266,
+    SDL_SCANCODE_COMPUTER = 267,
+    SDL_SCANCODE_AC_SEARCH = 268,
+    SDL_SCANCODE_AC_HOME = 269,
+    SDL_SCANCODE_AC_BACK = 270,
+    SDL_SCANCODE_AC_FORWARD = 271,
+    SDL_SCANCODE_AC_STOP = 272,
+    SDL_SCANCODE_AC_REFRESH = 273,
+    SDL_SCANCODE_AC_BOOKMARKS = 274,
+
+    /* @} *//* Usage page 0x0C */
+
+    /**
+     *  \name Walther keys
+     *
+     *  These are values that Christian Walther added (for mac keyboard?).
+     */
+    /* @{ */
+
+    SDL_SCANCODE_BRIGHTNESSDOWN = 275,
+    SDL_SCANCODE_BRIGHTNESSUP = 276,
+    SDL_SCANCODE_DISPLAYSWITCH = 277, /**< display mirroring/dual display
+                                           switch, video mode switch */
+    SDL_SCANCODE_KBDILLUMTOGGLE = 278,
+    SDL_SCANCODE_KBDILLUMDOWN = 279,
+    SDL_SCANCODE_KBDILLUMUP = 280,
+    SDL_SCANCODE_EJECT = 281,
+    SDL_SCANCODE_SLEEP = 282,
+
+    SDL_SCANCODE_APP1 = 283,
+    SDL_SCANCODE_

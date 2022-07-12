@@ -1,0 +1,1604 @@
+_GetWindowSurface(SDL_Window * window);
+
+/**
+ * Copy the window surface to the screen.
+ *
+ * This is the function you use to reflect any changes to the surface on the
+ * screen.
+ *
+ * This function is equivalent to the SDL 1.2 API SDL_Flip().
+ *
+ * \param window the window to update
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetWindowSurface
+ * \sa SDL_UpdateWindowSurfaceRects
+ */
+extern DECLSPEC int SDLCALL SDL_UpdateWindowSurface(SDL_Window * window);
+
+/**
+ * Copy areas of the window surface to the screen.
+ *
+ * This is the function you use to reflect changes to portions of the surface
+ * on the screen.
+ *
+ * This function is equivalent to the SDL 1.2 API SDL_UpdateRects().
+ *
+ * \param window the window to update
+ * \param rects an array of SDL_Rect structures representing areas of the
+ *              surface to copy
+ * \param numrects the number of rectangles
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetWindowSurface
+ * \sa SDL_UpdateWindowSurface
+ */
+extern DECLSPEC int SDLCALL SDL_UpdateWindowSurfaceRects(SDL_Window * window,
+                                                         const SDL_Rect * rects,
+                                                         int numrects);
+
+/**
+ * Set a window's input grab mode.
+ *
+ * When input is grabbed, the mouse is confined to the window. This function
+ * will also grab the keyboard if `SDL_HINT_GRAB_KEYBOARD` is set. To grab the
+ * keyboard without also grabbing the mouse, use SDL_SetWindowKeyboardGrab().
+ *
+ * If the caller enables a grab while another window is currently grabbed, the
+ * other window loses its grab in favor of the caller's window.
+ *
+ * \param window the window for which the input grab mode should be set
+ * \param grabbed SDL_TRUE to grab input or SDL_FALSE to release input
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetGrabbedWindow
+ * \sa SDL_GetWindowGrab
+ */
+extern DECLSPEC void SDLCALL SDL_SetWindowGrab(SDL_Window * window,
+                                               SDL_bool grabbed);
+
+/**
+ * Set a window's keyboard grab mode.
+ *
+ * Keyboard grab enables capture of system keyboard shortcuts like Alt+Tab or
+ * the Meta/Super key. Note that not all system keyboard shortcuts can be
+ * captured by applications (one example is Ctrl+Alt+Del on Windows).
+ *
+ * This is primarily intended for specialized applications such as VNC clients
+ * or VM frontends. Normal games should not use keyboard grab.
+ *
+ * When keyboard grab is enabled, SDL will continue to handle Alt+Tab when the
+ * window is full-screen to ensure the user is not trapped in your
+ * application. If you have a custom keyboard shortcut to exit fullscreen
+ * mode, you may suppress this behavior with
+ * `SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED`.
+ *
+ * If the caller enables a grab while another window is currently grabbed, the
+ * other window loses its grab in favor of the caller's window.
+ *
+ * \param window The window for which the keyboard grab mode should be set.
+ * \param grabbed This is SDL_TRUE to grab keyboard, and SDL_FALSE to release.
+ *
+ * \since This function is available since SDL 2.0.16.
+ *
+ * \sa SDL_GetWindowKeyboardGrab
+ * \sa SDL_SetWindowMouseGrab
+ * \sa SDL_SetWindowGrab
+ */
+extern DECLSPEC void SDLCALL SDL_SetWindowKeyboardGrab(SDL_Window * window,
+                                                       SDL_bool grabbed);
+
+/**
+ * Set a window's mouse grab mode.
+ *
+ * Mouse grab confines the mouse cursor to the window.
+ *
+ * \param window The window for which the mouse grab mode should be set.
+ * \param grabbed This is SDL_TRUE to grab mouse, and SDL_FALSE to release.
+ *
+ * \since This function is available since SDL 2.0.16.
+ *
+ * \sa SDL_GetWindowMouseGrab
+ * \sa SDL_SetWindowKeyboardGrab
+ * \sa SDL_SetWindowGrab
+ */
+extern DECLSPEC void SDLCALL SDL_SetWindowMouseGrab(SDL_Window * window,
+                                                    SDL_bool grabbed);
+
+/**
+ * Get a window's input grab mode.
+ *
+ * \param window the window to query
+ * \returns SDL_TRUE if input is grabbed, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_SetWindowGrab
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowGrab(SDL_Window * window);
+
+/**
+ * Get a window's keyboard grab mode.
+ *
+ * \param window the window to query
+ * \returns SDL_TRUE if keyboard is grabbed, and SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.16.
+ *
+ * \sa SDL_SetWindowKeyboardGrab
+ * \sa SDL_GetWindowGrab
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowKeyboardGrab(SDL_Window * window);
+
+/**
+ * Get a window's mouse grab mode.
+ *
+ * \param window the window to query
+ * \returns SDL_TRUE if mouse is grabbed, and SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.16.
+ *
+ * \sa SDL_SetWindowKeyboardGrab
+ * \sa SDL_GetWindowGrab
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowMouseGrab(SDL_Window * window);
+
+/**
+ * Get the window that currently has an input grab enabled.
+ *
+ * \returns the window if input is grabbed or NULL otherwise.
+ *
+ * \since This function is available since SDL 2.0.4.
+ *
+ * \sa SDL_GetWindowGrab
+ * \sa SDL_SetWindowGrab
+ */
+extern DECLSPEC SDL_Window * SDLCALL SDL_GetGrabbedWindow(void);
+
+/**
+ * Confines the cursor to the specified area of a window.
+ *
+ * Note that this does NOT grab the cursor, it only defines the area a cursor
+ * is restricted to when the window has mouse focus.
+ *
+ * \param window The window that will be associated with the barrier.
+ * \param rect A rectangle area in window-relative coordinates. If NULL the
+ *             barrier for the specified window will be destroyed.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.18.
+ *
+ * \sa SDL_GetWindowMouseRect
+ * \sa SDL_SetWindowMouseGrab
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowMouseRect(SDL_Window * window, const SDL_Rect * rect);
+
+/**
+ * Get the mouse confinement rectangle of a window.
+ *
+ * \param window The window to query
+ * \returns A pointer to the mouse confinement rectangle of a window, or NULL
+ *          if there isn't one.
+ *
+ * \since This function is available since SDL 2.0.18.
+ *
+ * \sa SDL_SetWindowMouseRect
+ */
+extern DECLSPEC const SDL_Rect * SDLCALL SDL_GetWindowMouseRect(SDL_Window * window);
+
+/**
+ * Set the brightness (gamma multiplier) for a given window's display.
+ *
+ * Despite the name and signature, this method sets the brightness of the
+ * entire display, not an individual window. A window is considered to be
+ * owned by the display that contains the window's center pixel. (The index of
+ * this display can be retrieved using SDL_GetWindowDisplayIndex().) The
+ * brightness set will not follow the window if it is moved to another
+ * display.
+ *
+ * Many platforms will refuse to set the display brightness in modern times.
+ * You are better off using a shader to adjust gamma during rendering, or
+ * something similar.
+ *
+ * \param window the window used to select the display whose brightness will
+ *               be changed
+ * \param brightness the brightness (gamma multiplier) value to set where 0.0
+ *                   is completely dark and 1.0 is normal brightness
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetWindowBrightness
+ * \sa SDL_SetWindowGammaRamp
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowBrightness(SDL_Window * window, float brightness);
+
+/**
+ * Get the brightness (gamma multiplier) for a given window's display.
+ *
+ * Despite the name and signature, this method retrieves the brightness of the
+ * entire display, not an individual window. A window is considered to be
+ * owned by the display that contains the window's center pixel. (The index of
+ * this display can be retrieved using SDL_GetWindowDisplayIndex().)
+ *
+ * \param window the window used to select the display whose brightness will
+ *               be queried
+ * \returns the brightness for the display where 0.0 is completely dark and
+ *          1.0 is normal brightness.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_SetWindowBrightness
+ */
+extern DECLSPEC float SDLCALL SDL_GetWindowBrightness(SDL_Window * window);
+
+/**
+ * Set the opacity for a window.
+ *
+ * The parameter `opacity` will be clamped internally between 0.0f
+ * (transparent) and 1.0f (opaque).
+ *
+ * This function also returns -1 if setting the opacity isn't supported.
+ *
+ * \param window the window which will be made transparent or opaque
+ * \param opacity the opacity value (0.0f - transparent, 1.0f - opaque)
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ *
+ * \sa SDL_GetWindowOpacity
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowOpacity(SDL_Window * window, float opacity);
+
+/**
+ * Get the opacity of a window.
+ *
+ * If transparency isn't supported on this platform, opacity will be reported
+ * as 1.0f without error.
+ *
+ * The parameter `opacity` is ignored if it is NULL.
+ *
+ * This function also returns -1 if an invalid window was provided.
+ *
+ * \param window the window to get the current opacity value from
+ * \param out_opacity the float filled in (0.0f - transparent, 1.0f - opaque)
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ *
+ * \sa SDL_SetWindowOpacity
+ */
+extern DECLSPEC int SDLCALL SDL_GetWindowOpacity(SDL_Window * window, float * out_opacity);
+
+/**
+ * Set the window as a modal for another window.
+ *
+ * \param modal_window the window that should be set modal
+ * \param parent_window the parent window for the modal window
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowModalFor(SDL_Window * modal_window, SDL_Window * parent_window);
+
+/**
+ * Explicitly set input focus to the window.
+ *
+ * You almost certainly want SDL_RaiseWindow() instead of this function. Use
+ * this with caution, as you might give focus to a window that is completely
+ * obscured by other windows.
+ *
+ * \param window the window that should get the input focus
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ *
+ * \sa SDL_RaiseWindow
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowInputFocus(SDL_Window * window);
+
+/**
+ * Set the gamma ramp for the display that owns a given window.
+ *
+ * Set the gamma translation table for the red, green, and blue channels of
+ * the video hardware. Each table is an array of 256 16-bit quantities,
+ * representing a mapping between the input and output for that channel. The
+ * input is the index into the array, and the output is the 16-bit gamma value
+ * at that index, scaled to the output color precision.
+ *
+ * Despite the name and signature, this method sets the gamma ramp of the
+ * entire display, not an individual window. A window is considered to be
+ * owned by the display that contains the window's center pixel. (The index of
+ * this display can be retrieved using SDL_GetWindowDisplayIndex().) The gamma
+ * ramp set will not follow the window if it is moved to another display.
+ *
+ * \param window the window used to select the display whose gamma ramp will
+ *               be changed
+ * \param red a 256 element array of 16-bit quantities representing the
+ *            translation table for the red channel, or NULL
+ * \param green a 256 element array of 16-bit quantities representing the
+ *              translation table for the green channel, or NULL
+ * \param blue a 256 element array of 16-bit quantities representing the
+ *             translation table for the blue channel, or NULL
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetWindowGammaRamp
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowGammaRamp(SDL_Window * window,
+                                                   const Uint16 * red,
+                                                   const Uint16 * green,
+                                                   const Uint16 * blue);
+
+/**
+ * Get the gamma ramp for a given window's display.
+ *
+ * Despite the name and signature, this method retrieves the gamma ramp of the
+ * entire display, not an individual window. A window is considered to be
+ * owned by the display that contains the window's center pixel. (The index of
+ * this display can be retrieved using SDL_GetWindowDisplayIndex().)
+ *
+ * \param window the window used to select the display whose gamma ramp will
+ *               be queried
+ * \param red a 256 element array of 16-bit quantities filled in with the
+ *            translation table for the red channel, or NULL
+ * \param green a 256 element array of 16-bit quantities filled in with the
+ *              translation table for the green channel, or NULL
+ * \param blue a 256 element array of 16-bit quantities filled in with the
+ *             translation table for the blue channel, or NULL
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_SetWindowGammaRamp
+ */
+extern DECLSPEC int SDLCALL SDL_GetWindowGammaRamp(SDL_Window * window,
+                                                   Uint16 * red,
+                                                   Uint16 * green,
+                                                   Uint16 * blue);
+
+/**
+ * Possible return values from the SDL_HitTest callback.
+ *
+ * \sa SDL_HitTest
+ */
+typedef enum
+{
+    SDL_HITTEST_NORMAL,  /**< Region is normal. No special properties. */
+    SDL_HITTEST_DRAGGABLE,  /**< Region can drag entire window. */
+    SDL_HITTEST_RESIZE_TOPLEFT,
+    SDL_HITTEST_RESIZE_TOP,
+    SDL_HITTEST_RESIZE_TOPRIGHT,
+    SDL_HITTEST_RESIZE_RIGHT,
+    SDL_HITTEST_RESIZE_BOTTOMRIGHT,
+    SDL_HITTEST_RESIZE_BOTTOM,
+    SDL_HITTEST_RESIZE_BOTTOMLEFT,
+    SDL_HITTEST_RESIZE_LEFT
+} SDL_HitTestResult;
+
+/**
+ * Callback used for hit-testing.
+ *
+ * \param win the SDL_Window where hit-testing was set on
+ * \param area an SDL_Point which should be hit-tested
+ * \param data what was passed as `callback_data` to SDL_SetWindowHitTest()
+ * \return an SDL_HitTestResult value.
+ *
+ * \sa SDL_SetWindowHitTest
+ */
+typedef SDL_HitTestResult (SDLCALL *SDL_HitTest)(SDL_Window *win,
+                                                 const SDL_Point *area,
+                                                 void *data);
+
+/**
+ * Provide a callback that decides if a window region has special properties.
+ *
+ * Normally windows are dragged and resized by decorations provided by the
+ * system window manager (a title bar, borders, etc), but for some apps, it
+ * makes sense to drag them from somewhere else inside the window itself; for
+ * example, one might have a borderless window that wants to be draggable from
+ * any part, or simulate its own title bar, etc.
+ *
+ * This function lets the app provide a callback that designates pieces of a
+ * given window as special. This callback is run during event processing if we
+ * need to tell the OS to treat a region of the window specially; the use of
+ * this callback is known as "hit testing."
+ *
+ * Mouse input may not be delivered to your application if it is within a
+ * special area; the OS will often apply that input to moving the window or
+ * resizing the window and not deliver it to the application.
+ *
+ * Specifying NULL for a callback disables hit-testing. Hit-testing is
+ * disabled by default.
+ *
+ * Platforms that don't support this functionality will return -1
+ * unconditionally, even if you're attempting to disable hit-testing.
+ *
+ * Your callback may fire at any time, and its firing does not indicate any
+ * specific behavior (for example, on Windows, this certainly might fire when
+ * the OS is deciding whether to drag your window, but it fires for lots of
+ * other reasons, too, some unrelated to anything you probably care about _and
+ * when the mouse isn't actually at the location it is testing_). Since this
+ * can fire at any time, you should try to keep your callback efficient,
+ * devoid of allocations, etc.
+ *
+ * \param window the window to set hit-testing on
+ * \param callback the function to call when doing a hit-test
+ * \param callback_data an app-defined void pointer passed to **callback**
+ * \returns 0 on success or -1 on error (including unsupported); call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.4.
+ */
+extern DECLSPEC int SDLCALL SDL_SetWindowHitTest(SDL_Window * window,
+                                                 SDL_HitTest callback,
+                                                 void *callback_data);
+
+/**
+ * Request a window to demand attention from the user.
+ *
+ * \param window the window to be flashed
+ * \param operation the flash operation
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.16.
+ */
+extern DECLSPEC int SDLCALL SDL_FlashWindow(SDL_Window * window, SDL_FlashOperation operation);
+
+/**
+ * Destroy a window.
+ *
+ * If `window` is NULL, this function will return immediately after setting
+ * the SDL error message to "Invalid window". See SDL_GetError().
+ *
+ * \param window the window to destroy
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateWindow
+ * \sa SDL_CreateWindowFrom
+ */
+extern DECLSPEC void SDLCALL SDL_DestroyWindow(SDL_Window * window);
+
+
+/**
+ * Check whether the screensaver is currently enabled.
+ *
+ * The screensaver is disabled by default since SDL 2.0.2. Before SDL 2.0.2
+ * the screensaver was enabled by default.
+ *
+ * The default can also be changed using `SDL_HINT_VIDEO_ALLOW_SCREENSAVER`.
+ *
+ * \returns SDL_TRUE if the screensaver is enabled, SDL_FALSE if it is
+ *          disabled.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_DisableScreenSaver
+ * \sa SDL_EnableScreenSaver
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_IsScreenSaverEnabled(void);
+
+/**
+ * Allow the screen to be blanked by a screen saver.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_DisableScreenSaver
+ * \sa SDL_IsScreenSaverEnabled
+ */
+extern DECLSPEC void SDLCALL SDL_EnableScreenSaver(void);
+
+/**
+ * Prevent the screen from being blanked by a screen saver.
+ *
+ * If you disable the screensaver, it is automatically re-enabled when SDL
+ * quits.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_EnableScreenSaver
+ * \sa SDL_IsScreenSaverEnabled
+ */
+extern DECLSPEC void SDLCALL SDL_DisableScreenSaver(void);
+
+
+/**
+ *  \name OpenGL support functions
+ */
+/* @{ */
+
+/**
+ * Dynamically load an OpenGL library.
+ *
+ * This should be done after initializing the video driver, but before
+ * creating any OpenGL windows. If no OpenGL library is loaded, the default
+ * library will be loaded upon creation of the first OpenGL window.
+ *
+ * If you do this, you need to retrieve all of the GL functions used in your
+ * program from the dynamic library using SDL_GL_GetProcAddress().
+ *
+ * \param path the platform dependent OpenGL library name, or NULL to open the
+ *             default OpenGL library
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_GetProcAddress
+ * \sa SDL_GL_UnloadLibrary
+ */
+extern DECLSPEC int SDLCALL SDL_GL_LoadLibrary(const char *path);
+
+/**
+ * Get an OpenGL function by name.
+ *
+ * If the GL library is loaded at runtime with SDL_GL_LoadLibrary(), then all
+ * GL functions must be retrieved this way. Usually this is used to retrieve
+ * function pointers to OpenGL extensions.
+ *
+ * There are some quirks to looking up OpenGL functions that require some
+ * extra care from the application. If you code carefully, you can handle
+ * these quirks without any platform-specific code, though:
+ *
+ * - On Windows, function pointers are specific to the current GL context;
+ *   this means you need to have created a GL context and made it current
+ *   before calling SDL_GL_GetProcAddress(). If you recreate your context or
+ *   create a second context, you should assume that any existing function
+ *   pointers aren't valid to use with it. This is (currently) a
+ *   Windows-specific limitation, and in practice lots of drivers don't suffer
+ *   this limitation, but it is still the way the wgl API is documented to
+ *   work and you should expect crashes if you don't respect it. Store a copy
+ *   of the function pointers that comes and goes with context lifespan.
+ * - On X11, function pointers returned by this function are valid for any
+ *   context, and can even be looked up before a context is created at all.
+ *   This means that, for at least some common OpenGL implementations, if you
+ *   look up a function that doesn't exist, you'll get a non-NULL result that
+ *   is _NOT_ safe to call. You must always make sure the function is actually
+ *   available for a given GL context before calling it, by checking for the
+ *   existence of the appropriate extension with SDL_GL_ExtensionSupported(),
+ *   or verifying that the version of OpenGL you're using offers the function
+ *   as core functionality.
+ * - Some OpenGL drivers, on all platforms, *will* return NULL if a function
+ *   isn't supported, but you can't count on this behavior. Check for
+ *   extensions you use, and if you get a NULL anyway, act as if that
+ *   extension wasn't available. This is probably a bug in the driver, but you
+ *   can code defensively for this scenario anyhow.
+ * - Just because you're on Linux/Unix, don't assume you'll be using X11.
+ *   Next-gen display servers are waiting to replace it, and may or may not
+ *   make the same promises about function pointers.
+ * - OpenGL function pointers must be declared `APIENTRY` as in the example
+ *   code. This will ensure the proper calling convention is followed on
+ *   platforms where this matters (Win32) thereby avoiding stack corruption.
+ *
+ * \param proc the name of an OpenGL function
+ * \returns a pointer to the named OpenGL function. The returned pointer
+ *          should be cast to the appropriate function signature.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_ExtensionSupported
+ * \sa SDL_GL_LoadLibrary
+ * \sa SDL_GL_UnloadLibrary
+ */
+extern DECLSPEC void *SDLCALL SDL_GL_GetProcAddress(const char *proc);
+
+/**
+ * Unload the OpenGL library previously loaded by SDL_GL_LoadLibrary().
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_LoadLibrary
+ */
+extern DECLSPEC void SDLCALL SDL_GL_UnloadLibrary(void);
+
+/**
+ * Check if an OpenGL extension is supported for the current context.
+ *
+ * This function operates on the current GL context; you must have created a
+ * context and it must be current before calling this function. Do not assume
+ * that all contexts you create will have the same set of extensions
+ * available, or that recreating an existing context will offer the same
+ * extensions again.
+ *
+ * While it's probably not a massive overhead, this function is not an O(1)
+ * operation. Check the extensions you care about after creating the GL
+ * context and save that information somewhere instead of calling the function
+ * every time you need to know.
+ *
+ * \param extension the name of the extension to check
+ * \returns SDL_TRUE if the extension is supported, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GL_ExtensionSupported(const char
+                                                           *extension);
+
+/**
+ * Reset all previously set OpenGL context attributes to their default values.
+ *
+ * \since This function is available since SDL 2.0.2.
+ *
+ * \sa SDL_GL_GetAttribute
+ * \sa SDL_GL_SetAttribute
+ */
+extern DECLSPEC void SDLCALL SDL_GL_ResetAttributes(void);
+
+/**
+ * Set an OpenGL window attribute before window creation.
+ *
+ * This function sets the OpenGL attribute `attr` to `value`. The requested
+ * attributes should be set before creating an OpenGL window. You should use
+ * SDL_GL_GetAttribute() to check the values after creating the OpenGL
+ * context, since the values obtained can differ from the requested ones.
+ *
+ * \param attr an SDL_GLattr enum value specifying the OpenGL attribute to set
+ * \param value the desired value for the attribute
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_GetAttribute
+ * \sa SDL_GL_ResetAttributes
+ */
+extern DECLSPEC int SDLCALL SDL_GL_SetAttribute(SDL_GLattr attr, int value);
+
+/**
+ * Get the actual value for an attribute from the current context.
+ *
+ * \param attr an SDL_GLattr enum value specifying the OpenGL attribute to get
+ * \param value a pointer filled in with the current value of `attr`
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_ResetAttributes
+ * \sa SDL_GL_SetAttribute
+ */
+extern DECLSPEC int SDLCALL SDL_GL_GetAttribute(SDL_GLattr attr, int *value);
+
+/**
+ * Create an OpenGL context for an OpenGL window, and make it current.
+ *
+ * Windows users new to OpenGL should note that, for historical reasons, GL
+ * functions added after OpenGL version 1.1 are not available by default.
+ * Those functions must be loaded at run-time, either with an OpenGL
+ * extension-handling library or with SDL_GL_GetProcAddress() and its related
+ * functions.
+ *
+ * SDL_GLContext is an alias for `void *`. It's opaque to the application.
+ *
+ * \param window the window to associate with the context
+ * \returns the OpenGL context associated with `window` or NULL on error; call
+ *          SDL_GetError() for more details.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_DeleteContext
+ * \sa SDL_GL_MakeCurrent
+ */
+extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_CreateContext(SDL_Window *
+                                                           window);
+
+/**
+ * Set up an OpenGL context for rendering into an OpenGL window.
+ *
+ * The context must have been created with a compatible window.
+ *
+ * \param window the window to associate with the context
+ * \param context the OpenGL context to associate with the window
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_CreateContext
+ */
+extern DECLSPEC int SDLCALL SDL_GL_MakeCurrent(SDL_Window * window,
+                                               SDL_GLContext context);
+
+/**
+ * Get the currently active OpenGL window.
+ *
+ * \returns the currently active OpenGL window on success or NULL on failure;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC SDL_Window* SDLCALL SDL_GL_GetCurrentWindow(void);
+
+/**
+ * Get the currently active OpenGL context.
+ *
+ * \returns the currently active OpenGL context or NULL on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_MakeCurrent
+ */
+extern DECLSPEC SDL_GLContext SDLCALL SDL_GL_GetCurrentContext(void);
+
+/**
+ * Get the size of a window's underlying drawable in pixels.
+ *
+ * This returns info useful for calling glViewport().
+ *
+ * This may differ from SDL_GetWindowSize() if we're rendering to a high-DPI
+ * drawable, i.e. the window was created with `SDL_WINDOW_ALLOW_HIGHDPI` on a
+ * platform with high-DPI support (Apple calls this "Retina"), and not
+ * disabled by the `SDL_HINT_VIDEO_HIGHDPI_DISABLED` hint.
+ *
+ * \param window the window from which the drawable size should be queried
+ * \param w a pointer to variable for storing the width in pixels, may be NULL
+ * \param h a pointer to variable for storing the height in pixels, may be
+ *          NULL
+ *
+ * \since This function is available since SDL 2.0.1.
+ *
+ * \sa SDL_CreateWindow
+ * \sa SDL_GetWindowSize
+ */
+extern DECLSPEC void SDLCALL SDL_GL_GetDrawableSize(SDL_Window * window, int *w,
+                                                    int *h);
+
+/**
+ * Set the swap interval for the current OpenGL context.
+ *
+ * Some systems allow specifying -1 for the interval, to enable adaptive
+ * vsync. Adaptive vsync works the same as vsync, but if you've already missed
+ * the vertical retrace for a given frame, it swaps buffers immediately, which
+ * might be less jarring for the user during occasional framerate drops. If an
+ * application requests adaptive vsync and the system does not support it,
+ * this function will fail and return -1. In such a case, you should probably
+ * retry the call with 1 for the interval.
+ *
+ * Adaptive vsync is implemented for some glX drivers with
+ * GLX_EXT_swap_control_tear:
+ *
+ * https://www.opengl.org/registry/specs/EXT/glx_swap_control_tear.txt
+ *
+ * and for some Windows drivers with WGL_EXT_swap_control_tear:
+ *
+ * https://www.opengl.org/registry/specs/EXT/wgl_swap_control_tear.txt
+ *
+ * Read more on the Khronos wiki:
+ * https://www.khronos.org/opengl/wiki/Swap_Interval#Adaptive_Vsync
+ *
+ * \param interval 0 for immediate updates, 1 for updates synchronized with
+ *                 the vertical retrace, -1 for adaptive vsync
+ * \returns 0 on success or -1 if setting the swap interval is not supported;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_GetSwapInterval
+ */
+extern DECLSPEC int SDLCALL SDL_GL_SetSwapInterval(int interval);
+
+/**
+ * Get the swap interval for the current OpenGL context.
+ *
+ * If the system can't determine the swap interval, or there isn't a valid
+ * current context, this function will return 0 as a safe default.
+ *
+ * \returns 0 if there is no vertical retrace synchronization, 1 if the buffer
+ *          swap is synchronized with the vertical retrace, and -1 if late
+ *          swaps happen immediately instead of waiting for the next retrace;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_SetSwapInterval
+ */
+extern DECLSPEC int SDLCALL SDL_GL_GetSwapInterval(void);
+
+/**
+ * Update a window with OpenGL rendering.
+ *
+ * This is used with double-buffered OpenGL contexts, which are the default.
+ *
+ * On macOS, make sure you bind 0 to the draw framebuffer before swapping the
+ * window, otherwise nothing will happen. If you aren't using
+ * glBindFramebuffer(), this is the default and you won't have to do anything
+ * extra.
+ *
+ * \param window the window to change
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC void SDLCALL SDL_GL_SwapWindow(SDL_Window * window);
+
+/**
+ * Delete an OpenGL context.
+ *
+ * \param context the OpenGL context to be deleted
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GL_CreateContext
+ */
+extern DECLSPEC void SDLCALL SDL_GL_DeleteContext(SDL_GLContext context);
+
+/* @} *//* OpenGL support functions */
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_video_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          /*
+  Simple DirectMedia Layer
+  Copyright (C) 2017, Mark Callow
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_vulkan.h
+ *
+ *  Header file for functions to creating Vulkan surfaces on SDL windows.
+ */
+
+#ifndef SDL_vulkan_h_
+#define SDL_vulkan_h_
+
+#include "SDL_video.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Avoid including vulkan.h, don't define VkInstance if it's already included */
+#ifdef VULKAN_H_
+#define NO_SDL_VULKAN_TYPEDEFS
+#endif
+#ifndef NO_SDL_VULKAN_TYPEDEFS
+#define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
+
+#if defined(__LP64__) || defined(_WIN64) || defined(__x86_64__) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
+#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef struct object##_T *object;
+#else
+#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef uint64_t object;
+#endif
+
+VK_DEFINE_HANDLE(VkInstance)
+VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkSurfaceKHR)
+
+#endif /* !NO_SDL_VULKAN_TYPEDEFS */
+
+typedef VkInstance SDL_vulkanInstance;
+typedef VkSurfaceKHR SDL_vulkanSurface; /* for compatibility with Tizen */
+
+/**
+ *  \name Vulkan support functions
+ *
+ *  \note SDL_Vulkan_GetInstanceExtensions & SDL_Vulkan_CreateSurface API
+ *        is compatable with Tizen's implementation of Vulkan in SDL.
+ */
+/* @{ */
+
+/**
+ * Dynamically load the Vulkan loader library.
+ *
+ * This should be called after initializing the video driver, but before
+ * creating any Vulkan windows. If no Vulkan loader library is loaded, the
+ * default library will be loaded upon creation of the first Vulkan window.
+ *
+ * It is fairly common for Vulkan applications to link with libvulkan instead
+ * of explicitly loading it at run time. This will work with SDL provided the
+ * application links to a dynamic library and both it and SDL use the same
+ * search path.
+ *
+ * If you specify a non-NULL `path`, an application should retrieve all of the
+ * Vulkan functions it uses from the dynamic library using
+ * SDL_Vulkan_GetVkGetInstanceProcAddr unless you can guarantee `path` points
+ * to the same vulkan loader library the application linked to.
+ *
+ * On Apple devices, if `path` is NULL, SDL will attempt to find the
+ * `vkGetInstanceProcAddr` address within all the Mach-O images of the current
+ * process. This is because it is fairly common for Vulkan applications to
+ * link with libvulkan (and historically MoltenVK was provided as a static
+ * library). If it is not found, on macOS, SDL will attempt to load
+ * `vulkan.framework/vulkan`, `libvulkan.1.dylib`,
+ * `MoltenVK.framework/MoltenVK`, and `libMoltenVK.dylib`, in that order. On
+ * iOS, SDL will attempt to load `libMoltenVK.dylib`. Applications using a
+ * dynamic framework or .dylib must ensure it is included in its application
+ * bundle.
+ *
+ * On non-Apple devices, application linking with a static libvulkan is not
+ * supported. Either do not link to the Vulkan loader or link to a dynamic
+ * library version.
+ *
+ * \param path The platform dependent Vulkan loader library name or NULL
+ * \returns 0 on success or -1 if the library couldn't be loaded; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_Vulkan_GetVkInstanceProcAddr
+ * \sa SDL_Vulkan_UnloadLibrary
+ */
+extern DECLSPEC int SDLCALL SDL_Vulkan_LoadLibrary(const char *path);
+
+/**
+ * Get the address of the `vkGetInstanceProcAddr` function.
+ *
+ * This should be called after either calling SDL_Vulkan_LoadLibrary() or
+ * creating an SDL_Window with the `SDL_WINDOW_VULKAN` flag.
+ *
+ * \returns the function pointer for `vkGetInstanceProcAddr` or NULL on error.
+ *
+ * \since This function is available since SDL 2.0.6.
+ */
+extern DECLSPEC void *SDLCALL SDL_Vulkan_GetVkGetInstanceProcAddr(void);
+
+/**
+ * Unload the Vulkan library previously loaded by SDL_Vulkan_LoadLibrary()
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_Vulkan_LoadLibrary
+ */
+extern DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
+
+/**
+ * Get the names of the Vulkan instance extensions needed to create a surface
+ * with SDL_Vulkan_CreateSurface.
+ *
+ * If `pNames` is NULL, then the number of required Vulkan instance extensions
+ * is returned in `pCount`. Otherwise, `pCount` must point to a variable set
+ * to the number of elements in the `pNames` array, and on return the variable
+ * is overwritten with the number of names actually written to `pNames`. If
+ * `pCount` is less than the number of required extensions, at most `pCount`
+ * structures will be written. If `pCount` is smaller than the number of
+ * required extensions, SDL_FALSE will be returned instead of SDL_TRUE, to
+ * indicate that not all the required extensions were returned.
+ *
+ * The `window` parameter is currently needed to be valid as of SDL 2.0.8,
+ * however, this parameter will likely be removed in future releases
+ *
+ * \param window A window for which the required Vulkan instance extensions
+ *               should be retrieved (will be deprecated in a future release)
+ * \param pCount A pointer to an unsigned int corresponding to the number of
+ *               extensions to be returned
+ * \param pNames NULL or a pointer to an array to be filled with required
+ *               Vulkan instance extensions
+ * \returns SDL_TRUE on success, SDL_FALSE on error.
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_Vulkan_CreateSurface
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_Vulkan_GetInstanceExtensions(SDL_Window *window,
+                                                                  unsigned int *pCount,
+                                                                  const char **pNames);
+
+/**
+ * Create a Vulkan rendering surface for a window.
+ *
+ * The `window` must have been created with the `SDL_WINDOW_VULKAN` flag and
+ * `instance` must have been created with extensions returned by
+ * SDL_Vulkan_GetInstanceExtensions() enabled.
+ *
+ * \param window The window to which to attach the Vulkan surface
+ * \param instance The Vulkan instance handle
+ * \param surface A pointer to a VkSurfaceKHR handle to output the newly
+ *                created surface
+ * \returns SDL_TRUE on success, SDL_FALSE on error.
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_Vulkan_GetInstanceExtensions
+ * \sa SDL_Vulkan_GetDrawableSize
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_Vulkan_CreateSurface(SDL_Window *window,
+                                                          VkInstance instance,
+                                                          VkSurfaceKHR* surface);
+
+/**
+ * Get the size of the window's underlying drawable dimensions in pixels.
+ *
+ * This may differ from SDL_GetWindowSize() if we're rendering to a high-DPI
+ * drawable, i.e. the window was created with `SDL_WINDOW_ALLOW_HIGHDPI` on a
+ * platform with high-DPI support (Apple calls this "Retina"), and not
+ * disabled by the `SDL_HINT_VIDEO_HIGHDPI_DISABLED` hint.
+ *
+ * \param window an SDL_Window for which the size is to be queried
+ * \param w Pointer to the variable to write the width to or NULL
+ * \param h Pointer to the variable to write the height to or NULL
+ *
+ * \since This function is available since SDL 2.0.6.
+ *
+ * \sa SDL_GetWindowSize
+ * \sa SDL_CreateWindow
+ * \sa SDL_Vulkan_CreateSurface
+ */
+extern DECLSPEC void SDLCALL SDL_Vulkan_GetDrawableSize(SDL_Window * window,
+                                                        int *w, int *h);
+
+/* @} *//* Vulkan support functions */
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_vulkan_h_ */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    INDX( 	 §           (   ê  Ë         L                   ”’     x d     é’     ¿ü˛lcÿÄ}Â(–XÿYÑ±n˜gÿI]±n˜gÿ       ˚              S D L _ t e s t _ m e m o r y . h     ‘’     x d     é’     <1¸˝lcÿÄ}Â(–Xÿ2≥n˜gÿˇ
+≥n˜gÿ       T              S D L _ t e s t _ r a n d o m . h     …’     h V     é’     ”K˛lcÿÄ}Â(–Xÿ{úún˜gÿ≤õn˜gÿ       £              
+S D L _ T E ~ 1 . H    ’     h V     é’     *v&˛lcÿÄ}Â(–Xÿ«©ün˜gÿ∂Çün˜gÿ        µ              
+S D L _ T E ~ 2 . H  À’     h V     é’     ·JW˛lcÿÄ}Â(–Xÿl0°n˜gÿ\	°n˜gÿ       s              
+S D L _ T E ~ 3 . H   Ã’     h V     é’     :¨˛lcÿÄ}Â(–Xÿ∑¢n˜gÿê¢n˜gÿ       9              
+S D L _ T E ~ 4 . H   ’’     p Z     é’     
+@˛lcÿÄ}Â(–Xÿ¯Tµn˜gÿÁ-µn˜gÿ P      @C              S D L _ t h r e a d . h       ’’     h V     é’     
+@˛lcÿÄ}Â(–Xÿ¯Tµn˜gÿÁ-µn˜gÿ P      @C              
+S D L _ T H ~ 1 . H   ÷’     h X     é’     ›„3˛lcÿÄ}Â(–XÿÆ∑n˜gÿù€∂n˜gÿ        z              S D  _ t i m e r . h ÷’     h V     é’     ›„3˛lcÿÄ}Â(–XÿÆ∑n˜gÿù€∂n˜gÿ        z              
+S D L _ T I ~ 1 . H   ◊’     h X     é’     „®˛lcÿÄ}Â(–XÿTâ∏n˜gÿCb∏n˜gÿ        ö              S D L _ t o u c h . h ◊’     h V     é’     „®˛lcÿÄ}Â(–XÿTâ∏n˜gÿCb∏n˜gÿ        ö              
+S D L _ T O ~ 1 . H   ÿ’     h X     é’     £ë˛lcÿÄ}Â(–Xÿ^∫n˜gÿ
+7∫n˜gÿ                     S D L _ t y p e s . h ÿ’     h V     é’     £ë˛lcÿÄ}Â(–Xÿ^∫n˜gÿ
+7∫n˜gÿ                    
+S D L _ T Y ~ 1 . H   Ÿ’     p \     é’     ‡Y=˛lcÿÄ}Â(–Xÿ¿‰ªn˜gÿüñªn˜gÿ                      S D L _ v e r s i o n . h     Ÿ’     h V     é’     ‡Y=˛lcÿÄ}Â(–Xÿ¿‰ªn˜gÿüñªn˜gÿ                      
+S D L _ V E ~ 1 . H   ⁄’     h X     é’     Ö;˛lcÿÄ}Â(–Xÿ…Uæn˜gÿ®æn˜gÿ 0     .             S D L _ v i d e o . h ⁄’     h V     é’     Ö;˛lcÿÄ}Â(–Xÿ…Uæn˜gÿ®æn˜gÿ 0     .             
+S D L _ V I ~ 1 . H   €’     p Z     é’     ;g˛lcÿÄ}Â(–Xÿ¬ü¿n˜gÿ°Q¿n˜gÿ 0     \!              S D L _ v u l k a n . h       €’     h V     é’     ;g˛lcÿÄ}Â(–Xÿ¬ü¿n˜gÿ°Q¿n˜gÿ 0      \!              
+S D L _ V U ~ 1 . H                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     # libSDL2.la - a libtool library file
+# Generated by libtool (GNU libtool) 2.4.6
+#
+# Please DO NOT delete this file!
+# It is necessary for linking the library.
+
+# The name that we can dlopen(3).
+dlname='../bin/SDL2.dll'
+
+# Names of this library.
+library_names='libSDL2.dll.a'
+
+# The name of the static archive.
+old_library='libSDL2.a'
+
+# Linker flags that cannot go in dependency_libs.
+inherited_linker_flags=''
+
+# Libraries that this one depends upon.
+dependency_libs=' -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid'
+
+# Names of additional weak libraries provided by this library
+weak_library_names=''
+
+# Version information for libSDL2.
+current=22
+age=22
+revision=0
+
+# Is this an already installed library?
+installed=yes
+
+# Should we warn about portability when linking against -modules?
+shouldnotlink=no
+
+# Files to dlopen/dlpreopen
+dlopen=''
+dlpreopen=''
+
+# Directory that this library needs to be installed in:
+libdir='/Users/valve/release/SDL/SDL2-2.0.22/x86_64-w64-mingw32/lib'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               !<arch>
+/               1650910413  0     0     0       56        `
+      Ã   Ã   Ãconsole_ansi_main console_wmain WinMain //                                              20        `
+SDL_windows_main.o/
+/0              1650910405  501   20    100644  9158      `
+dÜ     V  3      .text           ‡  l             P`.data                               @ P¿.bss                                Ä P¿.rdata          @   L              @ P@.xdata          $   å              @ 0@.pdata          0   ∞  »         @ 0@/4                ‡  @         @ @B/17             /
+  ¯  ê      B   @ B/29             ;  '              @ B/43             @  b              @ B/54             0   ¢  $         @ B/69             `   “              @ B/83             µ  2  8         @ B/95                Á              @ B/106                Ú              @ P@AWAVAUATUWVSHÉÏHˇ    Hâ¡HçT$<ˇ    IâƒHÖ¿Ñ—   ãD$<Hã-    çXˇ’Hc€∫   Hâ¡Hã    H¡„IâÿHâD$(ˇ–Hâ«HÖ¿Ñï   ãT$<Ö“é∆   1€Lç=%   Lç5.   ÎRfD  Hâ¡Ë    Hâ∆ˇ’DçF∫   Hâ¡HãD$(ˇ–HâﬂHâ¡HÖ¿tEAâLâÍË    LâÈË    çCHÉ√9\$<~\Iã‹Ë    Mã‹Lâ˙LâÒLçL Ë    Iâ≈HÖ¿uèE1…Lç    π   E1ÌHç   Ë    DâËHÉƒH[^_]A\A]A^A_√D  HòHç«Lâ·H«     1€ˇ    Ë    ãL$<Hâ˙Ë    Lã%    Aâ≈ãD$<Ö¿~ D  Hã4ﬂHÉ√ˇ’1“Hâ¡IâAˇ‘9\$<Âˇ’Iâ¯1“Hâ¡Aˇ‘Èzˇˇˇff.Ñ     ÈK˛ˇˇff.Ñ     È;˛ˇˇff.Ñ     È+˛ˇˇêêêêêêêêêêêOut of memory - aborting Fatal Error UTF-16LE UTF-8             	 Ç0`
+p	P¿–‡               •      ∞  µ     ¿  ≈     –  ’         ˇˇˇˇ xê      ¥               •         è   é    ç   (å   0Ü   8Ö   @Ñ   HÉ	   ê  
+H   √@   ƒ8   ≈0   ∆(   Ã    Õ   Œ   œ            ∞                    ¿                    –             +
+       GNU C17 11.1.0 -mmmx -m3dnow -msse -msse2 -msse3 -mtune=generic -march=x86-64 -g -O3 -fno-strict-aliasing ../src/main/windows/SDL_windows_main.c /Users/valve/release/SDL/SDL2-2.0.22-source/foo-x64         ’          char Ê   size_t (,  long long unsigned int long long int wchar_t gB  -  short unsigned int int long int Ê   -  X  unsigned int long unsigned int unsigned char WINBOOL X  BOOL ÉX  DWORD çç  float LPVOID ô≥  ˛  signed char short int ULONG_PTR 1.  SIZE_T ì'  CHAR Ê   WCHAR '-  J  J  Y  LPWSTR +^  LPCWSTR /d  <  LPSTR Pã  HANDLE ï≥  long double double =  k  q  HLOCAL ¿†  	HINSTANCE__ –  
+unused –X    HINSTANCE –"  Í  j  uint32_t (}  Uint32 ‹.  Ó       _`      T  }  &  SDL_MESSAGEBOX_ERROR SDL_MESSAGEBOX_WARNING  SDL_MESSAGEBOX_INFORMATION @SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT ÄSDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT   SDL_ShowSimpleMessageBox ∂X  P  ?  N  N  e   HeapFree 	+µ  u  †  “  È   SDL_main 
+ÇX  ï  X  œ   SDL_SetMainReady 
+íLocalFree V€  «  €   SDL_free ¨ﬂ  ≥   memcpy ≥    ≥  ¯  Û    SDL_strlen   Û   !  N   SDL_iconv_string ùk  T  N  N  N  Û    SDL_wcslen  Û   r  …   HeapAlloc 	)È  ò  †  “  -   GetProcessHeap 	-†  CommandLineToArgvW c(  ⁄  z  w   GetCommandLineW j  WinMain WX  –             úÄ  hInst p         hPrev p$  A   =   szCmdLine p1ë  ~   z   sw p@X  ª   ∑   ’      c   console_wmain hX  ¿             ú˚  argc hX  ¯   Ù   wargv h"’  5  1  wenvp h4q  r  n  ≈      c   console_ansi_main _X  ∞             úc  argc _X  Ø  ´  argv _#œ  Ï  Ë  µ      c   main_getcmdline )X          •      ú˛	  argvw +(  +  %  argv ,œ  z  t  i -	X  —  √  argc -X  ë¨result -X  l  h      ”  len ?“  ¶  ¢  arg @k  ‰  ‹  ò         ?  R}   ù       ò  ∞       r  o  Q8Xtˇˇˇˇ «       
+  ì  Q} Xt ˇˇˇˇ œ       «  ´  R}   Â       T  !˘       !  R~ Q   "˛	        0   1 	  !        R@Q	       X	        Y}           ⁄  $       Ø  F	  Që¨  @       ò  `       r  p	  Q8Xs  P      ™  à	  R|   U      ï  a      u  ≠	  Qu   Ç      ò  ç      P  ◊	  Q0Xt   ï      ò  !†      P  Q0Xu   #OutOfMemory ≈  $memcpy __builtin_memcpy   %  $ >  & I   :;9I   I     &    :;9I  	:;9  
+ :;9I8   :;9I   <  >I:;9  (   (   .?:;9'I<   I  . ?:;9'<  .?:;9'I<  .?:;9'<  . ?:;9'I<  .?:;9'I@óB   :;9I∑B  âÇ ïB1  .?:;9'I@óB  .:;9'I@óB  4 :;9I∑B  4 :;9I  U  âÇ1  äÇ ëB   âÇ 1  !âÇ1  "1R∏BUXYW  #. :;9'I   $. ?<n:;       –      ‘       R‘      ’       ÛRü                    –      ‘       Q‘      ’       ÛQü                    –      ‘       X‘      ’       ÛXü                    –      ‘       Y‘      ’       ÛYü                    ¿      ƒ       Rƒ      ≈       ÛRü                    ¿      ƒ       Qƒ      ≈       ÛQü                    ¿      ƒ       Xƒ      ≈       ÛXü                    ∞      ¥       R¥      µ       ÛRü                    ∞      ¥       Q¥      µ       ÛQü                     '       4        P4              \3      h       \                      c       ä        Pä              U3      •       U                             l       ä        0üä       “        S“       ‹        P‹              S3      >       Pk      s       0üs      Ä       S                    k      o       Po      •       ]                    õ       ‹        T3      >       T                        ä       ó        Pó       ‹        ]¸              P3      >       ]                ,                     ’                      ê       œ       ‹                                                                     ±   A  ˚      ../src/main/windows /opt/local/x86_64-w64-mingw32/include ../include  SDL_windows_main.c   corecrt.h   minwindef.h   basetsd.h   winnt.h   stdint.h   SDL_stdinc.h   SDL_messagebox.h   heapapi.h   SDL_main.h   winbase.h   intrin.h   shellapi.h   processenv.h   SDL_video.h   <built-in>      	        )Û ê◊
+êIJIt<I.<Âì	$Ç	=J	K=	 [ ≠ tÇ <	ü	ÂX	pg‰i<ª¿ 	qÇ.J;ux.h[.?J	 ë I	 K « i ¯X 	¿      X 	–      X SDL_Window GCC: (GNU) 11.1.0                    %        &    7   '    N   (    }       Ñ       î   +    √   ,    À   -    ·   .    ı   /                  0    L  )    Q  1    ]  2    d  *                                                                     $       (       ,                      ‘       ÿ       Ï                                 “       ‚       U  !    a  !          '      +      =      A      W      [      j      n      s      ñ      π      Ω      œ      ”      Â      È      Ó            8      <      M      Q      V      {      ü      £      ¥      ∏      ∆             Ó      Ú      ˜                        #      (      @      M      p      î      ¨      π      ÿ      ·      Ì      	      	      !	      .	      G	      T	      q	      â	      ñ	      Æ	      ª	      ÿ	      Â	                    P      ~      õ      .file       ˛ˇ  gSDL_windows_ma        u                                Ö   ∞          ó   ¿      WinMain –      .text          ’               .data                            .bss                             .rdata         4                 .xdata         $                 .pdata         0                    •                             ≤          /
+  B                 æ       	   ;                    Ã       
+   @                    ◊          0                    Ê          `                     Ù          µ                                                                                               ,               E               Z               j               z               â           memcpy           SDL_free             î               ü               ∞               …           SDL_main         ⁄  .debug_frame .debug_info .debug_abbrev .debug_loc .debug_aranges .debug_ranges .debug_line .debug_str .rdata$zzz main_getcmdline console_ansi_main console_wmain .debug_frame .debug_info .debug_abbrev .debug_loc .debug_aranges .debug_ranges .debug_line .debug_str .rdata$zzz __imp_GetCommandLineW __imp_CommandLineToArgvW __imp_GetProcessHeap __imp_HeapAlloc __imp_LocalFree __imp_HeapFree SDL_strlen SDL_wcslen SDL_iconv_string SDL_ShowSimpleMessageBox SDL_SetMainReady                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   INDX( 	 ™œ            (   p  Ë       ÿ~ g                 ‰’     ` L     ‹’     ÍÀª˝lcÿ!¶o˜gÿ!¶o˜gÿ!¶o˜gÿ                       c m a k e L 2 ›’     h T     ‹’     ¬«Ω˝lcÿÄy,–XÿœÎn˜gÿ≥3≈n˜gÿ ∞6    ˛¢6            	l i b S D L 2 . a     ﬁ’     p \     ‹’     ´Ô˝lcÿ n‡+–Xÿ©ão˜gÿøâo˜gÿ ‡     D⁄             l i b S D L 2 . d l l . a     ﬂ’     h V     ‹’     XNÓ˝lcÿ n‡+–XÿrÆëo˜gÿƒêo˜gÿ       !              
+l i b S D L 2 . l a   ‡’     p \     ‹’     oΩ˝lc Äy,–XÿˇWïo˜gÿãFîo˜gÿ 0      Œ$              l i b S D L 2 m a i n . a     ·’     p ^     ‹’     º˝lcÿÄy,–Xÿøvôo˜gÿû(ôo˜gÿ       ô              l i b S D L 2 m a i n . l a  ‚’     p ^     ‹’     p+Ï˝lcÿÄy,–Xÿ¡1ûo˜gÿ´úo˜gÿ ê	     Ãä	             l i b S D L 2 _ t e s t . a  „’     p `     ‹’     hÎ˝lcÿÄy,–Xÿâ£o˜gÿ„:£o˜gÿ       ú              l i b S D L 2 _ t e s t . l a ﬁ’     h V     ‹’     ´Ô˝lcÿ n‡+–Xÿ©ão˜gÿøâo˜gÿ ‡     D⁄             
+L I B S D L  1 . A   ·’     h X     ‹’     º˝lcÿÄy,–Xÿøvôo˜gÿû(ôo˜gÿ       ô              L I B S D L ~ 1 . L A ‡’     h V     ‹’     oΩ˝lcÿÄy,–XÿˇWïo˜gÿãFîo˜gÿ 0      Œ$              
+L I B S D L ~ 2 . A   „’     h X     ‹’     hÎ˝lcÿÄy,–Xÿâ£o˜gÿ„:£o˜gÿ       ú              L I B S D L ~ 2 . L A ‚’     h V     ‹’     p+Ï˝lcÿÄy,–Xÿ¡1ûo˜gÿ´úo˜gÿ ê	     Ãä	             
+L I B S D L ~ 3 . A   Ë’     h T     ‹’     ⁄§ª˝lcÿ∫l∫o˜gÿ∫l∫o˜gÿ∫l∫o˜gÿ                       	p k  c o n f i g     Ë’     h R     ‹’     ⁄§ª˝lcÿ∫l∫o˜gÿ∫l∫o˜gÿ∫l∫o˜gÿ                       P K G C O N ~ 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        # libSDL2main.la - a libtool library file
+# Generated by libtool (GNU libtool) 2.4.6
+#
+# Please DO NOT delete this file!
+# It is necessary for linking the library.
+
+# The name that we can dlopen(3).
+dlname=''
+
+# Names of this library.
+library_names=''
+
+# The name of the static archive.
+old_library='libSDL2main.a'
+
+# Linker flags that cannot go in dependency_libs.
+inherited_linker_flags=''
+
+# Libraries that this one depends upon.
+dependency_libs=''
+
+# Names of additional weak libraries provided by this library
+weak_library_names=''
+
+# Version information for libSDL2main.
+current=0
+age=0
+revision=0
+
+# Is this an already installed library?
+installed=yes
+
+# Should we warn about portability when linking against -modules?
+shouldnotlink=no
+
+# Files to dlopen/dlpreopen
+dlopen=''
+dlpreopen=''
+
+# Directory that this library needs to be installed in:
+libdir='/Users/valve/release/SDL/SDL2-2.0.22/x86_64-w64-mingw32/lib'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       # libSDL2_test.la - a libtool library file
+# Generated by libtool (GNU libtool) 2.4.6
+#
+# Please DO NOT delete this file!
+# It is necessary for linking the library.
+
+# The name that we can dlopen(3).
+dlname=''
+
+# Names of this library.
+library_names=''
+
+# The name of the static archive.
+old_library='libSDL2_test.a'
+
+# Linker flags that cannot go in dependency_libs.
+inherited_linker_flags=''
+
+# Libraries that this one depends upon.
+dependency_libs=''
+
+# Names of additional weak libraries provided by this library
+weak_library_names=''
+
+# Version information for libSDL2_test.
+current=0
+age=0
+revision=0
+
+# Is this an already installed library?
+installed=yes
+
+# Should we warn about portability when linking against -modules?
+shouldnotlink=no
+
+# Files to dlopen/dlpreopen
+dlopen=''
+dlpreopen=''
+
+# Directory that this library needs to be installed in:
+libdir='/Users/valve/release/SDL/SDL2-2.0.22/x86_64-w64-mingw32/lib'
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    # sdl2 cmake project-config input for ./configure scripts
+
+set(prefix "/opt/local/x86_64-w64-mingw32") 
+set(exec_prefix "${prefix}")
+set(libdir "${exec_prefix}/lib")
+set(includedir "${prefix}/include")
+set(SDL2_PREFIX "${prefix}")
+set(SDL2_EXEC_PREFIX "${exec_prefix}")
+set(SDL2_LIBDIR "${libdir}")
+set(SDL2_INCLUDE_DIRS "${includedir}/SDL2")
+set(SDL2_LIBRARIES "-L${SDL2_LIBDIR}  -lmingw32 -lSDL2main -lSDL2 -mwindows")
+string(STRIP "${SDL2_LIBRARIES}" SDL2_LIBRARIES)
+
+if(NOT TARGET SDL2::SDL2)
+  # provide SDL2::SDL2, SDL2::SDL2main and SDL2::SDL2-static targets, like SDL2Config.cmake does, for compatibility
+
+  # Remove -lSDL2 as that is handled by CMake, note the space at the end so it does not replace e.g. -lSDL2main
+  # This may require "libdir" beeing set (from above)
+  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS " -lmingw32 -lSDL2main -lSDL2 -mwindows ")
+  # also get rid of -lSDL2main, if you want to link against that use both SDL2::SDL2main and SDL2::SDL2 (in that order)
+  # (SDL2Config.cmake has the same behavior)
+  string(REPLACE "-lSDL2main" "" SDL2_EXTRA_LINK_FLAGS ${SDL2_EXTRA_LINK_FLAGS})
+  string(STRIP "${SDL2_EXTRA_LINK_FLAGS}" SDL2_EXTRA_LINK_FLAGS)
+  string(REPLACE "-lSDL2 " "" SDL2_EXTRA_LINK_FLAGS_STATIC " -Wl,--dynamicbase -Wl,--nxcompat -Wl,--high-entropy-va -lm -ldinput8 -ldxguid -ldxerr8 -luser32 -lgdi32 -lwinmm -limm32 -lole32 -loleaut32 -lshell32 -lsetupapi -lversion -luuid ")
+  string(STRIP "${SDL2_EXTRA_LINK_FLAGS_STATIC}" SDL2_EXTRA_LINK_FLAGS_STATIC)
+
+if(WIN32 AND NOT MSVC)
+  # MINGW needs very special handling, because the link order must be exactly -lmingw32 -lSDL2main -lSDL2
+  # for it to work at all (and -mwindows somewhere); a normal SHARED IMPORTED or STATIC IMPORTED library always puts itself first
+  # so handle this like a header-only lib and put everything in INTERFACE_LINK_LIBRARIES
+
+  add_library(SDL2::SDL2 INTERFACE IMPORTED)
+  set_target_properties(SDL2::SDL2 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${SDL2_INCLUDE_DIRS}"
+    INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lSDL2")
+
+  add_library(SDL2::SDL2main INTERFACE IMPORTED)
+  set_target_properties(SDL2::SDL2main PROPERTIES
+    INTERFACE_LINK_LIBRARIES "-L${SDL2_LIBDIR} -lmingw32 -lSDL2main -mwindows")
+
+else() # (not WIN32) or MSVC
+
+  add_library(SDL2::SDL2 SHARED IMPORTED)
+  set_target_properties(SDL2::SDL2 PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${SDL2_INCLUDE_DIRS}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+    IMPORTED_LOCATION "${SDL2_LIBDIR}/${CMAKE_SHARED_LIBRARY_PREFIX}SDL2${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+  if(MSVC)
+    # This file is generated when building SDL2 with autotools and MinGW, and MinGW/dlltool
+    # isn't able to generate .lib files that are usable by recent MSVC versions 
+    # (something about "module unsafe for SAFESEH"; SAFESEH is enabled by default in MSVC).
+    # The .lib file for SDL2.dll *could* be generated with `gendef SDL2.dll` and then
+    # `lib.exe /machine:x86 /def:SDL2.def /out:SDL2.lib` (or /machine:amd64)
+    # but that requires lib.exe from a Visual Studio installation - and that still doesn't
+    # give you a static SDL2main.lib with SAFESEH support that you'll need (unless you don't use SDL2main)
+    # Note that when building SDL2 with CMake and MSVC, the result works with both MinGW and MSVC.
+
+    message(FATAL_ERROR, "This build of libSDL2 only supports MinGW, not MSVC (Visual C++), because it lacks .lib files!")
+    # MSVC needs SDL2.lib set as IMPORTED_IMPLIB to link against (comment out message() call above if you added SDL2.lib yourself)
+    set_target_properties(SDL2::SDL2 PROPERTIES IMPORTED_IMPLIB "${SDL2_LIBDIR}/SDL2.lib")
+  else()
+    # this mustn't be set for MSVC, so do it here in an extra call here
+    set_target_properties(SDL2::SDL2 PROPERTIES INTERFACE_LINK_LIBRARIES  "${SDL2_EXTRA_LINK_FLAGS}")
+  endif()
+
+  add_library(SDL2::SDL2main STATIC IMPORTED)
+  set_target_properties(SDL2::SDL2main PROPERTIES
+    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+    IMPORTED_LOCATION "${SDL2_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2main${CMAKE_STATIC_LIBRARY_SUFFIX}")
+
+endif() # (not WIN32) or MSVC
+
+  add_library(SDL2::SDL2-static STATIC IMPORTED)
+  set_target_properties(SDL2::SDL2-static PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${SDL2_INCLUDE_DIRS}"
+    IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+    IMPORTED_LOCATION "${SDL2_LIBDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}SDL2${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    INTERFACE_LINK_LIBRARIES "${SDL2_EXTRA_LINK_FLAGS_STATIC}")
+
+endif() # NOT TARGET SDL2::SDL2
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       # Configure paths for SDL
+# Sam Lantinga 9/21/99
+# stolen from Manish Singh
+# stolen back from Frank Belew
+# stolen from Manish Singh
+# Shamelessly stolen from Owen Taylor
+#
+# Changelog:
+# * also look for SDL2.framework under Mac OS X
+# * removed HP/UX 9 support.
+# * updated for newer autoconf.
+
+# serial 2
+
+dnl AM_PATH_SDL2([MINIMUM-VERSION, [ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND]]])
+dnl Test for SDL, and define SDL_CFLAGS and SDL_LIBS
+dnl
+AC_DEFUN([AM_PATH_SDL2],
+[dnl
+dnl Get the cflags and libraries from the sdl2-config script
+dnl
+AC_ARG_WITH(sdl-prefix,[  --with-sdl-prefix=PFX   Prefix where SDL is installed (optional)],
+            sdl_prefix="$withval", sdl_prefix="")
+AC_ARG_WITH(sdl-exec-prefix,[  --with-sdl-exec-prefix=PFX Exec prefix where SDL is installed (optional)],
+            sdl_exec_prefix="$withval", sdl_exec_prefix="")
+AC_ARG_ENABLE(sdltest, [  --disable-sdltest       Do not try to compile and run a test SDL program],
+		    , enable_sdltest=yes)
+AC_ARG_ENABLE(sdlframework, [  --disable-sdlframework Do not search for SDL2.framework],
+        , search_sdl_framework=yes)
+
+AC_ARG_VAR(SDL2_FRAMEWORK, [Path to SDL2.framework])
+
+  min_sdl_version=ifelse([$1], ,2.0.0,$1)
+
+  if test "x$sdl_prefix$sdl_exec_prefix" = x ; then
+    PKG_CHECK_MODULES([SDL], [sdl2 >= $min_sdl_version],
+           [sdl_pc=yes],
+           [sdl_pc=no])
+  else
+    sdl_pc=no
+    if test x$sdl_exec_prefix != x ; then
+      sdl_config_args="$sdl_config_args --exec-prefix=$sdl_exec_prefix"
+      if test x${SDL2_CONFIG+set} != xset ; then
+        SDL2_CONFIG=$sdl_exec_prefix/bin/sdl2-config
+      fi
+    fi
+    if test x$sdl_prefix != x ; then
+      sdl_config_args="$sdl_config_args --prefix=$sdl_prefix"
+      if test x${SDL2_CONFIG+set} != xset ; then
+        SDL2_CONFIG=$sdl_prefix/bin/sdl2-config
+      fi
+    fi
+  fi
+
+  if test "x$sdl_pc" = xyes ; then
+    no_sdl=""
+    SDL2_CONFIG="pkg-config sdl2"
+  else
+    as_save_PATH="$PATH"
+    if test "x$prefix" != xNONE && test "$cross_compiling" != yes; then
+      PATH="$prefix/bin:$prefix/usr/bin:$PATH"
+    fi
+    AC_PATH_PROG(SDL2_CONFIG, sdl2-config, no, [$PATH])
+    PATH="$as_save_PATH"
+    no_sdl=""
+
+    if test "$SDL2_CONFIG" = "no" -a "x$search_sdl_framework" = "xyes"; then
+      AC_MSG_CHECKING(for SDL2.framework)
+      if test "x$SDL2_FRAMEWORK" != x; then
+        sdl_framework=$SDL2_FRAMEWORK
+      else
+        for d in / ~/ /System/; do
+          if test -d "$dLibrary/Frameworks/SDL2.framework"; then
+            sdl_framework="$dLibrary/Frameworks/SDL2.framework"
+          fi
+        done
+      fi
+
+      if test x"$sdl_framework" != x && test -d "$sdl_framework"; then
+        AC_MSG_RESULT($sdl_framework)
+        sdl_framework_dir=`dirname $sdl_framework`
+        SDL_CFLAGS="-F$sdl_framework_dir -Wl,-framework,SDL2 -I$sdl_framework/include"
+        SDL_LIBS="-F$sdl_framework_dir -Wl,-framework,SDL2"
+      else
+        no_sdl=yes
+      fi
+    fi
+
+    if test "$SDL2_CONFIG" != "no"; then
+      if test "x$sdl_pc" = "xno"; then
+        AC_MSG_CHECKING(for SDL - version >= $min_sdl_version)
+        SDL_CFLAGS=`$SDL2_CONFIG $sdl_config_args --cflags`
+        SDL_LIBS=`$SDL2_CONFIG $sdl_config_args --libs`
+      fi
+
+      sdl_major_version=`$SDL2_CONFIG $sdl_config_args --version | \
+             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+      sdl_minor_version=`$SDL2_CONFIG $sdl_config_args --version | \
+             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+      sdl_micro_version=`$SDL2_CONFIG $sdl_config_args --version | \
+             sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+      if test "x$enable_sdltest" = "xyes" ; then
+        ac_save_CFLAGS="$CFLAGS"
+        ac_save_CXXFLAGS="$CXXFLAGS"
+        ac_save_LIBS="$LIBS"
+        CFLAGS="$CFLAGS $SDL_CFLAGS"
+        CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+        LIBS="$LIBS $SDL_LIBS"
+dnl
+dnl Now check if the installed SDL is sufficiently new. (Also sanity
+dnl checks the results of sdl2-config to some extent
+dnl
+      rm -f conf.sdltest
+      AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#include <stdio.h>
+#include <stdlib.h>
+#include "SDL.h"
+
+int main (int argc, char *argv[])
+{
+  int major, minor, micro;
+  FILE *fp = fopen("conf.sdltest", "w");
+
+  if (fp) fclose(fp);
+
+  if (sscanf("$min_sdl_version", "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_sdl_version");
+     exit(1);
+   }
+
+   if (($sdl_major_version > major) ||
+      (($sdl_major_version == major) && ($sdl_minor_version > minor)) ||
+      (($sdl_major_version == major) && ($sdl_minor_version == minor) && ($sdl_micro_version >= micro)))
+    {
+      return 0;
+    }
+  else
+    {
+      printf("\n*** 'sdl2-config --version' returned %d.%d.%d, but the minimum version\n", $sdl_major_version, $sdl_minor_version, $sdl_micro_version);
+      printf("*** of SDL required is %d.%d.%d. If sdl2-config is correct, then it is\n", major, minor, micro);
+      printf("*** best to upgrade to the required version.\n");
+      printf("*** If sdl2-config was wrong, set the environment variable SDL2_CONFIG\n");
+      printf("*** to point to the correct copy of sdl2-config, and remove the file\n");
+      printf("*** config.cache before re-running configure\n");
+      return 1;
+    }
+}
+
+]])], [], [no_sdl=yes], [echo $ac_n "cross compiling; assumed OK... $ac_c"])
+        CFLAGS="$ac_save_CFLAGS"
+        CXXFLAGS="$ac_save_CXXFLAGS"
+        LIBS="$ac_save_LIBS"
+
+      fi
+      if test "x$sdl_pc" = "xno"; then
+        if test "x$no_sdl" = "xyes"; then
+          AC_MSG_RESULT(no)
+        else
+          AC_MSG_RESULT(yes)
+        fi
+      fi
+    fi
+  fi
+  if test "x$no_sdl" = x ; then
+     ifelse([$2], , :, [$2])
+  else
+     if test "$SDL2_CONFIG" = "no" ; then
+       echo "*** The sdl2-config script installed by SDL could not be found"
+       echo "*** If SDL was installed in PREFIX, make sure PREFIX/bin is in"
+       echo "*** your path, or set the SDL2_CONFIG environment variable to the"
+       echo "*** full path to sdl2-config."
+     else
+       if test -f conf.sdltest ; then
+        :
+       else
+          echo "*** Could not run SDL test program, checking why..."
+          CFLAGS="$CFLAGS $SDL_CFLAGS"
+          CXXFLAGS="$CXXFLAGS $SDL_CFLAGS"
+          LIBS="$LIBS $SDL_LIBS"
+          AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+#include <stdio.h>
+#include "SDL.h"
+
+int main(int argc, char *argv[])
+{ return 0; }
+#undef  main
+#define main K_and_R_C_main
+]], [[ return 0; ]])],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding SDL or finding the wrong"
+          echo "*** version of SDL. If it is not finding SDL, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means SDL was incorrectly installed"
+          echo "*** or that you have moved SDL since it was installed. In the latter case, you"
+          echo "*** may want to edit the sdl2-config script: $SDL2_CONFIG" ])
+          CFLAGS="$ac_save_CFLAGS"
+          CXXFLAGS="$ac_save_CXXFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+     SDL_CFLAGS=""
+     SDL_LIBS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(SDL_CFLAGS)
+  AC_SUBST(SDL_LIBS)
+  rm -f conf.sdltest
+])
+                                                                                                                                                                                                                                                                                                                                                                                                                                 INDX( 	 µ‹            (   ‡  Ë       ~                     K‘     h X     I‘     P;¨˝lcÿ÷π“m˜gÿ÷π“m˜gÿ÷π“m˜gÿ                       S D L 2 - 2 . 0 . 2 2 K‘     h X     I‘     P;¨˝lcÿ÷π“m˜gÿ÷π“m˜gÿ÷π“m˜gÿ                       S D L 2 - 2 ~ 1 . 2 2 J‘     ê ~     I‘     @bLÍlcÿôΩÒÒlcÿÚÜ˚f˜gÿ©˛Áf˜gÿ Äÿ     xÿ             S D L 2 - d e v e l - 2 . 0 . 2 2 - m i n g w . t a r . g z   J‘     h X     I‘     @bLÍlcÿôΩÒÒlcÿÚÜ˚f˜gÿ©˛Áf˜gÿ Äÿ     xÿ             S D L 2 - D  1 . G Z Ì’     x h     I‘     ŸeXcÿ‘:“o˜gÿ‘:“o˜gÿ‘:“o˜gÿ                       U s i n g   C + +   L i b r a r i e s Ì’     h R     I‘     ŸeXcÿ‘:“o˜gÿ‘:“o˜gÿ‘:“o˜gÿ                       U S I N G C ~ 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Using C++ Libraries" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Using C++ Libraries" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Using C++ Libraries" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                INDX( 	 ‘Î            (   Ë  Ë       s                     Ó’     ` L     Ì’     “√)Zcÿ’∏∫*Zcÿ®¿ o˜gÿa…o˜gÿ ê     ≤ä             1 . p n g     Ô’     h R     Ì’     À];0Ycÿ˝“;0Ycÿà-œo˜gÿxœo˜gÿX       T               m a i n . c p p       ’     Ä p     Ì’     ‰eÅXcÿöÉXcÿ`)—o˜gÿO—o˜gÿ       @              U s i n g   C + +   L i b r a r i e s . c b p Ò’     à v     Ì’     Hø§cÿOΩø§cÿ‰a“o˜gÿ√“o˜gÿh      e              U s i n g   C + +   L i b r a r i e  . l a y o u t   ’     p Z     Ì’     ‰eÅXcÿöÉXcÿ`)—o˜gÿO—o˜gÿ       @              U S I N G C ~ 1 . C B P       Ò’     p Z     Ì’     Hø§cÿOΩø§cÿ‰a“o˜gÿ√“o˜gÿh      e              U S I N G C ~ 1 . L A Y                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Aquiring Simple Direct Media Layer" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Aquiring Simple Direct Media Layer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Aquiring Simple Direct Media Layer" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+		</Compiler>
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   INDX( 	 ≠             (   ÿ  Ë       r                     Ù’     † é     Û’     ƒ´gdÿR±´gdÿí◊o˜gÿk◊o˜gÿ       m              &A q u i r i n g   S i m p l e   D i r e c t   M e d i a   L a y e r . c b p   ı’     ® î     Û’     xäÅhdÿ@ÌäÅhdÿ;õ‹o˜gÿM‹o˜gÿh      e              )A q u i r i n g   S i m p l e   D i r e c t   M e d i a   L a y e r . l a y o u t     ˆ’     † é     Û’     hYùhdÿı˚C¨hdÿpﬁo˜gÿ–˙›o˜gÿ                      &A q u i r i n g   S i m p l e   D i  e c t   M e d i a   L a y e r . t x t ÿÙ’     p Z     Û’     ƒ´gdÿR±´gdÿí◊o˜gÿk◊o˜gÿ       m              A Q U I R I ~ 1 . C B P       ı’     p Z     Û’     xäÅhdÿ@ÌäÅhdÿ;õ‹o˜gÿM‹o˜gÿh      e              A Q U I R I ~ 1 . L A Y       ˆ’     p Z     Û’     hYùhdÿı˚C¨hdÿpﬁo˜gÿ–˙›o˜gÿ                      A Q U I R I ~ 1 . T X T       ˜’     h R     Û’     ﬁñhdÿp°óhdÿŸk‡o˜gÿ∏‡o˜gÿx       u               m a i n . c p p                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       

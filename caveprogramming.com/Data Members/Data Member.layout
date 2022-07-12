@@ -1,0 +1,19 @@
+gamecontroller, int touchpad, int finger, Uint8 *state, float *x, float *y, float *pressure);
+
+/**
+ * Return whether a game controller has a particular sensor.
+ *
+ * \param gamecontroller The controller to query
+ * \param type The type of sensor to query
+ * \returns SDL_TRUE if the sensor exists, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.14.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GameControllerHasSensor(SDL_GameController *gamecontroller, SDL_SensorType type);
+
+/**
+ * Set whether data reporting for a game controller sensor is enabled.
+ *
+ * \param gamecontroller The controller to update
+ * \param type The type of sensor to enable/disable
+ * \param enabled Whether data repor

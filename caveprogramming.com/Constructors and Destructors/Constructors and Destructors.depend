@@ -1,0 +1,11 @@
+# depslib dependency file v1.0
+1651798273 source:c:\users\rizqi\desktop\c++\latihan 30\constructors and destructors\main.cpp
+	<iostream>
+	"cat.h"
+
+1651798711 source:c:\users\rizqi\desktop\c++\latihan 30\constructors and destructors\cat.cpp
+	<iostream>
+	"cat.h"
+
+1651798665 c:\users\rizqi\desktop\c++\latihan 30\constructors and destructors\cat.h
+

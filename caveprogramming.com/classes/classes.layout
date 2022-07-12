@@ -1,0 +1,30 @@
+gSetPriority
+ */
+extern DECLSPEC SDL_LogPriority SDLCALL SDL_LogGetPriority(int category);
+
+/**
+ * Reset all priorities to default.
+ *
+ * This is called by SDL_Quit().
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_LogSetAllPriority
+ * \sa SDL_LogSetPriority
+ */
+extern DECLSPEC void SDLCALL SDL_LogResetPriorities(void);
+
+/**
+ * Log a message with SDL_LOG_CATEGORY_APPLICATION and SDL_LOG_PRIORITY_INFO.
+ *
+ * = * \param fmt a printf() style message format string
+ *
+ * \param ... additional parameters matching % tokens in the `fmt` string, if
+ *            any
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_LogCritical
+ * \sa SDL_LogDebug
+ * \sa SDL_LogError
+ * \

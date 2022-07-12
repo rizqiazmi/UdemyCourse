@@ -1,0 +1,1601 @@
+/**
+ * Original code: automated SDL platform test written by Edgar Simo "bobbens"
+ * Extended and updated by aschiffler at ferzkopp dot net
+ */
+
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_test.h"
+
+/* ================= Test Case Implementation ================== */
+
+/* Helper functions */
+
+/**
+ * @brief Compare sizes of types.
+ *
+ * @note Watcom C flags these as Warning 201: "Unreachable code" if you just
+ *  compare them directly, so we push it through a function to keep the
+ *  compiler quiet.  --ryan.
+ */
+static int _compareSizeOfType( size_t sizeoftype, size_t hardcodetype )
+{
+    return sizeoftype != hardcodetype;
+}
+
+/* Test case functions */
+
+/**
+ * @brief Tests type sizes.
+ */
+int platform_testTypes(void *arg)
+{
+   int ret;
+
+   ret = _compareSizeOfType( sizeof(Uint8), 1 );
+   SDLTest_AssertCheck( ret == 0, "sizeof(Uint8) = %lu, expected  1", (unsigned long)sizeof(Uint8) );
+
+   ret = _compareSizeOfType( sizeof(Uint16), 2 );
+   SDLTest_AssertCheck( ret == 0, "sizeof(Uint16) = %lu, expected 2", (unsigned long)sizeof(Uint16) );
+
+   ret = _compareSizeOfType( sizeof(Uint32), 4 );
+   SDLTest_AssertCheck( ret == 0, "sizeof(Uint32) = %lu, expected 4", (unsigned long)sizeof(Uint32) );
+
+   ret = _compareSizeOfType( sizeof(Uint64), 8 );
+   SDLTest_AssertCheck( ret == 0, "sizeof(Uint64) = %lu, expected 8", (unsigned long)sizeof(Uint64) );
+
+   return TEST_COMPLETED;
+}
+
+/**
+ * @brief Tests platform endianness and SDL_SwapXY functions.
+ */
+int platform_testEndianessAndSwap(void *arg)
+{
+    int real_byteorder;
+    Uint16 value = 0x1234;
+    Uint16 value16 = 0xCDAB;
+    Uint16 swapped16 = 0xABCD;
+    Uint32 value32 = 0xEFBEADDE;
+    Uint32 swapped32 = 0xDEADBEEF;
+
+    Uint64 value64, swapped64;
+    value64 = 0xEFBEADDE;
+    value64 <<= 32;
+    value64 |= 0xCDAB3412;
+    swapped64 = 0x1234ABCD;
+    swapped64 <<= 32;
+    swapped64 |= 0xDEADBEEF;
+
+    if ((*((char *) &value) >> 4) == 0x1) {
+        real_byteorder = SDL_BIG_ENDIAN;
+    } else {
+        real_byteorder = SDL_LIL_ENDIAN;
+    }
+
+    /* Test endianness. */
+    SDLTest_AssertCheck( real_byteorder == SDL_BYTEORDER,
+             "Machine detected as %s endian, appears to be %s endian.",
+             (SDL_BYTEORDER == SDL_LIL_ENDIAN) ? "little" : "big",
+             (real_byteorder == SDL_LIL_ENDIAN) ? "little" : "big" );
+
+    /* Test 16 swap. */
+    SDLTest_AssertCheck( SDL_Swap16(value16) == swapped16,
+             "SDL_Swap16(): 16 bit swapped: 0x%X => 0x%X",
+             value16, SDL_Swap16(value16) );
+
+    /* Test 32 swap. */
+    SDLTest_AssertCheck( SDL_Swap32(value32) == swapped32,
+             "SDL_Swap32(): 32 bit swapped: 0x%X => 0x%X",
+             value32, SDL_Swap32(value32) );
+
+    /* Test 64 swap. */
+    SDLTest_AssertCheck( SDL_Swap64(value64) == swapped64,
+             "SDL_Swap64(): 64 bit swapped: 0x%"SDL_PRIX64" => 0x%"SDL_PRIX64,
+             value64, SDL_Swap64(value64) );
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_GetXYZ() functions
+ * \sa
+ * http://wiki.libsdl.org/SDL_GetPlatform
+ * http://wiki.libsdl.org/SDL_GetCPUCount
+ * http://wiki.libsdl.org/SDL_GetCPUCacheLineSize
+ * http://wiki.libsdl.org/SDL_GetRevision
+ * http://wiki.libsdl.org/SDL_GetRevisionNumber
+ */
+int platform_testGetFunctions (void *arg)
+{
+   char *platform;
+   char *revision;
+   int ret;
+   size_t len;
+
+   platform = (char *)SDL_GetPlatform();
+   SDLTest_AssertPass("SDL_GetPlatform()");
+   SDLTest_AssertCheck(platform != NULL, "SDL_GetPlatform() != NULL");
+   if (platform != NULL) {
+     len = SDL_strlen(platform);
+     SDLTest_AssertCheck(len > 0,
+             "SDL_GetPlatform(): expected non-empty platform, was platform: '%s', len: %i",
+             platform,
+             (int) len);
+   }
+
+   ret = SDL_GetCPUCount();
+   SDLTest_AssertPass("SDL_GetCPUCount()");
+   SDLTest_AssertCheck(ret > 0,
+             "SDL_GetCPUCount(): expected count > 0, was: %i",
+             ret);
+
+   ret = SDL_GetCPUCacheLineSize();
+   SDLTest_AssertPass("SDL_GetCPUCacheLineSize()");
+   SDLTest_AssertCheck(ret >= 0,
+             "SDL_GetCPUCacheLineSize(): expected size >= 0, was: %i",
+             ret);
+
+   revision = (char *)SDL_GetRevision();
+   SDLTest_AssertPass("SDL_GetRevision()");
+   SDLTest_AssertCheck(revision != NULL, "SDL_GetRevision() != NULL");
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasXYZ() functions
+ * \sa
+ * http://wiki.libsdl.org/SDL_Has3DNow
+ * http://wiki.libsdl.org/SDL_HasAltiVec
+ * http://wiki.libsdl.org/SDL_HasMMX
+ * http://wiki.libsdl.org/SDL_HasRDTSC
+ * http://wiki.libsdl.org/SDL_HasSSE
+ * http://wiki.libsdl.org/SDL_HasSSE2
+ * http://wiki.libsdl.org/SDL_HasSSE3
+ * http://wiki.libsdl.org/SDL_HasSSE41
+ * http://wiki.libsdl.org/SDL_HasSSE42
+ * http://wiki.libsdl.org/SDL_HasAVX
+ */
+int platform_testHasFunctions (void *arg)
+{
+   /* TODO: independently determine and compare values as well */
+
+   SDL_HasRDTSC();
+   SDLTest_AssertPass("SDL_HasRDTSC()");
+
+   SDL_HasAltiVec();
+   SDLTest_AssertPass("SDL_HasAltiVec()");
+
+   SDL_HasMMX();
+   SDLTest_AssertPass("SDL_HasMMX()");
+
+   SDL_Has3DNow();
+   SDLTest_AssertPass("SDL_Has3DNow()");
+
+   SDL_HasSSE();
+   SDLTest_AssertPass("SDL_HasSSE()");
+
+   SDL_HasSSE2();
+   SDLTest_AssertPass("SDL_HasSSE2()");
+
+   SDL_HasSSE3();
+   SDLTest_AssertPass("SDL_HasSSE3()");
+
+   SDL_HasSSE41();
+   SDLTest_AssertPass("SDL_HasSSE41()");
+
+   SDL_HasSSE42();
+   SDLTest_AssertPass("SDL_HasSSE42()");
+
+   SDL_HasAVX();
+   SDLTest_AssertPass("SDL_HasAVX()");
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_GetVersion
+ * \sa
+ * http://wiki.libsdl.org/SDL_GetVersion
+ */
+int platform_testGetVersion(void *arg)
+{
+   SDL_version linked;
+   int major = SDL_MAJOR_VERSION;
+   int minor = SDL_MINOR_VERSION;
+
+   SDL_GetVersion(&linked);
+   SDLTest_AssertCheck( linked.major >= major,
+             "SDL_GetVersion(): returned major %i (>= %i)",
+             linked.major,
+             major);
+   SDLTest_AssertCheck( linked.minor >= minor,
+             "SDL_GetVersion(): returned minor %i (>= %i)",
+             linked.minor,
+             minor);
+
+   return TEST_COMPLETED;
+}
+
+
+/* !
+ * \brief Tests SDL_VERSION macro
+ */
+int platform_testSDLVersion(void *arg)
+{
+   SDL_version compiled;
+   int major = SDL_MAJOR_VERSION;
+   int minor = SDL_MINOR_VERSION;
+
+   SDL_VERSION(&compiled);
+   SDLTest_AssertCheck( compiled.major >= major,
+             "SDL_VERSION() returned major %i (>= %i)",
+             compiled.major,
+             major);
+   SDLTest_AssertCheck( compiled.minor >= minor,
+             "SDL_VERSION() returned minor %i (>= %i)",
+             compiled.minor,
+             minor);
+
+   return TEST_COMPLETED;
+}
+
+
+/* !
+ * \brief Tests default SDL_Init
+ */
+int platform_testDefaultInit(void *arg)
+{
+   int ret;
+   int subsystem;
+
+   subsystem = SDL_WasInit(SDL_INIT_EVERYTHING);
+   SDLTest_AssertCheck( subsystem != 0,
+             "SDL_WasInit(0): returned %i, expected != 0",
+             subsystem);
+
+   ret = SDL_Init(SDL_WasInit(SDL_INIT_EVERYTHING));
+   SDLTest_AssertCheck( ret == 0,
+             "SDL_Init(0): returned %i, expected 0, error: %s",
+             ret,
+             SDL_GetError());
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_Get/Set/ClearError
+ * \sa
+ * http://wiki.libsdl.org/SDL_GetError
+ * http://wiki.libsdl.org/SDL_SetError
+ * http://wiki.libsdl.org/SDL_ClearError
+ */
+int platform_testGetSetClearError(void *arg)
+{
+   int result;
+   const char *testError = "Testing";
+   char *lastError;
+   size_t len;
+
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertPass("SDL_GetError()");
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == 0,
+             "SDL_GetError(): no message expected, len: %i", (int) len);
+   }
+
+   result = SDL_SetError("%s", testError);
+   SDLTest_AssertPass("SDL_SetError()");
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == SDL_strlen(testError),
+             "SDL_GetError(): expected message len %i, was len: %i",
+             (int) SDL_strlen(testError),
+             (int) len);
+     SDLTest_AssertCheck(SDL_strcmp(lastError, testError) == 0,
+             "SDL_GetError(): expected message %s, was message: %s",
+             testError,
+             lastError);
+   }
+
+   /* Clean up */
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_SetError with empty input
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetError
+ */
+int platform_testSetErrorEmptyInput(void *arg)
+{
+   int result;
+   const char *testError = "";
+   char *lastError;
+   size_t len;
+
+   result = SDL_SetError("%s", testError);
+   SDLTest_AssertPass("SDL_SetError()");
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == SDL_strlen(testError),
+             "SDL_GetError(): expected message len %i, was len: %i",
+             (int) SDL_strlen(testError),
+             (int) len);
+     SDLTest_AssertCheck(SDL_strcmp(lastError, testError) == 0,
+             "SDL_GetError(): expected message '%s', was message: '%s'",
+             testError,
+             lastError);
+   }
+
+   /* Clean up */
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_SetError with invalid input
+ * \sa
+ * http://wiki.libsdl.org/SDL_SetError
+ */
+int platform_testSetErrorInvalidInput(void *arg)
+{
+   int result;
+   const char *invalidError = NULL;
+   const char *probeError = "Testing";
+   char *lastError;
+   size_t len;
+
+   /* Reset */
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   /* Check for no-op */
+   result = SDL_SetError("%s", invalidError);
+   SDLTest_AssertPass("SDL_SetError()");
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == 0 || SDL_strcmp(lastError, "(null)") == 0,
+             "SDL_GetError(): expected message len 0, was len: %i",
+             (int) len);
+   }
+
+   /* Set */
+   result = SDL_SetError("%s", probeError);
+   SDLTest_AssertPass("SDL_SetError('%s')", probeError);
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+
+   /* Check for no-op */
+   result = SDL_SetError("%s", invalidError);
+   SDLTest_AssertPass("SDL_SetError(NULL)");
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == 0 || SDL_strcmp( lastError, "(null)" ) == 0,
+             "SDL_GetError(): expected message len 0, was len: %i",
+             (int) len);
+   }
+
+   /* Reset */
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   /* Set and check */
+   result = SDL_SetError("%s", probeError);
+   SDLTest_AssertPass("SDL_SetError()");
+   SDLTest_AssertCheck(result == -1, "SDL_SetError: expected -1, got: %i", result);
+   lastError = (char *)SDL_GetError();
+   SDLTest_AssertCheck(lastError != NULL,
+             "SDL_GetError() != NULL");
+   if (lastError != NULL)
+   {
+     len = SDL_strlen(lastError);
+     SDLTest_AssertCheck(len == SDL_strlen(probeError),
+             "SDL_GetError(): expected message len %i, was len: %i",
+             (int) SDL_strlen(probeError),
+             (int) len);
+     SDLTest_AssertCheck(SDL_strcmp(lastError, probeError) == 0,
+             "SDL_GetError(): expected message '%s', was message: '%s'",
+             probeError,
+             lastError);
+   }
+   
+   /* Clean up */
+   SDL_ClearError();
+   SDLTest_AssertPass("SDL_ClearError()");
+
+   return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_GetPowerInfo
+ * \sa
+ * http://wiki.libsdl.org/SDL_GetPowerInfo
+ */
+int platform_testGetPowerInfo(void *arg)
+{
+   SDL_PowerState state;
+   SDL_PowerState stateAgain;
+   int secs;
+   int secsAgain;
+   int pct;
+   int pctAgain;
+
+   state = SDL_GetPowerInfo(&secs, &pct);
+   SDLTest_AssertPass("SDL_GetPowerInfo()");
+   SDLTest_AssertCheck(
+       state==SDL_POWERSTATE_UNKNOWN ||
+       state==SDL_POWERSTATE_ON_BATTERY ||
+       state==SDL_POWERSTATE_NO_BATTERY ||
+       state==SDL_POWERSTATE_CHARGING ||
+       state==SDL_POWERSTATE_CHARGED,
+       "SDL_GetPowerInfo(): state %i is one of the expected values",
+       (int)state);
+
+   if (state==SDL_POWERSTATE_ON_BATTERY)
+   {
+      SDLTest_AssertCheck(
+         secs >= 0,
+         "SDL_GetPowerInfo(): on battery, secs >= 0, was: %i",
+         secs);
+      SDLTest_AssertCheck(
+         (pct >= 0) && (pct <= 100),
+         "SDL_GetPowerInfo(): on battery, pct=[0,100], was: %i",
+         pct);
+   }
+
+   if (state==SDL_POWERSTATE_UNKNOWN ||
+       state==SDL_POWERSTATE_NO_BATTERY)
+   {
+      SDLTest_AssertCheck(
+         secs == -1,
+         "SDL_GetPowerInfo(): no battery, secs == -1, was: %i",
+         secs);
+      SDLTest_AssertCheck(
+         pct == -1,
+         "SDL_GetPowerInfo(): no battery, pct == -1, was: %i",
+         pct);
+   }
+
+   /* Partial return value variations */
+   stateAgain = SDL_GetPowerInfo(&secsAgain, NULL);
+   SDLTest_AssertCheck(
+        state==stateAgain,
+        "State %i returned when only 'secs' requested",
+        stateAgain);
+   SDLTest_AssertCheck(
+        secs==secsAgain,
+        "Value %i matches when only 'secs' requested",
+        secsAgain);
+   stateAgain = SDL_GetPowerInfo(NULL, &pctAgain);
+   SDLTest_AssertCheck(
+        state==stateAgain,
+        "State %i returned when only 'pct' requested",
+        stateAgain);
+   SDLTest_AssertCheck(
+        pct==pctAgain,
+        "Value %i matches when only 'pct' requested",
+        pctAgain);
+   stateAgain = SDL_GetPowerInfo(NULL, NULL);
+   SDLTest_AssertCheck(
+        state==stateAgain,
+        "State %i returned when no value requested",
+        stateAgain);
+
+   return TEST_COMPLETED;
+}
+
+/* ================= Test References ================== */
+
+/* Platform test cases */
+static const SDLTest_TestCaseReference platformTest1 =
+        { (SDLTest_TestCaseFp)platform_testTypes, "platform_testTypes", "Tests predefined types", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest2 =
+        { (SDLTest_TestCaseFp)platform_testEndianessAndSwap, "platform_testEndianessAndSwap", "Tests endianess and swap functions", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest3 =
+        { (SDLTest_TestCaseFp)platform_testGetFunctions, "platform_testGetFunctions", "Tests various SDL_GetXYZ functions", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest4 =
+        { (SDLTest_TestCaseFp)platform_testHasFunctions, "platform_testHasFunctions", "Tests various SDL_HasXYZ functions", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest5 =
+        { (SDLTest_TestCaseFp)platform_testGetVersion, "platform_testGetVersion", "Tests SDL_GetVersion function", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest6 =
+        { (SDLTest_TestCaseFp)platform_testSDLVersion, "platform_testSDLVersion", "Tests SDL_VERSION macro", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest7 =
+        { (SDLTest_TestCaseFp)platform_testDefaultInit, "platform_testDefaultInit", "Tests default SDL_Init", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest8 =
+        { (SDLTest_TestCaseFp)platform_testGetSetClearError, "platform_testGetSetClearError", "Tests SDL_Get/Set/ClearError", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest9 =
+        { (SDLTest_TestCaseFp)platform_testSetErrorEmptyInput, "platform_testSetErrorEmptyInput", "Tests SDL_SetError with empty input", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest10 =
+        { (SDLTest_TestCaseFp)platform_testSetErrorInvalidInput, "platform_testSetErrorInvalidInput", "Tests SDL_SetError with invalid input", TEST_ENABLED};
+
+static const SDLTest_TestCaseReference platformTest11 =
+        { (SDLTest_TestCaseFp)platform_testGetPowerInfo, "platform_testGetPowerInfo", "Tests SDL_GetPowerInfo function", TEST_ENABLED };
+
+/* Sequence of Platform test cases */
+static const SDLTest_TestCaseReference *platformTests[] =  {
+    &platformTest1,
+    &platformTest2,
+    &platformTest3,
+    &platformTest4,
+    &platformTest5,
+    &platformTest6,
+    &platformTest7,
+    &platformTest8,
+    &platformTest9,
+    &platformTest10,
+    &platformTest11,
+    NULL
+};
+
+/* Platform test suite (global) */
+SDLTest_TestSuiteReference platformTestSuite = {
+    "Platform",
+    NULL,
+    platformTests,
+    NULL
+};
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     /**
+ * Original code: automated SDL rect test written by Edgar Simo "bobbens"
+ * New/updated tests: aschiffler at ferzkopp dot net
+ */
+
+#include <stdio.h>
+
+#include "SDL.h"
+#include "SDL_test.h"
+
+/* ================= Test Case Implementation ================== */
+
+/* Helper functions */
+
+/* !
+ * \brief Private helper to check SDL_IntersectRectAndLine results
+ */
+void _validateIntersectRectAndLineResults(
+    SDL_bool intersection, SDL_bool expectedIntersection,
+    SDL_Rect *rect, SDL_Rect * refRect,
+    int x1, int y1, int x2, int y2,
+    int x1Ref, int y1Ref, int x2Ref, int y2Ref)
+{
+    SDLTest_AssertCheck(intersection == expectedIntersection,
+        "Check for correct intersection result: expected %s, got %s intersecting rect (%d,%d,%d,%d) with line (%d,%d - %d,%d)",
+        (expectedIntersection == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (intersection == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        refRect->x, refRect->y, refRect->w, refRect->h,
+        x1Ref, y1Ref, x2Ref, y2Ref);
+    SDLTest_AssertCheck(rect->x == refRect->x && rect->y == refRect->y && rect->w == refRect->w && rect->h == refRect->h,
+        "Check that source rectangle was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rect->x, rect->y, rect->w, rect->h,
+        refRect->x, refRect->y, refRect->w, refRect->h);
+    SDLTest_AssertCheck(x1 == x1Ref && y1 == y1Ref && x2 == x2Ref && y2 == y2Ref,
+        "Check if line was incorrectly clipped or modified: got (%d,%d - %d,%d) expected (%d,%d - %d,%d)",
+        x1, y1, x2, y2,
+        x1Ref, y1Ref, x2Ref, y2Ref);
+}
+
+/* Test case functions */
+
+/* !
+ * \brief Tests SDL_IntersectRectAndLine() clipping cases
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRectAndLine
+ */
+int
+rect_testIntersectRectAndLine (void *arg)
+{
+    SDL_Rect refRect = { 0, 0, 32, 32 };
+    SDL_Rect rect;
+    int x1, y1;
+    int x2, y2;
+    SDL_bool intersected;
+
+    int xLeft = -SDLTest_RandomIntegerInRange(1, refRect.w);
+    int xRight = refRect.w + SDLTest_RandomIntegerInRange(1, refRect.w);
+    int yTop = -SDLTest_RandomIntegerInRange(1, refRect.h);
+    int yBottom = refRect.h + SDLTest_RandomIntegerInRange(1, refRect.h);
+
+    x1 = xLeft;
+    y1 = 15;
+    x2 = xRight;
+    y2 = 15;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 0, 15, 31, 15);
+
+    x1 = 15;
+    y1 = yTop;
+    x2 = 15;
+    y2 = yBottom;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 15, 0, 15, 31);
+
+    x1 = -refRect.w;
+    y1 = -refRect.h;
+    x2 = 2*refRect.w;
+    y2 = 2*refRect.h;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+     _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 0, 0, 31, 31);
+
+    x1 = 2*refRect.w;
+    y1 = 2*refRect.h;
+    x2 = -refRect.w;
+    y2 = -refRect.h;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 31, 31, 0, 0);
+
+    x1 = -1;
+    y1 = 32;
+    x2 = 32;
+    y2 = -1;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 0, 31, 31, 0);
+
+    x1 = 32;
+    y1 = -1;
+    x2 = -1;
+    y2 = 32;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, 31, 0, 0, 31);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRectAndLine() non-clipping case line inside
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRectAndLine
+ */
+int
+rect_testIntersectRectAndLineInside (void *arg)
+{
+    SDL_Rect refRect = { 0, 0, 32, 32 };
+    SDL_Rect rect;
+    int x1, y1;
+    int x2, y2;
+    SDL_bool intersected;
+
+    int xmin = refRect.x;
+    int xmax = refRect.x + refRect.w - 1;
+    int ymin = refRect.y;
+    int ymax = refRect.y + refRect.h - 1;
+    int x1Ref = SDLTest_RandomIntegerInRange(xmin + 1, xmax - 1);
+    int y1Ref = SDLTest_RandomIntegerInRange(ymin + 1, ymax - 1);
+    int x2Ref = SDLTest_RandomIntegerInRange(xmin + 1, xmax - 1);
+    int y2Ref = SDLTest_RandomIntegerInRange(ymin + 1, ymax - 1);
+
+    x1 = x1Ref;
+    y1 = y1Ref;
+    x2 = x2Ref;
+    y2 = y2Ref;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, x1Ref, y1Ref, x2Ref, y2Ref);
+
+    x1 = x1Ref;
+    y1 = y1Ref;
+    x2 = xmax;
+    y2 = ymax;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, x1Ref, y1Ref, xmax, ymax);
+
+    x1 = xmin;
+    y1 = ymin;
+    x2 = x2Ref;
+    y2 = y2Ref;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, xmin, ymin, x2Ref, y2Ref);
+
+    x1 = xmin;
+    y1 = ymin;
+    x2 = xmax;
+    y2 = ymax;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, xmin, ymin, xmax, ymax);
+
+    x1 = xmin;
+    y1 = ymax;
+    x2 = xmax;
+    y2 = ymin;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_TRUE, &rect, &refRect, x1, y1, x2, y2, xmin, ymax, xmax, ymin);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRectAndLine() non-clipping cases outside
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRectAndLine
+ */
+int
+rect_testIntersectRectAndLineOutside (void *arg)
+{
+    SDL_Rect refRect = { 0, 0, 32, 32 };
+    SDL_Rect rect;
+    int x1, y1;
+    int x2, y2;
+    SDL_bool intersected;
+
+    int xLeft = -SDLTest_RandomIntegerInRange(1, refRect.w);
+    int xRight = refRect.w + SDLTest_RandomIntegerInRange(1, refRect.w);
+    int yTop = -SDLTest_RandomIntegerInRange(1, refRect.h);
+    int yBottom = refRect.h + SDLTest_RandomIntegerInRange(1, refRect.h);
+
+    x1 = xLeft;
+    y1 = 0;
+    x2 = xLeft;
+    y2 = 31;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_FALSE, &rect, &refRect, x1, y1, x2, y2, xLeft, 0, xLeft, 31);
+
+    x1 = xRight;
+    y1 = 0;
+    x2 = xRight;
+    y2 = 31;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_FALSE, &rect, &refRect, x1, y1, x2, y2, xRight, 0, xRight, 31);
+
+    x1 = 0;
+    y1 = yTop;
+    x2 = 31;
+    y2 = yTop;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_FALSE, &rect, &refRect, x1, y1, x2, y2, 0, yTop, 31, yTop);
+
+    x1 = 0;
+    y1 = yBottom;
+    x2 = 31;
+    y2 = yBottom;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_FALSE, &rect, &refRect, x1, y1, x2, y2, 0, yBottom, 31, yBottom);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRectAndLine() with empty rectangle
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRectAndLine
+ */
+int
+rect_testIntersectRectAndLineEmpty (void *arg)
+{
+    SDL_Rect refRect;
+    SDL_Rect rect;
+    int x1, y1, x1Ref, y1Ref;
+    int x2, y2, x2Ref, y2Ref;
+    SDL_bool intersected;
+
+    refRect.x = SDLTest_RandomIntegerInRange(1, 1024);
+    refRect.y = SDLTest_RandomIntegerInRange(1, 1024);
+    refRect.w = 0;
+    refRect.h = 0;
+    x1Ref = refRect.x;
+    y1Ref = refRect.y;
+    x2Ref = SDLTest_RandomIntegerInRange(1, 1024);
+    y2Ref = SDLTest_RandomIntegerInRange(1, 1024);
+
+    x1 = x1Ref;
+    y1 = y1Ref;
+    x2 = x2Ref;
+    y2 = y2Ref;
+    rect = refRect;
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    _validateIntersectRectAndLineResults(intersected, SDL_FALSE, &rect, &refRect, x1, y1, x2, y2, x1Ref, y1Ref, x2Ref, y2Ref);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_IntersectRectAndLine() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRectAndLine
+ */
+int
+rect_testIntersectRectAndLineParam (void *arg)
+{
+    SDL_Rect rect = { 0, 0, 32, 32 };
+    int x1 = rect.w / 2;
+    int y1 = rect.h / 2;
+    int x2 = x1;
+    int y2 = 2 * rect.h;
+    SDL_bool intersected;
+
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, &y2);
+    SDLTest_AssertCheck(intersected == SDL_TRUE, "Check that intersection result was SDL_TRUE");
+
+    intersected = SDL_IntersectRectAndLine((SDL_Rect *)NULL, &x1, &y1, &x2, &y2);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when 1st parameter is NULL");
+    intersected = SDL_IntersectRectAndLine(&rect, (int *)NULL, &y1, &x2, &y2);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when 2nd parameter is NULL");
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, (int *)NULL, &x2, &y2);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when 3rd parameter is NULL");
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, (int *)NULL, &y2);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when 4th parameter is NULL");
+    intersected = SDL_IntersectRectAndLine(&rect, &x1, &y1, &x2, (int *)NULL);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when 5th parameter is NULL");
+    intersected = SDL_IntersectRectAndLine((SDL_Rect *)NULL, (int *)NULL, (int *)NULL, (int *)NULL, (int *)NULL);
+    SDLTest_AssertCheck(intersected == SDL_FALSE, "Check that function returns SDL_FALSE when all parameters are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Private helper to check SDL_HasIntersection results
+ */
+void _validateHasIntersectionResults(
+    SDL_bool intersection, SDL_bool expectedIntersection,
+    SDL_Rect *rectA, SDL_Rect *rectB, SDL_Rect *refRectA, SDL_Rect *refRectB)
+{
+    SDLTest_AssertCheck(intersection == expectedIntersection,
+        "Check intersection result: expected %s, got %s intersecting A (%d,%d,%d,%d) with B (%d,%d,%d,%d)",
+        (expectedIntersection == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (intersection == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        rectB->x, rectB->y, rectB->w, rectB->h);
+    SDLTest_AssertCheck(rectA->x == refRectA->x && rectA->y == refRectA->y && rectA->w == refRectA->w && rectA->h == refRectA->h,
+        "Check that source rectangle A was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        refRectA->x, refRectA->y, refRectA->w, refRectA->h);
+    SDLTest_AssertCheck(rectB->x == refRectB->x && rectB->y == refRectB->y && rectB->w == refRectB->w && rectB->h == refRectB->h,
+        "Check that source rectangle B was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectB->x, rectB->y, rectB->w, rectB->h,
+        refRectB->x, refRectB->y, refRectB->w, refRectB->h);
+}
+
+/* !
+ * \brief Private helper to check SDL_IntersectRect results
+ */
+void _validateIntersectRectResults(
+    SDL_bool intersection, SDL_bool expectedIntersection,
+    SDL_Rect *rectA, SDL_Rect *rectB, SDL_Rect *refRectA, SDL_Rect *refRectB,
+    SDL_Rect *result, SDL_Rect *expectedResult)
+{
+    _validateHasIntersectionResults(intersection, expectedIntersection, rectA, rectB, refRectA, refRectB);
+    if (result && expectedResult) {
+        SDLTest_AssertCheck(result->x == expectedResult->x && result->y == expectedResult->y && result->w == expectedResult->w && result->h == expectedResult->h,
+            "Check that intersection of rectangles A (%d,%d,%d,%d) and B (%d,%d,%d,%d) was correctly calculated, got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+            rectA->x, rectA->y, rectA->w, rectA->h,
+            rectB->x, rectB->y, rectB->w, rectB->h,
+            result->x, result->y, result->w, result->h,
+            expectedResult->x, expectedResult->y, expectedResult->w, expectedResult->h);
+    }
+}
+
+/* !
+ * \brief Private helper to check SDL_UnionRect results
+ */
+void _validateUnionRectResults(
+    SDL_Rect *rectA, SDL_Rect *rectB, SDL_Rect *refRectA, SDL_Rect *refRectB,
+    SDL_Rect *result, SDL_Rect *expectedResult)
+{
+    SDLTest_AssertCheck(rectA->x == refRectA->x && rectA->y == refRectA->y && rectA->w == refRectA->w && rectA->h == refRectA->h,
+        "Check that source rectangle A was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        refRectA->x, refRectA->y, refRectA->w, refRectA->h);
+    SDLTest_AssertCheck(rectB->x == refRectB->x && rectB->y == refRectB->y && rectB->w == refRectB->w && rectB->h == refRectB->h,
+        "Check that source rectangle B was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectB->x, rectB->y, rectB->w, rectB->h,
+        refRectB->x, refRectB->y, refRectB->w, refRectB->h);
+    SDLTest_AssertCheck(result->x == expectedResult->x && result->y == expectedResult->y && result->w == expectedResult->w && result->h == expectedResult->h,
+        "Check that union of rectangles A (%d,%d,%d,%d) and B (%d,%d,%d,%d) was correctly calculated, got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        rectB->x, rectB->y, rectB->w, rectB->h,
+        result->x, result->y, result->w, result->h,
+        expectedResult->x, expectedResult->y, expectedResult->w, expectedResult->h);
+}
+
+/* !
+ * \brief Private helper to check SDL_RectEmpty results
+ */
+void _validateRectEmptyResults(
+    SDL_bool empty, SDL_bool expectedEmpty,
+    SDL_Rect *rect, SDL_Rect *refRect)
+{
+    SDLTest_AssertCheck(empty == expectedEmpty,
+        "Check for correct empty result: expected %s, got %s testing (%d,%d,%d,%d)",
+        (expectedEmpty == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (empty == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        rect->x, rect->y, rect->w, rect->h);
+    SDLTest_AssertCheck(rect->x == refRect->x && rect->y == refRect->y && rect->w == refRect->w && rect->h == refRect->h,
+        "Check that source rectangle was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rect->x, rect->y, rect->w, rect->h,
+        refRect->x, refRect->y, refRect->w, refRect->h);
+}
+
+/* !
+ * \brief Private helper to check SDL_RectEquals results
+ */
+void _validateRectEqualsResults(
+    SDL_bool equals, SDL_bool expectedEquals,
+    SDL_Rect *rectA, SDL_Rect *rectB, SDL_Rect *refRectA, SDL_Rect *refRectB)
+{
+    SDLTest_AssertCheck(equals == expectedEquals,
+        "Check for correct equals result: expected %s, got %s testing (%d,%d,%d,%d) and (%d,%d,%d,%d)",
+        (expectedEquals == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (equals == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        rectB->x, rectB->y, rectB->w, rectB->h);
+    SDLTest_AssertCheck(rectA->x == refRectA->x && rectA->y == refRectA->y && rectA->w == refRectA->w && rectA->h == refRectA->h,
+        "Check that source rectangle A was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        refRectA->x, refRectA->y, refRectA->w, refRectA->h);
+    SDLTest_AssertCheck(rectB->x == refRectB->x && rectB->y == refRectB->y && rectB->w == refRectB->w && rectB->h == refRectB->h,
+        "Check that source rectangle B was not modified: got (%d,%d,%d,%d) expected (%d,%d,%d,%d)",
+        rectB->x, rectB->y, rectB->w, rectB->h,
+        refRectB->x, refRectB->y, refRectB->w, refRectB->h);
+}
+
+/* !
+ * \brief Private helper to check SDL_FRectEquals results
+ */
+void _validateFRectEqualsResults(
+    SDL_bool equals, SDL_bool expectedEquals,
+    SDL_FRect *rectA, SDL_FRect *rectB, SDL_FRect *refRectA, SDL_FRect *refRectB)
+{
+    int cmpRes;
+    SDLTest_AssertCheck(equals == expectedEquals,
+        "Check for correct equals result: expected %s, got %s testing (%f,%f,%f,%f) and (%f,%f,%f,%f)",
+        (expectedEquals == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        (equals == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        rectB->x, rectB->y, rectB->w, rectB->h);
+    cmpRes = SDL_memcmp(rectA, refRectA, sizeof(*rectA));
+    SDLTest_AssertCheck(cmpRes == 0,
+        "Check that source rectangle A was not modified: got (%f,%f,%f,%f) expected (%f,%f,%f,%f)",
+        rectA->x, rectA->y, rectA->w, rectA->h,
+        refRectA->x, refRectA->y, refRectA->w, refRectA->h);
+    cmpRes = SDL_memcmp(rectB, refRectB, sizeof(*rectB));
+    SDLTest_AssertCheck(cmpRes == 0,
+        "Check that source rectangle B was not modified: got (%f,%f,%f,%f) expected (%f,%f,%f,%f)",
+        rectB->x, rectB->y, rectB->w, rectB->h,
+        refRectB->x, refRectB->y, refRectB->w, refRectB->h);
+}
+
+/* !
+ * \brief Tests SDL_IntersectRect() with B fully inside A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectInside (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_bool intersection;
+
+    /* rectB fully contained in rectA */
+    refRectB.x = 0;
+    refRectB.y = 0;
+    refRectB.w = SDLTest_RandomIntegerInRange(refRectA.x + 1, refRectA.x + refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(refRectA.y + 1, refRectA.y + refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRect() with B fully outside A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectOutside (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_bool intersection;
+
+    /* rectB fully outside of rectA */
+    refRectB.x = refRectA.x + refRectA.w + SDLTest_RandomIntegerInRange(1, 10);
+    refRectB.y = refRectA.y + refRectA.h + SDLTest_RandomIntegerInRange(1, 10);
+    refRectB.w = refRectA.w;
+    refRectB.h = refRectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRect() with B partially intersecting A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectPartial (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_Rect expectedResult;
+    SDL_bool intersection;
+
+    /* rectB partially contained in rectA */
+    refRectB.x = SDLTest_RandomIntegerInRange(refRectA.x + 1, refRectA.x + refRectA.w - 1);
+    refRectB.y = SDLTest_RandomIntegerInRange(refRectA.y + 1, refRectA.y + refRectA.h - 1);
+    refRectB.w = refRectA.w;
+    refRectB.h = refRectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    expectedResult.x = refRectB.x;
+    expectedResult.y = refRectB.y;
+    expectedResult.w = refRectA.w - refRectB.x;
+    expectedResult.h = refRectA.h - refRectB.y;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* rectB right edge */
+    refRectB.x = rectA.w - 1;
+    refRectB.y = rectA.y;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    expectedResult.x = refRectB.x;
+    expectedResult.y = refRectB.y;
+    expectedResult.w = 1;
+    expectedResult.h = refRectB.h;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* rectB left edge */
+    refRectB.x = 1 - rectA.w;
+    refRectB.y = rectA.y;
+    refRectB.w = refRectA.w;
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    expectedResult.x = 0;
+    expectedResult.y = refRectB.y;
+    expectedResult.w = 1;
+    expectedResult.h = refRectB.h;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* rectB bottom edge */
+    refRectB.x = rectA.x;
+    refRectB.y = rectA.h - 1;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    expectedResult.x = refRectB.x;
+    expectedResult.y = refRectB.y;
+    expectedResult.w = refRectB.w;
+    expectedResult.h = 1;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    /* rectB top edge */
+    refRectB.x = rectA.x;
+    refRectB.y = 1 - rectA.h;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = rectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    expectedResult.x = refRectB.x;
+    expectedResult.y = 0;
+    expectedResult.w = refRectB.w;
+    expectedResult.h = 1;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &expectedResult);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRect() with 1x1 pixel sized rectangles
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectPoint (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 1, 1 };
+    SDL_Rect refRectB = { 0, 0, 1, 1 };
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_bool intersection;
+    int offsetX, offsetY;
+
+    /* intersecting pixels */
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB.x = refRectA.x;
+    refRectB.y = refRectA.y;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB, &result, &refRectA);
+
+    /* non-intersecting pixels cases */
+    for (offsetX = -1; offsetX <= 1; offsetX++) {
+        for (offsetY = -1; offsetY <= 1; offsetY++) {
+            if (offsetX != 0 || offsetY != 0) {
+                refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+                refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+                refRectB.x = refRectA.x;
+                refRectB.y = refRectA.y;
+                refRectB.x += offsetX;
+                refRectB.y += offsetY;
+                rectA = refRectA;
+                rectB = refRectB;
+                intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+                _validateIntersectRectResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+            }
+        }
+    }
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_IntersectRect() with empty rectangles
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectEmpty (void *arg)
+{
+    SDL_Rect refRectA;
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_bool intersection;
+    SDL_bool empty;
+
+    /* Rect A empty */
+    result.w = SDLTest_RandomIntegerInRange(1, 100);
+    result.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectA.w = 0;
+    refRectA.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    empty = (SDL_bool)SDL_RectEmpty(&result);
+    SDLTest_AssertCheck(empty == SDL_TRUE, "Validate result is empty Rect; got: %s", (empty == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+
+    /* Rect B empty */
+    result.w = SDLTest_RandomIntegerInRange(1, 100);
+    result.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectB.w = 0;
+    refRectB.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    empty = (SDL_bool)SDL_RectEmpty(&result);
+    SDLTest_AssertCheck(empty == SDL_TRUE, "Validate result is empty Rect; got: %s", (empty == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+
+    /* Rect A and B empty */
+    result.w = SDLTest_RandomIntegerInRange(1, 100);
+    result.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectA.w = 0;
+    refRectA.h = 0;
+    refRectB.w = 0;
+    refRectB.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_IntersectRect(&rectA, &rectB, &result);
+    _validateIntersectRectResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    empty = (SDL_bool)SDL_RectEmpty(&result);
+    SDLTest_AssertCheck(empty == SDL_TRUE, "Validate result is empty Rect; got: %s", (empty == SDL_TRUE) ? "SDL_TRUE" : "SDL_FALSE");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_IntersectRect() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_IntersectRect
+ */
+int rect_testIntersectRectParam(void *arg)
+{
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_Rect result;
+    SDL_bool intersection;
+
+    /* invalid parameter combinations */
+    intersection = SDL_IntersectRect((SDL_Rect *)NULL, &rectB, &result);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 1st parameter is NULL");
+    intersection = SDL_IntersectRect(&rectA, (SDL_Rect *)NULL, &result);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 2st parameter is NULL");
+    intersection = SDL_IntersectRect(&rectA, &rectB, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 3st parameter is NULL");
+    intersection = SDL_IntersectRect((SDL_Rect *)NULL, (SDL_Rect *)NULL, &result);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 1st and 2nd parameters are NULL");
+    intersection = SDL_IntersectRect((SDL_Rect *)NULL, &rectB, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 1st and 3rd parameters are NULL ");
+    intersection = SDL_IntersectRect((SDL_Rect *)NULL, (SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when all parameters are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasIntersection() with B fully inside A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionInside (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+
+    /* rectB fully contained in rectA */
+    refRectB.x = 0;
+    refRectB.y = 0;
+    refRectB.w = SDLTest_RandomIntegerInRange(refRectA.x + 1, refRectA.x + refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(refRectA.y + 1, refRectA.y + refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasIntersection() with B fully outside A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionOutside (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+
+    /* rectB fully outside of rectA */
+    refRectB.x = refRectA.x + refRectA.w + SDLTest_RandomIntegerInRange(1, 10);
+    refRectB.y = refRectA.y + refRectA.h + SDLTest_RandomIntegerInRange(1, 10);
+    refRectB.w = refRectA.w;
+    refRectB.h = refRectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasIntersection() with B partially intersecting A
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionPartial (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 32, 32 };
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+
+    /* rectB partially contained in rectA */
+    refRectB.x = SDLTest_RandomIntegerInRange(refRectA.x + 1, refRectA.x + refRectA.w - 1);
+    refRectB.y = SDLTest_RandomIntegerInRange(refRectA.y + 1, refRectA.y + refRectA.h - 1);
+    refRectB.w = refRectA.w;
+    refRectB.h = refRectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* rectB right edge */
+    refRectB.x = rectA.w - 1;
+    refRectB.y = rectA.y;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* rectB left edge */
+    refRectB.x = 1 - rectA.w;
+    refRectB.y = rectA.y;
+    refRectB.w = refRectA.w;
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* rectB bottom edge */
+    refRectB.x = rectA.x;
+    refRectB.y = rectA.h - 1;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = SDLTest_RandomIntegerInRange(1, refRectA.h - 1);
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* rectB top edge */
+    refRectB.x = rectA.x;
+    refRectB.y = 1 - rectA.h;
+    refRectB.w = SDLTest_RandomIntegerInRange(1, refRectA.w - 1);
+    refRectB.h = rectA.h;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasIntersection() with 1x1 pixel sized rectangles
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionPoint (void *arg)
+{
+    SDL_Rect refRectA = { 0, 0, 1, 1 };
+    SDL_Rect refRectB = { 0, 0, 1, 1 };
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+    int offsetX, offsetY;
+
+    /* intersecting pixels */
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB.x = refRectA.x;
+    refRectB.y = refRectA.y;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_TRUE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* non-intersecting pixels cases */
+    for (offsetX = -1; offsetX <= 1; offsetX++) {
+        for (offsetY = -1; offsetY <= 1; offsetY++) {
+            if (offsetX != 0 || offsetY != 0) {
+                refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+                refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+                refRectB.x = refRectA.x;
+                refRectB.y = refRectA.y;
+                refRectB.x += offsetX;
+                refRectB.y += offsetY;
+                rectA = refRectA;
+                rectB = refRectB;
+                intersection = SDL_HasIntersection(&rectA, &rectB);
+                _validateHasIntersectionResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB);
+            }
+        }
+    }
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Tests SDL_HasIntersection() with empty rectangles
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionEmpty (void *arg)
+{
+    SDL_Rect refRectA;
+    SDL_Rect refRectB;
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+
+    /* Rect A empty */
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectA.w = 0;
+    refRectA.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* Rect B empty */
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectB.w = 0;
+    refRectB.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB);
+
+    /* Rect A and B empty */
+    refRectA.x = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.y = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.w = SDLTest_RandomIntegerInRange(1, 100);
+    refRectA.h = SDLTest_RandomIntegerInRange(1, 100);
+    refRectB = refRectA;
+    refRectA.w = 0;
+    refRectA.h = 0;
+    refRectB.w = 0;
+    refRectB.h = 0;
+    rectA = refRectA;
+    rectB = refRectB;
+    intersection = SDL_HasIntersection(&rectA, &rectB);
+    _validateHasIntersectionResults(intersection, SDL_FALSE, &rectA, &rectB, &refRectA, &refRectB);
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Negative tests against SDL_HasIntersection() with invalid parameters
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_HasIntersection
+ */
+int rect_testHasIntersectionParam(void *arg)
+{
+    SDL_Rect rectA;
+    SDL_Rect rectB;
+    SDL_bool intersection;
+
+    /* invalid parameter combinations */
+    intersection = SDL_HasIntersection((SDL_Rect *)NULL, &rectB);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 1st parameter is NULL");
+    intersection = SDL_HasIntersection(&rectA, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when 2st parameter is NULL");
+    intersection = SDL_HasIntersection((SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(intersection == SDL_FALSE, "Check that function returns SDL_FALSE when all parameters are NULL");
+
+    return TEST_COMPLETED;
+}
+
+/* !
+ * \brief Test SDL_EnclosePoints() without clipping
+ *
+ * \sa
+ * http://wiki.libsdl.org/SDL_EnclosePoints
+ */
+int rect_testEnclosePoints(void *arg)
+{
+    const int numPoints = 16;
+    SDL_Point refPoints[16];
+    SDL_Point points[16];
+    SDL_Rect result;
+    SDL_bool anyEnclosed;
+    SDL_bool anyEnclosedNoResult;
+    SDL_bool expectedEnclosed = SDL_TRUE;
+    int newx, newy;
+    int minx = 0, maxx = 0, miny = 0, maxy = 0;
+    int i;
+
+    /* Create input data, tracking result */
+    for (i=0; i<numPoints; i++) {
+        newx = SDLTest_RandomIntegerInRange(-1024, 1024);
+        newy = SDLTest_RandomIntegerInRange(-1024, 1024);
+        refPoints[i].x = newx;
+        refPoints[i].y = newy;
+        points[i].x = newx;
+        points[i].y = newy;
+        if (i==0) {
+            minx = newx;
+            maxx = newx;
+            miny = newy;
+            maxy = newy;
+        } else {
+            if (newx < minx) minx = newx;
+            if (newx > maxx) maxx = newx;
+            if (newy < miny) miny = newy;
+            if (newy > maxy) maxy = newy;
+        }
+    }
+
+    /* Call function and validate - special case: no result requested */
+    anyEnclosedNoResult = SDL_EnclosePoints((const SDL_Point *)points, numPoints, (const SDL_Rect *)NULL, (SDL_Rect *)NULL);
+    SDLTest_AssertCheck(expectedEnclosed==anyEnclosedNoResult,
+        "Check expected return value 

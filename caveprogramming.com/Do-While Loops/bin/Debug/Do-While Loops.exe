@@ -1,0 +1,3088 @@
+/*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_surface.h
+ *
+ *  Header file for ::SDL_Surface definition and management functions.
+ */
+
+#ifndef SDL_surface_h_
+#define SDL_surface_h_
+
+#include "SDL_stdinc.h"
+#include "SDL_pixels.h"
+#include "SDL_rect.h"
+#include "SDL_blendmode.h"
+#include "SDL_rwops.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ *  \name Surface flags
+ *
+ *  These are the currently supported flags for the ::SDL_Surface.
+ *
+ *  \internal
+ *  Used internally (read-only).
+ */
+/* @{ */
+#define SDL_SWSURFACE       0           /**< Just here for compatibility */
+#define SDL_PREALLOC        0x00000001  /**< Surface uses preallocated memory */
+#define SDL_RLEACCEL        0x00000002  /**< Surface is RLE encoded */
+#define SDL_DONTFREE        0x00000004  /**< Surface is referenced internally */
+#define SDL_SIMD_ALIGNED    0x00000008  /**< Surface uses aligned memory */
+/* @} *//* Surface flags */
+
+/**
+ *  Evaluates to true if the surface needs to be locked before access.
+ */
+#define SDL_MUSTLOCK(S) (((S)->flags & SDL_RLEACCEL) != 0)
+
+/**
+ * \brief A collection of pixels used in software blitting.
+ *
+ * \note  This structure should be treated as read-only, except for \c pixels,
+ *        which, if not NULL, contains the raw pixel data for the surface.
+ */
+typedef struct SDL_Surface
+{
+    Uint32 flags;               /**< Read-only */
+    SDL_PixelFormat *format;    /**< Read-only */
+    int w, h;                   /**< Read-only */
+    int pitch;                  /**< Read-only */
+    void *pixels;               /**< Read-write */
+
+    /** Application data associated with the surface */
+    void *userdata;             /**< Read-write */
+
+    /** information needed for surfaces requiring locks */
+    int locked;                 /**< Read-only */
+
+    /** list of BlitMap that hold a reference to this surface */
+    void *list_blitmap;         /**< Private */
+
+    /** clipping information */
+    SDL_Rect clip_rect;         /**< Read-only */
+
+    /** info for fast blit mapping to other surfaces */
+    struct SDL_BlitMap *map;    /**< Private */
+
+    /** Reference count -- used when freeing surface */
+    int refcount;               /**< Read-mostly */
+} SDL_Surface;
+
+/**
+ * \brief The type of function used for surface blitting functions.
+ */
+typedef int (SDLCALL *SDL_blit) (struct SDL_Surface * src, SDL_Rect * srcrect,
+                                 struct SDL_Surface * dst, SDL_Rect * dstrect);
+
+/**
+ * \brief The formula used for converting between YUV and RGB
+ */
+typedef enum
+{
+    SDL_YUV_CONVERSION_JPEG,        /**< Full range JPEG */
+    SDL_YUV_CONVERSION_BT601,       /**< BT.601 (the default) */
+    SDL_YUV_CONVERSION_BT709,       /**< BT.709 */
+    SDL_YUV_CONVERSION_AUTOMATIC    /**< BT.601 for SD content, BT.709 for HD content */
+} SDL_YUV_CONVERSION_MODE;
+
+/**
+ * Allocate a new RGB surface.
+ *
+ * If `depth` is 4 or 8 bits, an empty palette is allocated for the surface.
+ * If `depth` is greater than 8 bits, the pixel format is set using the
+ * [RGBA]mask parameters.
+ *
+ * The [RGBA]mask parameters are the bitmasks used to extract that color from
+ * a pixel. For instance, `Rmask` being 0xFF000000 means the red data is
+ * stored in the most significant byte. Using zeros for the RGB masks sets a
+ * default value, based on the depth. For example:
+ *
+ * ```c++
+ * SDL_CreateRGBSurface(0,w,h,32,0,0,0,0);
+ * ```
+ *
+ * However, using zero for the Amask results in an Amask of 0.
+ *
+ * By default surfaces with an alpha mask are set up for blending as with:
+ *
+ * ```c++
+ * SDL_SetSurfaceBlendMode(surface, SDL_BLENDMODE_BLEND)
+ * ```
+ *
+ * You can change this by calling SDL_SetSurfaceBlendMode() and selecting a
+ * different `blendMode`.
+ *
+ * \param flags the flags are unused and should be set to 0
+ * \param width the width of the surface
+ * \param height the height of the surface
+ * \param depth the depth of the surface in bits
+ * \param Rmask the red mask for the pixels
+ * \param Gmask the green mask for the pixels
+ * \param Bmask the blue mask for the pixels
+ * \param Amask the alpha mask for the pixels
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateRGBSurfaceFrom
+ * \sa SDL_CreateRGBSurfaceWithFormat
+ * \sa SDL_FreeSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurface
+    (Uint32 flags, int width, int height, int depth,
+     Uint32 Rmask, Uint32 Gmask, Uint32 Bmask, Uint32 Amask);
+
+
+/* !!! FIXME for 2.1: why does this ask for depth? Format provides that. */
+
+/**
+ * Allocate a new RGB surface with a specific pixel format.
+ *
+ * This function operates mostly like SDL_CreateRGBSurface(), except instead
+ * of providing pixel color masks, you provide it with a predefined format
+ * from SDL_PixelFormatEnum.
+ *
+ * \param flags the flags are unused and should be set to 0
+ * \param width the width of the surface
+ * \param height the height of the surface
+ * \param depth the depth of the surface in bits
+ * \param format the SDL_PixelFormatEnum for the new surface's pixel format.
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ *
+ * \sa SDL_CreateRGBSurface
+ * \sa SDL_CreateRGBSurfaceFrom
+ * \sa SDL_FreeSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurfaceWithFormat
+    (Uint32 flags, int width, int height, int depth, Uint32 format);
+
+/**
+ * Allocate a new RGB surface with existing pixel data.
+ *
+ * This function operates mostly like SDL_CreateRGBSurface(), except it does
+ * not allocate memory for the pixel data, instead the caller provides an
+ * existing buffer of data for the surface to use.
+ *
+ * No copy is made of the pixel data. Pixel data is not managed automatically;
+ * you must free the surface before you free the pixel data.
+ *
+ * \param pixels a pointer to existing pixel data
+ * \param width the width of the surface
+ * \param height the height of the surface
+ * \param depth the depth of the surface in bits
+ * \param pitch the pitch of the surface in bytes
+ * \param Rmask the red mask for the pixels
+ * \param Gmask the green mask for the pixels
+ * \param Bmask the blue mask for the pixels
+ * \param Amask the alpha mask for the pixels
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateRGBSurface
+ * \sa SDL_CreateRGBSurfaceWithFormat
+ * \sa SDL_FreeSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurfaceFrom(void *pixels,
+                                                              int width,
+                                                              int height,
+                                                              int depth,
+                                                              int pitch,
+                                                              Uint32 Rmask,
+                                                              Uint32 Gmask,
+                                                              Uint32 Bmask,
+                                                              Uint32 Amask);
+
+/* !!! FIXME for 2.1: why does this ask for depth? Format provides that. */
+
+/**
+ * Allocate a new RGB surface with with a specific pixel format and existing
+ * pixel data.
+ *
+ * This function operates mostly like SDL_CreateRGBSurfaceFrom(), except
+ * instead of providing pixel color masks, you provide it with a predefined
+ * format from SDL_PixelFormatEnum.
+ *
+ * No copy is made of the pixel data. Pixel data is not managed automatically;
+ * you must free the surface before you free the pixel data.
+ *
+ * \param pixels a pointer to existing pixel data
+ * \param width the width of the surface
+ * \param height the height of the surface
+ * \param depth the depth of the surface in bits
+ * \param pitch the pitch of the surface in bytes
+ * \param format the SDL_PixelFormatEnum for the new surface's pixel format.
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.5.
+ *
+ * \sa SDL_CreateRGBSurfaceFrom
+ * \sa SDL_CreateRGBSurfaceWithFormat
+ * \sa SDL_FreeSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_CreateRGBSurfaceWithFormatFrom
+    (void *pixels, int width, int height, int depth, int pitch, Uint32 format);
+
+/**
+ * Free an RGB surface.
+ *
+ * It is safe to pass NULL to this function.
+ *
+ * \param surface the SDL_Surface to free.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_CreateRGBSurface
+ * \sa SDL_CreateRGBSurfaceFrom
+ * \sa SDL_LoadBMP
+ * \sa SDL_LoadBMP_RW
+ */
+extern DECLSPEC void SDLCALL SDL_FreeSurface(SDL_Surface * surface);
+
+/**
+ * Set the palette used by a surface.
+ *
+ * A single palette can be shared with many surfaces.
+ *
+ * \param surface the SDL_Surface structure to update
+ * \param palette the SDL_Palette structure to use
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC int SDLCALL SDL_SetSurfacePalette(SDL_Surface * surface,
+                                                  SDL_Palette * palette);
+
+/**
+ * Set up a surface for directly accessing the pixels.
+ *
+ * Between calls to SDL_LockSurface() / SDL_UnlockSurface(), you can write to
+ * and read from `surface->pixels`, using the pixel format stored in
+ * `surface->format`. Once you are done accessing the surface, you should use
+ * SDL_UnlockSurface() to release it.
+ *
+ * Not all surfaces require locking. If `SDL_MUSTLOCK(surface)` evaluates to
+ * 0, then you can read and write to the surface at any time, and the pixel
+ * format of the surface will not change.
+ *
+ * \param surface the SDL_Surface structure to be locked
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_MUSTLOCK
+ * \sa SDL_UnlockSurface
+ */
+extern DECLSPEC int SDLCALL SDL_LockSurface(SDL_Surface * surface);
+
+/**
+ * Release a surface after directly accessing the pixels.
+ *
+ * \param surface the SDL_Surface structure to be unlocked
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_LockSurface
+ */
+extern DECLSPEC void SDLCALL SDL_UnlockSurface(SDL_Surface * surface);
+
+/**
+ * Load a BMP image from a seekable SDL data stream.
+ *
+ * The new surface should be freed with SDL_FreeSurface(). Not doing so will
+ * result in a memory leak.
+ *
+ * src is an open SDL_RWops buffer, typically loaded with SDL_RWFromFile.
+ * Alternitavely, you might also use the macro SDL_LoadBMP to load a bitmap
+ * from a file, convert it to an SDL_Surface and then close the file.
+ *
+ * \param src the data stream for the surface
+ * \param freesrc non-zero to close the stream after being read
+ * \returns a pointer to a new SDL_Surface structure or NULL if there was an
+ *          error; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_FreeSurface
+ * \sa SDL_RWFromFile
+ * \sa SDL_LoadBMP
+ * \sa SDL_SaveBMP_RW
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_LoadBMP_RW(SDL_RWops * src,
+                                                    int freesrc);
+
+/**
+ * Load a surface from a file.
+ *
+ * Convenience macro.
+ */
+#define SDL_LoadBMP(file)   SDL_LoadBMP_RW(SDL_RWFromFile(file, "rb"), 1)
+
+/**
+ * Save a surface to a seekable SDL data stream in BMP format.
+ *
+ * Surfaces with a 24-bit, 32-bit and paletted 8-bit format get saved in the
+ * BMP directly. Other RGB formats with 8-bit or higher get converted to a
+ * 24-bit surface or, if they have an alpha mask or a colorkey, to a 32-bit
+ * surface before they are saved. YUV and paletted 1-bit and 4-bit formats are
+ * not supported.
+ *
+ * \param surface the SDL_Surface structure containing the image to be saved
+ * \param dst a data stream to save to
+ * \param freedst non-zero to close the stream after being written
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_LoadBMP_RW
+ * \sa SDL_SaveBMP
+ */
+extern DECLSPEC int SDLCALL SDL_SaveBMP_RW
+    (SDL_Surface * surface, SDL_RWops * dst, int freedst);
+
+/**
+ *  Save a surface to a file.
+ *
+ *  Convenience macro.
+ */
+#define SDL_SaveBMP(surface, file) \
+        SDL_SaveBMP_RW(surface, SDL_RWFromFile(file, "wb"), 1)
+
+/**
+ * Set the RLE acceleration hint for a surface.
+ *
+ * If RLE is enabled, color key and alpha blending blits are much faster, but
+ * the surface must be locked before directly accessing the pixels.
+ *
+ * \param surface the SDL_Surface structure to optimize
+ * \param flag 0 to disable, non-zero to enable RLE acceleration
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ * \sa SDL_LockSurface
+ * \sa SDL_UnlockSurface
+ */
+extern DECLSPEC int SDLCALL SDL_SetSurfaceRLE(SDL_Surface * surface,
+                                              int flag);
+
+/**
+ * Returns whether the surface is RLE enabled
+ *
+ * It is safe to pass a NULL `surface` here; it will return SDL_FALSE.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \returns SDL_TRUE if the surface is RLE enabled, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.14.
+ *
+ * \sa SDL_SetSurfaceRLE
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_HasSurfaceRLE(SDL_Surface * surface);
+
+/**
+ * Set the color key (transparent pixel) in a surface.
+ *
+ * The color key defines a pixel value that will be treated as transparent in
+ * a blit. For example, one can use this to specify that cyan pixels should be
+ * considered transparent, and therefore not rendered.
+ *
+ * It is a pixel of the format used by the surface, as generated by
+ * SDL_MapRGB().
+ *
+ * RLE acceleration can substantially speed up blitting of images with large
+ * horizontal runs of transparent pixels. See SDL_SetSurfaceRLE() for details.
+ *
+ * \param surface the SDL_Surface structure to update
+ * \param flag SDL_TRUE to enable color key, SDL_FALSE to disable color key
+ * \param key the transparent pixel
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ * \sa SDL_GetColorKey
+ */
+extern DECLSPEC int SDLCALL SDL_SetColorKey(SDL_Surface * surface,
+                                            int flag, Uint32 key);
+
+/**
+ * Returns whether the surface has a color key
+ *
+ * It is safe to pass a NULL `surface` here; it will return SDL_FALSE.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \return SDL_TRUE if the surface has a color key, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.9.
+ *
+ * \sa SDL_SetColorKey
+ * \sa SDL_GetColorKey
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_HasColorKey(SDL_Surface * surface);
+
+/**
+ * Get the color key (transparent pixel) for a surface.
+ *
+ * The color key is a pixel of the format used by the surface, as generated by
+ * SDL_MapRGB().
+ *
+ * If the surface doesn't have color key enabled this function returns -1.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \param key a pointer filled in with the transparent pixel
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ * \sa SDL_SetColorKey
+ */
+extern DECLSPEC int SDLCALL SDL_GetColorKey(SDL_Surface * surface,
+                                            Uint32 * key);
+
+/**
+ * Set an additional color value multiplied into blit operations.
+ *
+ * When this surface is blitted, during the blit operation each source color
+ * channel is modulated by the appropriate color value according to the
+ * following formula:
+ *
+ * `srcC = srcC * (color / 255)`
+ *
+ * \param surface the SDL_Surface structure to update
+ * \param r the red color value multiplied into blit operations
+ * \param g the green color value multiplied into blit operations
+ * \param b the blue color value multiplied into blit operations
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetSurfaceColorMod
+ * \sa SDL_SetSurfaceAlphaMod
+ */
+extern DECLSPEC int SDLCALL SDL_SetSurfaceColorMod(SDL_Surface * surface,
+                                                   Uint8 r, Uint8 g, Uint8 b);
+
+
+/**
+ * Get the additional color value multiplied into blit operations.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \param r a pointer filled in with the current red color value
+ * \param g a pointer filled in with the current green color value
+ * \param b a pointer filled in with the current blue color value
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetSurfaceAlphaMod
+ * \sa SDL_SetSurfaceColorMod
+ */
+extern DECLSPEC int SDLCALL SDL_GetSurfaceColorMod(SDL_Surface * surface,
+                                                   Uint8 * r, Uint8 * g,
+                                                   Uint8 * b);
+
+/**
+ * Set an additional alpha value used in blit operations.
+ *
+ * When this surface is blitted, during the blit operation the source alpha
+ * value is modulated by this alpha value according to the following formula:
+ *
+ * `srcA = srcA * (alpha / 255)`
+ *
+ * \param surface the SDL_Surface structure to update
+ * \param alpha the alpha value multiplied into blit operations
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetSurfaceAlphaMod
+ * \sa SDL_SetSurfaceColorMod
+ */
+extern DECLSPEC int SDLCALL SDL_SetSurfaceAlphaMod(SDL_Surface * surface,
+                                                   Uint8 alpha);
+
+/**
+ * Get the additional alpha value used in blit operations.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \param alpha a pointer filled in with the current alpha value
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetSurfaceColorMod
+ * \sa SDL_SetSurfaceAlphaMod
+ */
+extern DECLSPEC int SDLCALL SDL_GetSurfaceAlphaMod(SDL_Surface * surface,
+                                                   Uint8 * alpha);
+
+/**
+ * Set the blend mode used for blit operations.
+ *
+ * To copy a surface to another surface (or texture) without blending with the
+ * existing data, the blendmode of the SOURCE surface should be set to
+ * `SDL_BLENDMODE_NONE`.
+ *
+ * \param surface the SDL_Surface structure to update
+ * \param blendMode the SDL_BlendMode to use for blit blending
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_GetSurfaceBlendMode
+ */
+extern DECLSPEC int SDLCALL SDL_SetSurfaceBlendMode(SDL_Surface * surface,
+                                                    SDL_BlendMode blendMode);
+
+/**
+ * Get the blend mode used for blit operations.
+ *
+ * \param surface the SDL_Surface structure to query
+ * \param blendMode a pointer filled in with the current SDL_BlendMode
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_SetSurfaceBlendMode
+ */
+extern DECLSPEC int SDLCALL SDL_GetSurfaceBlendMode(SDL_Surface * surface,
+                                                    SDL_BlendMode *blendMode);
+
+/**
+ * Set the clipping rectangle for a surface.
+ *
+ * When `surface` is the destination of a blit, only the area within the clip
+ * rectangle is drawn into.
+ *
+ * Note that blits are automatically clipped to the edges of the source and
+ * destination surfaces.
+ *
+ * \param surface the SDL_Surface structure to be clipped
+ * \param rect the SDL_Rect structure representing the clipping rectangle, or
+ *             NULL to disable clipping
+ * \returns SDL_TRUE if the rectangle intersects the surface, otherwise
+ *          SDL_FALSE and blits will be completely clipped.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ * \sa SDL_GetClipRect
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_SetClipRect(SDL_Surface * surface,
+                                                 const SDL_Rect * rect);
+
+/**
+ * Get the clipping rectangle for a surface.
+ *
+ * When `surface` is the destination of a blit, only the area within the clip
+ * rectangle is drawn into.
+ *
+ * \param surface the SDL_Surface structure representing the surface to be
+ *                clipped
+ * \param rect an SDL_Rect structure filled in with the clipping rectangle for
+ *             the surface
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ * \sa SDL_SetClipRect
+ */
+extern DECLSPEC void SDLCALL SDL_GetClipRect(SDL_Surface * surface,
+                                             SDL_Rect * rect);
+
+/*
+ * Creates a new surface identical to the existing surface.
+ *
+ * The returned surface should be freed with SDL_FreeSurface().
+ *
+ * \param surface the surface to duplicate.
+ * \returns a copy of the surface, or NULL on failure; call SDL_GetError() for
+ *          more information.
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_DuplicateSurface(SDL_Surface * surface);
+
+/**
+ * Copy an existing surface to a new surface of the specified format.
+ *
+ * This function is used to optimize images for faster *repeat* blitting. This
+ * is accomplished by converting the original and storing the result as a new
+ * surface. The new, optimized surface can then be used as the source for
+ * future blits, making them faster.
+ *
+ * \param src the existing SDL_Surface structure to convert
+ * \param fmt the SDL_PixelFormat structure that the new surface is optimized
+ *            for
+ * \param flags the flags are unused and should be set to 0; this is a
+ *              leftover from SDL 1.2's API
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AllocFormat
+ * \sa SDL_ConvertSurfaceFormat
+ * \sa SDL_CreateRGBSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_ConvertSurface
+    (SDL_Surface * src, const SDL_PixelFormat * fmt, Uint32 flags);
+
+/**
+ * Copy an existing surface to a new surface of the specified format enum.
+ *
+ * This function operates just like SDL_ConvertSurface(), but accepts an
+ * SDL_PixelFormatEnum value instead of an SDL_PixelFormat structure. As such,
+ * it might be easier to call but it doesn't have access to palette
+ * information for the destination surface, in case that would be important.
+ *
+ * \param src the existing SDL_Surface structure to convert
+ * \param pixel_format the SDL_PixelFormatEnum that the new surface is
+ *                     optimized for
+ * \param flags the flags are unused and should be set to 0; this is a
+ *              leftover from SDL 1.2's API
+ * \returns the new SDL_Surface structure that is created or NULL if it fails;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AllocFormat
+ * \sa SDL_ConvertSurface
+ * \sa SDL_CreateRGBSurface
+ */
+extern DECLSPEC SDL_Surface *SDLCALL SDL_ConvertSurfaceFormat
+    (SDL_Surface * src, Uint32 pixel_format, Uint32 flags);
+
+/**
+ * Copy a block of pixels of one format to another format.
+ *
+ * \param width the width of the block to copy, in pixels
+ * \param height the height of the block to copy, in pixels
+ * \param src_format an SDL_PixelFormatEnum value of the `src` pixels format
+ * \param src a pointer to the source pixels
+ * \param src_pitch the pitch of the source pixels, in bytes
+ * \param dst_format an SDL_PixelFormatEnum value of the `dst` pixels format
+ * \param dst a pointer to be filled in with new pixel data
+ * \param dst_pitch the pitch of the destination pixels, in bytes
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC int SDLCALL SDL_ConvertPixels(int width, int height,
+                                              Uint32 src_format,
+                                              const void * src, int src_pitch,
+                                              Uint32 dst_format,
+                                              void * dst, int dst_pitch);
+
+/**
+ * Premultiply the alpha on a block of pixels.
+ *
+ * This is safe to use with src == dst, but not for other overlapping areas.
+ *
+ * This function is currently only implemented for SDL_PIXELFORMAT_ARGB8888.
+ *
+ * \param width the width of the block to convert, in pixels
+ * \param height the height of the block to convert, in pixels
+ * \param src_format an SDL_PixelFormatEnum value of the `src` pixels format
+ * \param src a pointer to the source pixels
+ * \param src_pitch the pitch of the source pixels, in bytes
+ * \param dst_format an SDL_PixelFormatEnum value of the `dst` pixels format
+ * \param dst a pointer to be filled in with premultiplied pixel data
+ * \param dst_pitch the pitch of the destination pixels, in bytes
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.18.
+ */
+extern DECLSPEC int SDLCALL SDL_PremultiplyAlpha(int width, int height,
+                                                 Uint32 src_format,
+                                                 const void * src, int src_pitch,
+                                                 Uint32 dst_format,
+                                                 void * dst, int dst_pitch);
+
+/**
+ * Perform a fast fill of a rectangle with a specific color.
+ *
+ * `color` should be a pixel of the format used by the surface, and can be
+ * generated by SDL_MapRGB() or SDL_MapRGBA(). If the color value contains an
+ * alpha component then the destination is simply filled with that alpha
+ * information, no blending takes place.
+ *
+ * If there is a clip rectangle set on the destination (set via
+ * SDL_SetClipRect()), then this function will fill based on the intersection
+ * of the clip rectangle and `rect`.
+ *
+ * \param dst the SDL_Surface structure that is the drawing target
+ * \param rect the SDL_Rect structure representing the rectangle to fill, or
+ *             NULL to fill the entire surface
+ * \param color the color to fill with
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_FillRects
+ */
+extern DECLSPEC int SDLCALL SDL_FillRect
+    (SDL_Surface * dst, const SDL_Rect * rect, Uint32 color);
+
+/**
+ * Perform a fast fill of a set of rectangles with a specific color.
+ *
+ * `color` should be a pixel of the format used by the surface, and can be
+ * generated by SDL_MapRGB() or SDL_MapRGBA(). If the color value contains an
+ * alpha component then the destination is simply filled with that alpha
+ * information, no blending takes place.
+ *
+ * If there is a clip rectangle set on the destination (set via
+ * SDL_SetClipRect()), then this function will fill based on the intersection
+ * of the clip rectangle and `rect`.
+ *
+ * \param dst the SDL_Surface structure that is the drawing target
+ * \param rects an array of SDL_Rects representing the rectangles to fill.
+ * \param count the number of rectangles in the array
+ * \param color the color to fill with
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_FillRect
+ */
+extern DECLSPEC int SDLCALL SDL_FillRects
+    (SDL_Surface * dst, const SDL_Rect * rects, int count, Uint32 color);
+
+/* !!! FIXME: merge this documentation with the wiki */
+/**
+ *  Performs a fast blit from the source surface to the destination surface.
+ *
+ *  This assumes that the source and destination rectangles are
+ *  the same size.  If either \c srcrect or \c dstrect are NULL, the entire
+ *  surface (\c src or \c dst) is copied.  The final blit rectangles are saved
+ *  in \c srcrect and \c dstrect after all clipping is performed.
+ *
+ *  \returns 0 if the blit is successful, otherwise it returns -1.
+ *
+ *  The blit function should not be called on a locked surface.
+ *
+ *  The blit semantics for surfaces with and without blending and colorkey
+ *  are defined as follows:
+ *  \verbatim
+    RGBA->RGB:
+      Source surface blend mode set to SDL_BLENDMODE_BLEND:
+        alpha-blend (using the source alpha-channel and per-surface alpha)
+        SDL_SRCCOLORKEY ignored.
+      Source surface blend mode set to SDL_BLENDMODE_NONE:
+        copy RGB.
+        if SDL_SRCCOLORKEY set, only copy the pixels matching the
+        RGB values of the source color key, ignoring alpha in the
+        comparison.
+
+    RGB->RGBA:
+      Source surface blend mode set to SDL_BLENDMODE_BLEND:
+        alpha-blend (using the source per-surface alpha)
+      Source surface blend mode set to SDL_BLENDMODE_NONE:
+        copy RGB, set destination alpha to source per-surface alpha value.
+      both:
+        if SDL_SRCCOLORKEY set, only copy the pixels matching the
+        source color key.
+
+    RGBA->RGBA:
+      Source surface blend mode set to SDL_BLENDMODE_BLEND:
+        alpha-blend (using the source alpha-channel and per-surface alpha)
+        SDL_SRCCOLORKEY ignored.
+      Source surface blend mode set to SDL_BLENDMODE_NONE:
+        copy all of RGBA to the destination.
+        if SDL_SRCCOLORKEY set, only copy the pixels matching the
+        RGB values of the source color key, ignoring alpha in the
+        comparison.
+
+    RGB->RGB:
+      Source surface blend mode set to SDL_BLENDMODE_BLEND:
+        alpha-blend (using the source per-surface alpha)
+      Source surface blend mode set to SDL_BLENDMODE_NONE:
+        copy RGB.
+      both:
+        if SDL_SRCCOLORKEY set, only copy the pixels matching the
+        source color key.
+    \endverbatim
+ *
+ *  You should call SDL_BlitSurface() unless you know exactly how SDL
+ *  blitting works internally and how to use the other blit functions.
+ */
+#define SDL_BlitSurface SDL_UpperBlit
+
+/**
+ * Perform a fast blit from the source surface to the destination surface.
+ *
+ * SDL_UpperBlit() has been replaced by SDL_BlitSurface(), which is merely a
+ * macro for this function with a less confusing name.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ */
+extern DECLSPEC int SDLCALL SDL_UpperBlit
+    (SDL_Surface * src, const SDL_Rect * srcrect,
+     SDL_Surface * dst, SDL_Rect * dstrect);
+
+/**
+ * Perform low-level surface blitting only.
+ *
+ * This is a semi-private blit function and it performs low-level surface
+ * blitting, assuming the input rectangles have already been clipped.
+ *
+ * Unless you know what you're doing, you should be using SDL_BlitSurface()
+ * instead.
+ *
+ * \param src the SDL_Surface structure to be copied from
+ * \param srcrect the SDL_Rect structure representing the rectangle to be
+ *                copied, or NULL to copy the entire surface
+ * \param dst the SDL_Surface structure that is the blit target
+ * \param dstrect the SDL_Rect structure representing the rectangle that is
+ *                copied into
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitSurface
+ */
+extern DECLSPEC int SDLCALL SDL_LowerBlit
+    (SDL_Surface * src, SDL_Rect * srcrect,
+     SDL_Surface * dst, SDL_Rect * dstrect);
+
+
+/**
+ * Perform a fast, low quality, stretch blit between two surfaces of the same
+ * format.
+ *
+ * Please use SDL_BlitScaled() instead.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC int SDLCALL SDL_SoftStretch(SDL_Surface * src,
+                                            const SDL_Rect * srcrect,
+                                            SDL_Surface * dst,
+                                            const SDL_Rect * dstrect);
+
+/**
+ * Perform bilinear scaling between two surfaces of the same format, 32BPP.
+ *
+ * \since This function is available since SDL 2.0.16.
+ */
+extern DECLSPEC int SDLCALL SDL_SoftStretchLinear(SDL_Surface * src,
+                                            const SDL_Rect * srcrect,
+                                            SDL_Surface * dst,
+                                            const SDL_Rect * dstrect);
+
+
+#define SDL_BlitScaled SDL_UpperBlitScaled
+
+/**
+ * Perform a scaled surface copy to a destination surface.
+ *
+ * SDL_UpperBlitScaled() has been replaced by SDL_BlitScaled(), which is
+ * merely a macro for this function with a less confusing name.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitScaled
+ */
+extern DECLSPEC int SDLCALL SDL_UpperBlitScaled
+    (SDL_Surface * src, const SDL_Rect * srcrect,
+    SDL_Surface * dst, SDL_Rect * dstrect);
+
+/**
+ * Perform low-level surface scaled blitting only.
+ *
+ * This is a semi-private function and it performs low-level surface blitting,
+ * assuming the input rectangles have already been clipped.
+ *
+ * \param src the SDL_Surface structure to be copied from
+ * \param srcrect the SDL_Rect structure representing the rectangle to be
+ *                copied
+ * \param dst the SDL_Surface structure that is the blit target
+ * \param dstrect the SDL_Rect structure representing the rectangle that is
+ *                copied into
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_BlitScaled
+ */
+extern DECLSPEC int SDLCALL SDL_LowerBlitScaled
+    (SDL_Surface * src, SDL_Rect * srcrect,
+    SDL_Surface * dst, SDL_Rect * dstrect);
+
+/**
+ * Set the YUV conversion mode
+ *
+ * \since This function is available since SDL 2.0.8.
+ */
+extern DECLSPEC void SDLCALL SDL_SetYUVConversionMode(SDL_YUV_CONVERSION_MODE mode);
+
+/**
+ * Get the YUV conversion mode
+ *
+ * \since This function is available since SDL 2.0.8.
+ */
+extern DECLSPEC SDL_YUV_CONVERSION_MODE SDLCALL SDL_GetYUVConversionMode(void);
+
+/**
+ * Get the YUV conversion mode, returning the correct mode for the resolution
+ * when the current conversion mode is SDL_YUV_CONVERSION_AUTOMATIC
+ *
+ * \since This function is available since SDL 2.0.8.
+ */
+extern DECLSPEC SDL_YUV_CONVERSION_MODE SDLCALL SDL_GetYUVConversionModeForResolution(int width, int height);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_surface_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                          /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_system.h
+ *
+ *  Include file for platform specific SDL API functions
+ */
+
+#ifndef SDL_system_h_
+#define SDL_system_h_
+
+#include "SDL_stdinc.h"
+#include "SDL_keyboard.h"
+#include "SDL_render.h"
+#include "SDL_video.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/* Platform specific functions for Windows */
+#ifdef __WIN32__
+	
+typedef void (SDLCALL * SDL_WindowsMessageHook)(void *userdata, void *hWnd, unsigned int message, Uint64 wParam, Sint64 lParam);
+
+/**
+ * Set a callback for every Windows message, run before TranslateMessage().
+ *
+ * \param callback The SDL_WindowsMessageHook function to call.
+ * \param userdata a pointer to pass to every iteration of `callback`
+ *
+ * \since This function is available since SDL 2.0.4.
+ */
+extern DECLSPEC void SDLCALL SDL_SetWindowsMessageHook(SDL_WindowsMessageHook callback, void *userdata);
+
+/**
+ * Get the D3D9 adapter index that matches the specified display index.
+ *
+ * The returned adapter index can be passed to `IDirect3D9::CreateDevice` and
+ * controls on which monitor a full screen application will appear.
+ *
+ * \param displayIndex the display index for which to get the D3D9 adapter
+ *                     index
+ * \returns the D3D9 adapter index on success or a negative error code on
+ *          failure; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.1.
+ */
+extern DECLSPEC int SDLCALL SDL_Direct3D9GetAdapterIndex( int displayIndex );
+
+typedef struct IDirect3DDevice9 IDirect3DDevice9;
+
+/**
+ * Get the D3D9 device associated with a renderer.
+ *
+ * Once you are done using the device, you should release it to avoid a
+ * resource leak.
+ *
+ * \param renderer the renderer from which to get the associated D3D device
+ * \returns the D3D9 device associated with given renderer or NULL if it is
+ *          not a D3D9 renderer; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.1.
+ */
+extern DECLSPEC IDirect3DDevice9* SDLCALL SDL_RenderGetD3D9Device(SDL_Renderer * renderer);
+
+typedef struct ID3D11Device ID3D11Device;
+
+/**
+ * Get the D3D11 device associated with a renderer.
+ *
+ * Once you are done using the device, you should release it to avoid a
+ * resource leak.
+ *
+ * \param renderer the renderer from which to get the associated D3D11 device
+ * \returns the D3D11 device associated with given renderer or NULL if it is
+ *          not a D3D11 renderer; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.16.
+ */
+extern DECLSPEC ID3D11Device* SDLCALL SDL_RenderGetD3D11Device(SDL_Renderer * renderer);
+
+/**
+ * Get the DXGI Adapter and Output indices for the specified display index.
+ *
+ * The DXGI Adapter and Output indices can be passed to `EnumAdapters` and
+ * `EnumOutputs` respectively to get the objects required to create a DX10 or
+ * DX11 device and swap chain.
+ *
+ * Before SDL 2.0.4 this function did not return a value. Since SDL 2.0.4 it
+ * returns an SDL_bool.
+ *
+ * \param displayIndex the display index for which to get both indices
+ * \param adapterIndex a pointer to be filled in with the adapter index
+ * \param outputIndex a pointer to be filled in with the output index
+ * \returns SDL_TRUE on success or SDL_FALSE on failure; call SDL_GetError()
+ *          for more information.
+ *
+ * \since This function is available since SDL 2.0.2.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_DXGIGetOutputInfo( int displayIndex, int *adapterIndex, int *outputIndex );
+
+#endif /* __WIN32__ */
+
+
+/* Platform specific functions for Linux */
+#ifdef __LINUX__
+
+/**
+ * Sets the UNIX nice value for a thread.
+ *
+ * This uses setpriority() if possible, and RealtimeKit if available.
+ *
+ * \param threadID the Unix thread ID to change priority of.
+ * \param priority The new, Unix-specific, priority value.
+ * \returns 0 on success, or -1 on error.
+ *
+ * \since This function is available since SDL 2.0.9.
+ */
+extern DECLSPEC int SDLCALL SDL_LinuxSetThreadPriority(Sint64 threadID, int priority);
+
+/**
+ * Sets the priority (not nice level) and scheduling policy for a thread.
+ *
+ * This uses setpriority() if possible, and RealtimeKit if available.
+ *
+ * \param threadID The Unix thread ID to change priority of.
+ * \param sdlPriority The new SDL_ThreadPriority value.
+ * \param schedPolicy The new scheduling policy (SCHED_FIFO, SCHED_RR,
+ *                    SCHED_OTHER, etc...)
+ * \returns 0 on success, or -1 on error.
+ *
+ * \since This function is available since SDL 2.0.18.
+ */
+extern DECLSPEC int SDLCALL SDL_LinuxSetThreadPriorityAndPolicy(Sint64 threadID, int sdlPriority, int schedPolicy);
+ 
+#endif /* __LINUX__ */
+	
+/* Platform specific functions for iOS */
+#ifdef __IPHONEOS__
+
+#define SDL_iOSSetAnimationCallback(window, interval, callback, callbackParam) SDL_iPhoneSetAnimationCallback(window, interval, callback, callbackParam)
+
+/**
+ * Use this function to set the animation callback on Apple iOS.
+ *
+ * The function prototype for `callback` is:
+ *
+ * ```c
+ * void callback(void* callbackParam);
+ * ```
+ *
+ * Where its parameter, `callbackParam`, is what was passed as `callbackParam`
+ * to SDL_iPhoneSetAnimationCallback().
+ *
+ * This function is only available on Apple iOS.
+ *
+ * For more information see:
+ * [README-ios.md](https://hg.libsdl.org/SDL/file/default/docs/README-ios.md)
+ *
+ * This functions is also accessible using the macro
+ * SDL_iOSSetAnimationCallback() since SDL 2.0.4.
+ *
+ * \param window the window for which the animation callback should be set
+ * \param interval the number of frames after which **callback** will be
+ *                 called
+ * \param callback the function to call for every frame.
+ * \param callbackParam a pointer that is passed to `callback`.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_iPhoneSetEventPump
+ */
+extern DECLSPEC int SDLCALL SDL_iPhoneSetAnimationCallback(SDL_Window * window, int interval, void (*callback)(void*), void *callbackParam);
+
+#define SDL_iOSSetEventPump(enabled) SDL_iPhoneSetEventPump(enabled)
+
+/**
+ * Use this function to enable or disable the SDL event pump on Apple iOS.
+ *
+ * This function is only available on Apple iOS.
+ *
+ * This functions is also accessible using the macro SDL_iOSSetEventPump()
+ * since SDL 2.0.4.
+ *
+ * \param enabled SDL_TRUE to enable the event pump, SDL_FALSE to disable it
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_iPhoneSetAnimationCallback
+ */
+extern DECLSPEC void SDLCALL SDL_iPhoneSetEventPump(SDL_bool enabled);
+
+#endif /* __IPHONEOS__ */
+
+
+/* Platform specific functions for Android */
+#ifdef __ANDROID__
+
+/**
+ * Get the Android Java Native Interface Environment of the current thread.
+ *
+ * This is the JNIEnv one needs to access the Java virtual machine from native
+ * code, and is needed for many Android APIs to be usable from C.
+ *
+ * The prototype of the function in SDL's code actually declare a void* return
+ * type, even if the implementation returns a pointer to a JNIEnv. The
+ * rationale being that the SDL headers can avoid including jni.h.
+ *
+ * \returns a pointer to Java native interface object (JNIEnv) to which the
+ *          current thread is attached, or 0 on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AndroidGetActivity
+ */
+extern DECLSPEC void * SDLCALL SDL_AndroidGetJNIEnv(void);
+
+/**
+ * Retrieve the Java instance of the Android activity class.
+ *
+ * The prototype of the function in SDL's code actually declares a void*
+ * return type, even if the implementation returns a jobject. The rationale
+ * being that the SDL headers can avoid including jni.h.
+ *
+ * The jobject returned by the function is a local reference and must be
+ * released by the caller. See the PushLocalFrame() and PopLocalFrame() or
+ * DeleteLocalRef() functions of the Java native interface:
+ *
+ * https://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/functions.html
+ *
+ * \returns the jobject representing the instance of the Activity class of the
+ *          Android application, or NULL on error.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AndroidGetJNIEnv
+ */
+extern DECLSPEC void * SDLCALL SDL_AndroidGetActivity(void);
+
+/**
+ * Query Android API level of the current device.
+ *
+ * - API level 31: Android 12
+ * - API level 30: Android 11
+ * - API level 29: Android 10
+ * - API level 28: Android 9
+ * - API level 27: Android 8.1
+ * - API level 26: Android 8.0
+ * - API level 25: Android 7.1
+ * - API level 24: Android 7.0
+ * - API level 23: Android 6.0
+ * - API level 22: Android 5.1
+ * - API level 21: Android 5.0
+ * - API level 20: Android 4.4W
+ * - API level 19: Android 4.4
+ * - API level 18: Android 4.3
+ * - API level 17: Android 4.2
+ * - API level 16: Android 4.1
+ * - API level 15: Android 4.0.3
+ * - API level 14: Android 4.0
+ * - API level 13: Android 3.2
+ * - API level 12: Android 3.1
+ * - API level 11: Android 3.0
+ * - API level 10: Android 2.3.3
+ *
+ * \returns the Android API level.
+ *
+ * \since This function is available since SDL 2.0.12.
+ */
+extern DECLSPEC int SDLCALL SDL_GetAndroidSDKVersion(void);
+
+/**
+ * Query if the application is running on Android TV.
+ *
+ * \returns SDL_TRUE if this is Android TV, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.8.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_IsAndroidTV(void);
+
+/**
+ * Query if the application is running on a Chromebook.
+ *
+ * \returns SDL_TRUE if this is a Chromebook, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.9.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_IsChromebook(void);
+
+/**
+ * Query if the application is running on a Samsung DeX docking station.
+ *
+ * \returns SDL_TRUE if this is a DeX docking station, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.9.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_IsDeXMode(void);
+
+/**
+ * Trigger the Android system back button behavior.
+ *
+ * \since This function is available since SDL 2.0.9.
+ */
+extern DECLSPEC void SDLCALL SDL_AndroidBackButton(void);
+
+/**
+   See the official Android developer guide for more information:
+   http://developer.android.com/guide/topics/data/data-storage.html
+*/
+#define SDL_ANDROID_EXTERNAL_STORAGE_READ   0x01
+#define SDL_ANDROID_EXTERNAL_STORAGE_WRITE  0x02
+
+/**
+ * Get the path used for internal storage for this application.
+ *
+ * This path is unique to your application and cannot be written to by other
+ * applications.
+ *
+ * Your internal storage path is typically:
+ * `/data/data/your.app.package/files`.
+ *
+ * \returns the path used for internal storage or NULL on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AndroidGetExternalStorageState
+ */
+extern DECLSPEC const char * SDLCALL SDL_AndroidGetInternalStoragePath(void);
+
+/**
+ * Get the current state of external storage.
+ *
+ * The current state of external storage, a bitmask of these values:
+ * `SDL_ANDROID_EXTERNAL_STORAGE_READ`, `SDL_ANDROID_EXTERNAL_STORAGE_WRITE`.
+ *
+ * If external storage is currently unavailable, this will return 0.
+ *
+ * \returns the current state of external storage on success or 0 on failure;
+ *          call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AndroidGetExternalStoragePath
+ */
+extern DECLSPEC int SDLCALL SDL_AndroidGetExternalStorageState(void);
+
+/**
+ * Get the path used for external storage for this application.
+ *
+ * This path is unique to your application, but is public and can be written
+ * to by other applications.
+ *
+ * Your external storage path is typically:
+ * `/storage/sdcard0/Android/data/your.app.package/files`.
+ *
+ * \returns the path used for external storage for this application on success
+ *          or NULL on failure; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ *
+ * \sa SDL_AndroidGetExternalStorageState
+ */
+extern DECLSPEC const char * SDLCALL SDL_AndroidGetExternalStoragePath(void);
+
+/**
+ * Request permissions at runtime.
+ *
+ * This blocks the calling thread until the permission is granted or denied.
+ *
+ * \param permission The permission to request.
+ * \returns SDL_TRUE if the permission was granted, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.14.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_AndroidRequestPermission(const char *permission);
+
+/**
+ * Shows an Android toast notification.
+ *
+ * Toasts are a sort of lightweight notification that are unique to Android.
+ *
+ * https://developer.android.com/guide/topics/ui/notifiers/toasts
+ *
+ * Shows toast in UI thread.
+ *
+ * For the `gravity` parameter, choose a value from here, or -1 if you don't
+ * have a preference:
+ *
+ * https://developer.android.com/reference/android/view/Gravity
+ *
+ * \param message text message to be shown
+ * \param duration 0=short, 1=long
+ * \param gravity where the notification should appear on the screen.
+ * \param xoffset set this parameter only when gravity >=0
+ * \param yoffset set this parameter only when gravity >=0
+ * \returns 0 if success, -1 if any error occurs.
+ *
+ * \since This function is available since SDL 2.0.16.
+ */
+extern DECLSPEC int SDLCALL SDL_AndroidShowToast(const char* message, int duration, int gravity, int xoffset, int yoffset);
+
+/**
+ * Send a user command to SDLActivity.
+ *
+ * Override "boolean onUnhandledMessage(Message msg)" to handle the message.
+ *
+ * \param command user command that must be greater or equal to 0x8000
+ * \param param user parameter
+ *
+ * \since This function is available since SDL 2.0.22.
+ */
+extern DECLSPEC int SDLCALL SDL_AndroidSendMessage(Uint32 command, int param);
+
+#endif /* __ANDROID__ */
+
+/* Platform specific functions for WinRT */
+#ifdef __WINRT__
+
+/**
+ *  \brief WinRT / Windows Phone path types
+ */
+typedef enum
+{
+    /** \brief The installed app's root directory.
+        Files here are likely to be read-only. */
+    SDL_WINRT_PATH_INSTALLED_LOCATION,
+
+    /** \brief The app's local data store.  Files may be written here */
+    SDL_WINRT_PATH_LOCAL_FOLDER,
+
+    /** \brief The app's roaming data store.  Unsupported on Windows Phone.
+        Files written here may be copied to other machines via a network
+        connection.
+    */
+    SDL_WINRT_PATH_ROAMING_FOLDER,
+
+    /** \brief The app's temporary data store.  Unsupported on Windows Phone.
+        Files written here may be deleted at any time. */
+    SDL_WINRT_PATH_TEMP_FOLDER
+} SDL_WinRT_Path;
+
+
+/**
+ *  \brief WinRT Device Family
+ */
+typedef enum
+{
+    /** \brief Unknown family  */
+    SDL_WINRT_DEVICEFAMILY_UNKNOWN,
+
+    /** \brief Desktop family*/
+    SDL_WINRT_DEVICEFAMILY_DESKTOP,
+
+    /** \brief Mobile family (for example smartphone) */
+    SDL_WINRT_DEVICEFAMILY_MOBILE,
+
+    /** \brief XBox family */
+    SDL_WINRT_DEVICEFAMILY_XBOX,
+} SDL_WinRT_DeviceFamily;
+
+
+/**
+ * Retrieve a WinRT defined path on the local file system.
+ *
+ * Not all paths are available on all versions of Windows. This is especially
+ * true on Windows Phone. Check the documentation for the given SDL_WinRT_Path
+ * for more information on which path types are supported where.
+ *
+ * Documentation on most app-specific path types on WinRT can be found on
+ * MSDN, at the URL:
+ *
+ * https://msdn.microsoft.com/en-us/library/windows/apps/hh464917.aspx
+ *
+ * \param pathType the type of path to retrieve, one of SDL_WinRT_Path
+ * \returns a UCS-2 string (16-bit, wide-char) containing the path, or NULL if
+ *          the path is not available for any reason; call SDL_GetError() for
+ *          more information.
+ *
+ * \since This function is available since SDL 2.0.3.
+ *
+ * \sa SDL_WinRTGetFSPathUTF8
+ */
+extern DECLSPEC const wchar_t * SDLCALL SDL_WinRTGetFSPathUNICODE(SDL_WinRT_Path pathType);
+
+/**
+ * Retrieve a WinRT defined path on the local file system.
+ *
+ * Not all paths are available on all versions of Windows. This is especially
+ * true on Windows Phone. Check the documentation for the given SDL_WinRT_Path
+ * for more information on which path types are supported where.
+ *
+ * Documentation on most app-specific path types on WinRT can be found on
+ * MSDN, at the URL:
+ *
+ * https://msdn.microsoft.com/en-us/library/windows/apps/hh464917.aspx
+ *
+ * \param pathType the type of path to retrieve, one of SDL_WinRT_Path
+ * \returns a UTF-8 string (8-bit, multi-byte) containing the path, or NULL if
+ *          the path is not available for any reason; call SDL_GetError() for
+ *          more information.
+ *
+ * \since This function is available since SDL 2.0.3.
+ *
+ * \sa SDL_WinRTGetFSPathUNICODE
+ */
+extern DECLSPEC const char * SDLCALL SDL_WinRTGetFSPathUTF8(SDL_WinRT_Path pathType);
+
+/**
+ * Detects the device family of WinRT plattform at runtime.
+ *
+ * \returns a value from the SDL_WinRT_DeviceFamily enum.
+ *
+ * \since This function is available since SDL 2.0.8.
+ */
+extern DECLSPEC SDL_WinRT_DeviceFamily SDLCALL SDL_WinRTGetDeviceFamily();
+
+#endif /* __WINRT__ */
+
+/**
+ * Query if the current device is a tablet.
+ *
+ * If SDL can't determine this, it will return SDL_FALSE.
+ *
+ * \returns SDL_TRUE if the device is a tablet, SDL_FALSE otherwise.
+ *
+ * \since This function is available since SDL 2.0.9.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_IsTablet(void);
+
+/* Functions used by iOS application delegates to notify SDL about state changes */
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillTerminate(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidReceiveMemoryWarning(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillResignActive(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidEnterBackground(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationWillEnterForeground(void);
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidBecomeActive(void);
+#ifdef __IPHONEOS__
+extern DECLSPEC void SDLCALL SDL_OnApplicationDidChangeStatusBarOrientation(void);
+#endif
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_system_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_syswm.h
+ *
+ *  Include file for SDL custom system window manager hooks.
+ */
+
+#ifndef SDL_syswm_h_
+#define SDL_syswm_h_
+
+#include "SDL_stdinc.h"
+#include "SDL_error.h"
+#include "SDL_video.h"
+#include "SDL_version.h"
+
+/**
+ *  \brief SDL_syswm.h
+ *
+ *  Your application has access to a special type of event ::SDL_SYSWMEVENT,
+ *  which contains window-manager specific information and arrives whenever
+ *  an unhandled window event occurs.  This event is ignored by default, but
+ *  you can enable it with SDL_EventState().
+ */
+struct SDL_SysWMinfo;
+
+#if !defined(SDL_PROTOTYPES_ONLY)
+
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX   /* don't define min() and max(). */
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_WINRT)
+#include <Inspectable.h>
+#endif
+
+/* This is the structure for custom window manager events */
+#if defined(SDL_VIDEO_DRIVER_X11)
+#if defined(__APPLE__) && defined(__MACH__)
+/* conflicts with Quickdraw.h */
+#define Cursor X11Cursor
+#endif
+
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+
+#if defined(__APPLE__) && defined(__MACH__)
+/* matches the re-define above */
+#undef Cursor
+#endif
+
+#endif /* defined(SDL_VIDEO_DRIVER_X11) */
+
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+#include <directfb.h>
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+#ifdef __OBJC__
+@class NSWindow;
+#else
+typedef struct _NSWindow NSWindow;
+#endif
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+#ifdef __OBJC__
+#include <UIKit/UIKit.h>
+#else
+typedef struct _UIWindow UIWindow;
+typedef struct _UIViewController UIViewController;
+#endif
+typedef Uint32 GLuint;
+#endif
+
+#if defined(SDL_VIDEO_VULKAN) || defined(SDL_VIDEO_METAL)
+#define SDL_METALVIEW_TAG 255
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_ANDROID)
+typedef struct ANativeWindow ANativeWindow;
+typedef void *EGLSurface;
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_VIVANTE)
+#include "SDL_egl.h"
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_OS2)
+#define INCL_WIN
+#include <os2.h>
+#endif
+#endif /* SDL_PROTOTYPES_ONLY */
+
+#if defined(SDL_VIDEO_DRIVER_KMSDRM)
+struct gbm_device;
+#endif
+
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if !defined(SDL_PROTOTYPES_ONLY)
+/**
+ *  These are the various supported windowing subsystems
+ */
+typedef enum
+{
+    SDL_SYSWM_UNKNOWN,
+    SDL_SYSWM_WINDOWS,
+    SDL_SYSWM_X11,
+    SDL_SYSWM_DIRECTFB,
+    SDL_SYSWM_COCOA,
+    SDL_SYSWM_UIKIT,
+    SDL_SYSWM_WAYLAND,
+    SDL_SYSWM_MIR,  /* no longer available, left for API/ABI compatibility. Remove in 2.1! */
+    SDL_SYSWM_WINRT,
+    SDL_SYSWM_ANDROID,
+    SDL_SYSWM_VIVANTE,
+    SDL_SYSWM_OS2,
+    SDL_SYSWM_HAIKU,
+    SDL_SYSWM_KMSDRM,
+    SDL_SYSWM_RISCOS
+} SDL_SYSWM_TYPE;
+
+/**
+ *  The custom event structure.
+ */
+struct SDL_SysWMmsg
+{
+    SDL_version version;
+    SDL_SYSWM_TYPE subsystem;
+    union
+    {
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
+        struct {
+            HWND hwnd;                  /**< The window for the message */
+            UINT msg;                   /**< The type of message */
+            WPARAM wParam;              /**< WORD message parameter */
+            LPARAM lParam;              /**< LONG message parameter */
+        } win;
+#endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+        struct {
+            XEvent event;
+        } x11;
+#endif
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+        struct {
+            DFBEvent event;
+        } dfb;
+#endif
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+        struct
+        {
+            /* Latest version of Xcode clang complains about empty structs in C v. C++:
+                 error: empty struct has size 0 in C, size 1 in C++
+             */
+            int dummy;
+            /* No Cocoa window events yet */
+        } cocoa;
+#endif
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+        struct
+        {
+            int dummy;
+            /* No UIKit window events yet */
+        } uikit;
+#endif
+#if defined(SDL_VIDEO_DRIVER_VIVANTE)
+        struct
+        {
+            int dummy;
+            /* No Vivante window events yet */
+        } vivante;
+#endif
+#if defined(SDL_VIDEO_DRIVER_OS2)
+        struct
+        {
+            BOOL fFrame;                /**< TRUE if hwnd is a frame window */
+            HWND hwnd;                  /**< The window receiving the message */
+            ULONG msg;                  /**< The message identifier */
+            MPARAM mp1;                 /**< The first first message parameter */
+            MPARAM mp2;                 /**< The second first message parameter */
+        } os2;
+#endif
+        /* Can't have an empty union */
+        int dummy;
+    } msg;
+};
+
+/**
+ *  The custom window manager information structure.
+ *
+ *  When this structure is returned, it holds information about which
+ *  low level system it is using, and will be one of SDL_SYSWM_TYPE.
+ */
+struct SDL_SysWMinfo
+{
+    SDL_version version;
+    SDL_SYSWM_TYPE subsystem;
+    union
+    {
+#if defined(SDL_VIDEO_DRIVER_WINDOWS)
+        struct
+        {
+            HWND window;                /**< The window handle */
+            HDC hdc;                    /**< The window device context */
+            HINSTANCE hinstance;        /**< The instance handle */
+        } win;
+#endif
+#if defined(SDL_VIDEO_DRIVER_WINRT)
+        struct
+        {
+            IInspectable * window;      /**< The WinRT CoreWindow */
+        } winrt;
+#endif
+#if defined(SDL_VIDEO_DRIVER_X11)
+        struct
+        {
+            Display *display;           /**< The X11 display */
+            Window window;              /**< The X11 window */
+        } x11;
+#endif
+#if defined(SDL_VIDEO_DRIVER_DIRECTFB)
+        struct
+        {
+            IDirectFB *dfb;             /**< The directfb main interface */
+            IDirectFBWindow *window;    /**< The directfb window handle */
+            IDirectFBSurface *surface;  /**< The directfb client surface */
+        } dfb;
+#endif
+#if defined(SDL_VIDEO_DRIVER_COCOA)
+        struct
+        {
+#if defined(__OBJC__) && defined(__has_feature)
+        #if __has_feature(objc_arc)
+            NSWindow __unsafe_unretained *window; /**< The Cocoa window */
+        #else
+            NSWindow *window;                     /**< The Cocoa window */
+        #endif
+#else
+            NSWindow *window;                     /**< The Cocoa window */
+#endif
+        } cocoa;
+#endif
+#if defined(SDL_VIDEO_DRIVER_UIKIT)
+        struct
+        {
+#if defined(__OBJC__) && defined(__has_feature)
+        #if __has_feature(objc_arc)
+            UIWindow __unsafe_unretained *window; /**< The UIKit window */
+        #else
+            UIWindow *window;                     /**< The UIKit window */
+        #endif
+#else
+            UIWindow *window;                     /**< The UIKit window */
+#endif
+            GLuint framebuffer; /**< The GL view's Framebuffer Object. It must be bound when rendering to the screen using GL. */
+            GLuint colorbuffer; /**< The GL view's color Renderbuffer Object. It must be bound when SDL_GL_SwapWindow is called. */
+            GLuint resolveFramebuffer; /**< The Framebuffer Object which holds the resolve color Renderbuffer, when MSAA is used. */
+        } uikit;
+#endif
+#if defined(SDL_VIDEO_DRIVER_WAYLAND)
+        struct
+        {
+            struct wl_display *display;             /**< Wayland display */
+            struct wl_surface *surface;             /**< Wayland surface */
+            void *shell_surface;                    /**< DEPRECATED Wayland shell_surface (window manager handle) */
+            struct wl_egl_window *egl_window;       /**< Wayland EGL window (native window) */
+            struct xdg_surface *xdg_surface;        /**< Wayland xdg surface (window manager handle) */
+            struct xdg_toplevel *xdg_toplevel;      /**< Wayland xdg toplevel role */
+            struct xdg_popup *xdg_popup;            /**< Wayland xdg popup role */
+            struct xdg_positioner *xdg_positioner;  /**< Wayland xdg positioner, for popup */
+        } wl;
+#endif
+#if defined(SDL_VIDEO_DRIVER_MIR)  /* no longer available, left for API/ABI compatibility. Remove in 2.1! */
+        struct
+        {
+            void *connection;  /**< Mir display server connection */
+            void *surface;  /**< Mir surface */
+        } mir;
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_ANDROID)
+        struct
+        {
+            ANativeWindow *window;
+            EGLSurface surface;
+        } android;
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_OS2)
+        struct
+        {
+            HWND hwnd;                  /**< The window handle */
+            HWND hwndFrame;             /**< The frame window handle */
+        } os2;
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_VIVANTE)
+        struct
+        {
+            EGLNativeDisplayType display;
+            EGLNativeWindowType window;
+        } vivante;
+#endif
+
+#if defined(SDL_VIDEO_DRIVER_KMSDRM)
+        struct
+        {
+            int dev_index;               /**< Device index (ex: the X in /dev/dri/cardX) */
+            int drm_fd;                  /**< DRM FD (unavailable on Vulkan windows) */
+            struct gbm_device *gbm_dev;  /**< GBM device (unavailable on Vulkan windows) */
+        } kmsdrm;
+#endif
+
+        /* Make sure this union is always 64 bytes (8 64-bit pointers). */
+        /* Be careful not to overflow this if you add a new target! */
+        Uint8 dummy[64];
+    } info;
+};
+
+#endif /* SDL_PROTOTYPES_ONLY */
+
+typedef struct SDL_SysWMinfo SDL_SysWMinfo;
+
+
+/**
+ * Get driver-specific information about a window.
+ *
+ * You must include SDL_syswm.h for the declaration of SDL_SysWMinfo.
+ *
+ * The caller must initialize the `info` structure's version by using
+ * `SDL_VERSION(&info.version)`, and then this function will fill in the rest
+ * of the structure with information about the given window.
+ *
+ * \param window the window about which information is being requested
+ * \param info an SDL_SysWMinfo structure filled in with window information
+ * \returns SDL_TRUE if the function is implemented and the `version` member
+ *          of the `info` struct is valid, or SDL_FALSE if the information
+ *          could not be retrieved; call SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 2.0.0.
+ */
+extern DECLSPEC SDL_bool SDLCALL SDL_GetWindowWMInfo(SDL_Window * window,
+                                                     SDL_SysWMinfo * info);
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_syswm_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_assert.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/*
+ *
+ * Assert API for test code and test cases
+ *
+ */
+
+#ifndef SDL_test_assert_h_
+#define SDL_test_assert_h_
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * \brief Fails the assert.
+ */
+#define ASSERT_FAIL     0
+
+/**
+ * \brief Passes the assert.
+ */
+#define ASSERT_PASS     1
+
+/**
+ * \brief Assert that logs and break execution flow on failures.
+ *
+ * \param assertCondition Evaluated condition or variable to assert; fail (==0) or pass (!=0).
+ * \param assertDescription Message to log with the assert describing it.
+ */
+void SDLTest_Assert(int assertCondition, SDL_PRINTF_FORMAT_STRING const char *assertDescription, ...) SDL_PRINTF_VARARG_FUNC(2);
+
+/**
+ * \brief Assert for test cases that logs but does not break execution flow on failures. Updates assertion counters.
+ *
+ * \param assertCondition Evaluated condition or variable to assert; fail (==0) or pass (!=0).
+ * \param assertDescription Message to log with the assert describing it.
+ *
+ * \returns the assertCondition so it can be used to externally to break execution flow if desired.
+ */
+int SDLTest_AssertCheck(int assertCondition, SDL_PRINTF_FORMAT_STRING const char *assertDescription, ...) SDL_PRINTF_VARARG_FUNC(2);
+
+/**
+ * \brief Explicitly pass without checking an assertion condition. Updates assertion counter.
+ *
+ * \param assertDescription Message to log with the assert describing it.
+ */
+void SDLTest_AssertPass(SDL_PRINTF_FORMAT_STRING const char *assertDescription, ...) SDL_PRINTF_VARARG_FUNC(1);
+
+/**
+ * \brief Resets the assert summary counters to zero.
+ */
+void SDLTest_ResetAssertSummary(void);
+
+/**
+ * \brief Logs summary of all assertions (total, pass, fail) since last reset as INFO or ERROR.
+ */
+void SDLTest_LogAssertSummary(void);
+
+
+/**
+ * \brief Converts the current assert summary state to a test result.
+ *
+ * \returns TEST_RESULT_PASSED, TEST_RESULT_FAILED, or TEST_RESULT_NO_ASSERT
+ */
+int SDLTest_AssertSummaryToTestResult(void);
+
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_assert_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_common.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/* Ported from original test\common.h file. */
+
+#ifndef SDL_test_common_h_
+#define SDL_test_common_h_
+
+#include "SDL.h"
+
+#if defined(__PSP__)
+#define DEFAULT_WINDOW_WIDTH  480
+#define DEFAULT_WINDOW_HEIGHT 272
+#elif defined(__VITA__)
+#define DEFAULT_WINDOW_WIDTH  960
+#define DEFAULT_WINDOW_HEIGHT 544
+#else
+#define DEFAULT_WINDOW_WIDTH  640
+#define DEFAULT_WINDOW_HEIGHT 480
+#endif
+
+#define VERBOSE_VIDEO   0x00000001
+#define VERBOSE_MODES   0x00000002
+#define VERBOSE_RENDER  0x00000004
+#define VERBOSE_EVENT   0x00000008
+#define VERBOSE_AUDIO   0x00000010
+
+typedef struct
+{
+    /* SDL init flags */
+    char **argv;
+    Uint32 flags;
+    Uint32 verbose;
+
+    /* Video info */
+    const char *videodriver;
+    int display;
+    const char *window_title;
+    const char *window_icon;
+    Uint32 window_flags;
+    SDL_bool flash_on_focus_loss;
+    int window_x;
+    int window_y;
+    int window_w;
+    int window_h;
+    int window_minW;
+    int window_minH;
+    int window_maxW;
+    int window_maxH;
+    int logical_w;
+    int logical_h;
+    float scale;
+    int depth;
+    int refresh_rate;
+    int num_windows;
+    SDL_Window **windows;
+
+    /* Renderer info */
+    const char *renderdriver;
+    Uint32 render_flags;
+    SDL_bool skip_renderer;
+    SDL_Renderer **renderers;
+    SDL_Texture **targets;
+
+    /* Audio info */
+    const char *audiodriver;
+    SDL_AudioSpec audiospec;
+
+    /* GL settings */
+    int gl_red_size;
+    int gl_green_size;
+    int gl_blue_size;
+    int gl_alpha_size;
+    int gl_buffer_size;
+    int gl_depth_size;
+    int gl_stencil_size;
+    int gl_double_buffer;
+    int gl_accum_red_size;
+    int gl_accum_green_size;
+    int gl_accum_blue_size;
+    int gl_accum_alpha_size;
+    int gl_stereo;
+    int gl_multisamplebuffers;
+    int gl_multisamplesamples;
+    int gl_retained_backing;
+    int gl_accelerated;
+    int gl_major_version;
+    int gl_minor_version;
+    int gl_debug;
+    int gl_profile_mask;
+
+    /* Additional fields added in 2.0.18 */
+    SDL_Rect confine;
+
+} SDLTest_CommonState;
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Function prototypes */
+
+/**
+ * \brief Parse command line parameters and create common state.
+ *
+ * \param argv Array of command line parameters
+ * \param flags Flags indicating which subsystem to initialize (i.e. SDL_INIT_VIDEO | SDL_INIT_AUDIO)
+ *
+ * \returns a newly allocated common state object.
+ */
+SDLTest_CommonState *SDLTest_CommonCreateState(char **argv, Uint32 flags);
+
+/**
+ * \brief Process one common argument.
+ *
+ * \param state The common state describing the test window to create.
+ * \param index The index of the argument to process in argv[].
+ *
+ * \returns the number of arguments processed (i.e. 1 for --fullscreen, 2 for --video [videodriver], or -1 on error.
+ */
+int SDLTest_CommonArg(SDLTest_CommonState * state, int index);
+
+
+/**
+ * \brief Logs command line usage info.
+ *
+ * This logs the appropriate command line options for the subsystems in use
+ *  plus other common options, and then any application-specific options.
+ *  This uses the SDL_Log() function and splits up output to be friendly to
+ *  80-character-wide terminals.
+ *
+ * \param state The common state describing the test window for the app.
+ * \param argv0 argv[0], as passed to main/SDL_main.
+ * \param options an array of strings for application specific options. The last element of the array should be NULL.
+ */
+void SDLTest_CommonLogUsage(SDLTest_CommonState * state, const char *argv0, const char **options);
+
+/**
+ * \brief Returns common usage information
+ *
+ * You should (probably) be using SDLTest_CommonLogUsage() instead, but this
+ *  function remains for binary compatibility. Strings returned from this
+ *  function are valid until SDLTest_CommonQuit() is called, in which case
+ *  those strings' memory is freed and can no longer be used.
+ *
+ * \param state The common state describing the test window to create.
+ * \returns a string with usage information
+ */
+const char *SDLTest_CommonUsage(SDLTest_CommonState * state);
+
+/**
+ * \brief Open test window.
+ *
+ * \param state The common state describing the test window to create.
+ *
+ * \returns SDL_TRUE if initialization succeeded, false otherwise
+ */
+SDL_bool SDLTest_CommonInit(SDLTest_CommonState * state);
+
+/**
+ * \brief Easy argument handling when test app doesn't need any custom args.
+ *
+ * \param state The common state describing the test window to create.
+ * \param argc argc, as supplied to SDL_main
+ * \param argv argv, as supplied to SDL_main
+ *
+ * \returns SDL_FALSE if app should quit, true otherwise.
+ */
+SDL_bool SDLTest_CommonDefaultArgs(SDLTest_CommonState * state, const int argc, char **argv);
+
+/**
+ * \brief Common event handler for test windows.
+ *
+ * \param state The common state used to create test window.
+ * \param event The event to handle.
+ * \param done Flag indicating we are done.
+ *
+ */
+void SDLTest_CommonEvent(SDLTest_CommonState * state, SDL_Event * event, int *done);
+
+/**
+ * \brief Close test window.
+ *
+ * \param state The common state used to create test window.
+ *
+ */
+void SDLTest_CommonQuit(SDLTest_CommonState * state);
+
+/**
+ * \brief Draws various window information (position, size, etc.) to the renderer.
+ *
+ * \param renderer The renderer to draw to.
+ * \param window The window whose information should be displayed.
+ * \param usedHeight Returns the height used, so the caller can draw more below.
+ *
+ */
+void SDLTest_CommonDrawWindowInfo(SDL_Renderer * renderer, SDL_Window * window, int * usedHeight);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_common_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_compare.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/*
+
+ Defines comparison functions (i.e. for surfaces).
+
+*/
+
+#ifndef SDL_test_compare_h_
+#define SDL_test_compare_h_
+
+#include "SDL.h"
+
+#include "SDL_test_images.h"
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * \brief Compares a surface and with reference image data for equality
+ *
+ * \param surface Surface used in comparison
+ * \param referenceSurface Test Surface used in comparison
+ * \param allowable_error Allowable difference (=sum of squared difference for each RGB component) in blending accuracy.
+ *
+ * \returns 0 if comparison succeeded, >0 (=number of pixels for which the comparison failed) if comparison failed, -1 if any of the surfaces were NULL, -2 if the surface sizes differ.
+ */
+int SDLTest_CompareSurfaces(SDL_Surface *surface, SDL_Surface *referenceSurface, int allowable_error);
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_compare_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_crc32.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/*
+
+ Implements CRC32 calculations (default output is Perl String::CRC32 compatible).
+
+*/
+
+#ifndef SDL_test_crc32_h_
+#define SDL_test_crc32_h_
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/* ------------ Definitions --------- */
+
+/* Definition shared by all CRC routines */
+
+#ifndef CrcUint32
+ #define CrcUint32  unsigned int
+#endif
+#ifndef CrcUint8
+ #define CrcUint8   unsigned char
+#endif
+
+#ifdef ORIGINAL_METHOD
+ #define CRC32_POLY 0x04c11db7   /* AUTODIN II, Ethernet, & FDDI */
+#else
+ #define CRC32_POLY 0xEDB88320   /* Perl String::CRC32 compatible */
+#endif
+
+/**
+ * Data structure for CRC32 (checksum) computation
+ */
+  typedef struct {
+    CrcUint32    crc32_table[256]; /* CRC table */
+  } SDLTest_Crc32Context;
+
+/* ---------- Function Prototypes ------------- */
+
+/**
+ * \brief Initialize the CRC context
+ *
+ * Note: The function initializes the crc table required for all crc calculations.
+ *
+ * \param crcContext        pointer to context variable
+ *
+ * \returns 0 for OK, -1 on error
+ *
+ */
+ int SDLTest_Crc32Init(SDLTest_Crc32Context * crcContext);
+
+
+/**
+ * \brief calculate a crc32 from a data block
+ *
+ * \param crcContext         pointer to context variable
+ * \param inBuf              input buffer to checksum
+ * \param inLen              length of input buffer
+ * \param crc32              pointer to Uint32 to store the final CRC into
+ *
+ * \returns 0 for OK, -1 on error
+ *
+ */
+int SDLTest_Crc32Calc(SDLTest_Crc32Context * crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32);
+
+/* Same routine broken down into three steps */
+int SDLTest_Crc32CalcStart(SDLTest_Crc32Context * crcContext, CrcUint32 *crc32);
+int SDLTest_Crc32CalcEnd(SDLTest_Crc32Context * crcContext, CrcUint32 *crc32);
+int SDLTest_Crc32CalcBuffer(SDLTest_Crc32Context * crcContext, CrcUint8 *inBuf, CrcUint32 inLen, CrcUint32 *crc32);
+
+
+/**
+ * \brief clean up CRC context
+ *
+ * \param crcContext        pointer to context variable
+ *
+ * \returns 0 for OK, -1 on error
+ *
+*/
+
+int SDLTest_Crc32Done(SDLTest_Crc32Context * crcContext);
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_crc32_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_font.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+#ifndef SDL_test_font_h_
+#define SDL_test_font_h_
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Function prototypes */
+
+#define FONT_CHARACTER_SIZE  8
+
+/**
+ *  \brief Draw a string in the currently set font.
+ *
+ *  \param renderer The renderer to draw on.
+ *  \param x The X coordinate of the upper left corner of the character.
+ *  \param y The Y coordinate of the upper left corner of the character.
+ *  \param c The character to draw.
+ *
+ *  \returns 0 on success, -1 on failure.
+ */
+int SDLTest_DrawCharacter(SDL_Renderer *renderer, int x, int y, char c);
+
+/**
+ *  \brief Draw a string in the currently set font.
+ *
+ *  \param renderer The renderer to draw on.
+ *  \param x The X coordinate of the upper left corner of the string.
+ *  \param y The Y coordinate of the upper left corner of the string.
+ *  \param s The string to draw.
+ *
+ *  \returns 0 on success, -1 on failure.
+ */
+int SDLTest_DrawString(SDL_Renderer *renderer, int x, int y, const char *s);
+
+
+/**
+ *  \brief Cleanup textures used by font drawing functions.
+ */
+void SDLTest_CleanupTextDrawing(void);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_font_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_fuzzer.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/*
+
+  Data generators for fuzzing test data in a reproducible way.
+
+*/
+
+#ifndef SDL_test_fuzzer_h_
+#define SDL_test_fuzzer_h_
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/*
+  Based on GSOC code by Markus Kauppila <markus.kauppila@gmail.com>
+*/
+
+
+/**
+ * \file
+ * Note: The fuzzer implementation uses a static instance of random context
+ * internally which makes it thread-UNsafe.
+ */
+
+/**
+ * Initializes the fuzzer for a test
+ *
+ * \param execKey Execution "Key" that initializes the random number generator uniquely for the test.
+ *
+ */
+void SDLTest_FuzzerInit(Uint64 execKey);
+
+
+/**
+ * Returns a random Uint8
+ *
+ * \returns a generated integer
+ */
+Uint8 SDLTest_RandomUint8(void);
+
+/**
+ * Returns a random Sint8
+ *
+ * \returns a generated signed integer
+ */
+Sint8 SDLTest_RandomSint8(void);
+
+
+/**
+ * Returns a random Uint16
+ *
+ * \returns a generated integer
+ */
+Uint16 SDLTest_RandomUint16(void);
+
+/**
+ * Returns a random Sint16
+ *
+ * \returns a generated signed integer
+ */
+Sint16 SDLTest_RandomSint16(void);
+
+
+/**
+ * Returns a random integer
+ *
+ * \returns a generated integer
+ */
+Sint32 SDLTest_RandomSint32(void);
+
+
+/**
+ * Returns a random positive integer
+ *
+ * \returns a generated integer
+ */
+Uint32 SDLTest_RandomUint32(void);
+
+/**
+ * Returns random Uint64.
+ *
+ * \returns a generated integer
+ */
+Uint64 SDLTest_RandomUint64(void);
+
+
+/**
+ * Returns random Sint64.
+ *
+ * \returns a generated signed integer
+ */
+Sint64 SDLTest_RandomSint64(void);
+
+/**
+ * \returns a random float in range [0.0 - 1.0]
+ */
+float SDLTest_RandomUnitFloat(void);
+
+/**
+ * \returns a random double in range [0.0 - 1.0]
+ */
+double SDLTest_RandomUnitDouble(void);
+
+/**
+ * \returns a random float.
+ *
+ */
+float SDLTest_RandomFloat(void);
+
+/**
+ * \returns a random double.
+ *
+ */
+double SDLTest_RandomDouble(void);
+
+/**
+ * Returns a random boundary value for Uint8 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomUint8BoundaryValue(10, 20, SDL_TRUE) returns 10, 11, 19 or 20
+ * RandomUint8BoundaryValue(1, 20, SDL_FALSE) returns 0 or 21
+ * RandomUint8BoundaryValue(0, 99, SDL_FALSE) returns 100
+ * RandomUint8BoundaryValue(0, 255, SDL_FALSE) returns 0 (error set)
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or 0 with error set
+ */
+Uint8 SDLTest_RandomUint8BoundaryValue(Uint8 boundary1, Uint8 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Uint16 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomUint16BoundaryValue(10, 20, SDL_TRUE) returns 10, 11, 19 or 20
+ * RandomUint16BoundaryValue(1, 20, SDL_FALSE) returns 0 or 21
+ * RandomUint16BoundaryValue(0, 99, SDL_FALSE) returns 100
+ * RandomUint16BoundaryValue(0, 0xFFFF, SDL_FALSE) returns 0 (error set)
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or 0 with error set
+ */
+Uint16 SDLTest_RandomUint16BoundaryValue(Uint16 boundary1, Uint16 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Uint32 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomUint32BoundaryValue(10, 20, SDL_TRUE) returns 10, 11, 19 or 20
+ * RandomUint32BoundaryValue(1, 20, SDL_FALSE) returns 0 or 21
+ * RandomUint32BoundaryValue(0, 99, SDL_FALSE) returns 100
+ * RandomUint32BoundaryValue(0, 0xFFFFFFFF, SDL_FALSE) returns 0 (with error set)
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or 0 with error set
+ */
+Uint32 SDLTest_RandomUint32BoundaryValue(Uint32 boundary1, Uint32 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Uint64 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomUint64BoundaryValue(10, 20, SDL_TRUE) returns 10, 11, 19 or 20
+ * RandomUint64BoundaryValue(1, 20, SDL_FALSE) returns 0 or 21
+ * RandomUint64BoundaryValue(0, 99, SDL_FALSE) returns 100
+ * RandomUint64BoundaryValue(0, 0xFFFFFFFFFFFFFFFF, SDL_FALSE) returns 0 (with error set)
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or 0 with error set
+ */
+Uint64 SDLTest_RandomUint64BoundaryValue(Uint64 boundary1, Uint64 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Sint8 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomSint8BoundaryValue(-10, 20, SDL_TRUE) returns -11, -10, 19 or 20
+ * RandomSint8BoundaryValue(-100, -10, SDL_FALSE) returns -101 or -9
+ * RandomSint8BoundaryValue(SINT8_MIN, 99, SDL_FALSE) returns 100
+ * RandomSint8BoundaryValue(SINT8_MIN, SINT8_MAX, SDL_FALSE) returns SINT8_MIN (== error value) with error set
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or SINT8_MIN with error set
+ */
+Sint8 SDLTest_RandomSint8BoundaryValue(Sint8 boundary1, Sint8 boundary2, SDL_bool validDomain);
+
+
+/**
+ * Returns a random boundary value for Sint16 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomSint16BoundaryValue(-10, 20, SDL_TRUE) returns -11, -10, 19 or 20
+ * RandomSint16BoundaryValue(-100, -10, SDL_FALSE) returns -101 or -9
+ * RandomSint16BoundaryValue(SINT16_MIN, 99, SDL_FALSE) returns 100
+ * RandomSint16BoundaryValue(SINT16_MIN, SINT16_MAX, SDL_FALSE) returns SINT16_MIN (== error value) with error set
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or SINT16_MIN with error set
+ */
+Sint16 SDLTest_RandomSint16BoundaryValue(Sint16 boundary1, Sint16 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Sint32 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomSint32BoundaryValue(-10, 20, SDL_TRUE) returns -11, -10, 19 or 20
+ * RandomSint32BoundaryValue(-100, -10, SDL_FALSE) returns -101 or -9
+ * RandomSint32BoundaryValue(SINT32_MIN, 99, SDL_FALSE) returns 100
+ * RandomSint32BoundaryValue(SINT32_MIN, SINT32_MAX, SDL_FALSE) returns SINT32_MIN (== error value)
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or SINT32_MIN with error set
+ */
+Sint32 SDLTest_RandomSint32BoundaryValue(Sint32 boundary1, Sint32 boundary2, SDL_bool validDomain);
+
+/**
+ * Returns a random boundary value for Sint64 within the given boundaries.
+ * Boundaries are inclusive, see the usage examples below. If validDomain
+ * is true, the function will only return valid boundaries, otherwise non-valid
+ * boundaries are also possible.
+ * If boundary1 > boundary2, the values are swapped
+ *
+ * Usage examples:
+ * RandomSint64BoundaryValue(-10, 20, SDL_TRUE) returns -11, -10, 19 or 20
+ * RandomSint64BoundaryValue(-100, -10, SDL_FALSE) returns -101 or -9
+ * RandomSint64BoundaryValue(SINT64_MIN, 99, SDL_FALSE) returns 100
+ * RandomSint64BoundaryValue(SINT64_MIN, SINT64_MAX, SDL_FALSE) returns SINT64_MIN (== error value) and error set
+ *
+ * \param boundary1 Lower boundary limit
+ * \param boundary2 Upper boundary limit
+ * \param validDomain Should the generated boundary be valid (=within the bounds) or not?
+ *
+ * \returns a random boundary value for the given range and domain or SINT64_MIN with error set
+ */
+Sint64 SDLTest_RandomSint64BoundaryValue(Sint64 boundary1, Sint64 boundary2, SDL_bool validDomain);
+
+
+/**
+ * Returns integer in range [min, max] (inclusive).
+ * Min and max values can be negative values.
+ * If Max in smaller than min, then the values are swapped.
+ * Min and max are the same value, that value will be returned.
+ *
+ * \param min Minimum inclusive value of returned random number
+ * \param max Maximum inclusive value of returned random number
+ *
+ * \returns a generated random integer in range
+ */
+Sint32 SDLTest_RandomIntegerInRange(Sint32 min, Sint32 max);
+
+
+/**
+ * Generates random null-terminated string. The minimum length for
+ * the string is 1 character, maximum length for the string is 255
+ * characters and it can contain ASCII characters from 32 to 126.
+ *
+ * Note: Returned string needs to be deallocated.
+ *
+ * \returns a newly allocated random string; or NULL if length was invalid or string could not be allocated.
+ */
+char * SDLTest_RandomAsciiString(void);
+
+
+/**
+ * Generates random null-terminated string. The maximum length for
+ * the string is defined by the maxLength parameter.
+ * String can contain ASCII characters from 32 to 126.
+ *
+ * Note: Returned string needs to be deallocated.
+ *
+ * \param maxLength The maximum length of the generated string.
+ *
+ * \returns a newly allocated random string; or NULL if maxLength was invalid or string could not be allocated.
+ */
+char * SDLTest_RandomAsciiStringWithMaximumLength(int maxLength);
+
+
+/**
+ * Generates random null-terminated string. The length for
+ * the string is defined by the size parameter.
+ * String can contain ASCII characters from 32 to 126.
+ *
+ * Note: Returned string needs to be deallocated.
+ *
+ * \param size The length of the generated string
+ *
+ * \returns a newly allocated random string; or NULL if size was invalid or string could not be allocated.
+ */
+char * SDLTest_RandomAsciiStringOfSize(int size);
+
+/**
+ * Get the invocation count for the fuzzer since last ...FuzzerInit.
+ *
+ * \returns the invocation count.
+ */
+int SDLTest_GetFuzzerInvocationCount(void);
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_fuzzer_h_ */
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /*
+  Simple DirectMedia Layer
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source distribution.
+*/
+
+/**
+ *  \file SDL_test_harness.h
+ *
+ *  Include file for SDL test framework.
+ *
+ *  This code is a part of the SDL2_test library, not the main SDL library.
+ */
+
+/*
+  Defines types for test case definitions and the test execution harness API.
+
+  Based on original GSOC code by Markus Kauppila <markus.kauppila@gmail.com>
+*/
+
+#ifndef SDL_test_h_arness_h
+#define SDL_test_h_arness_h
+
+#include "begin_code.h"
+/* Set up for C function definitions, even when using C++ */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+/* ! Definitions for test case structures */
+#define TEST_ENABLED  1
+#define TEST_DISABLED 0
+
+/* ! Definition of all the possible test return values of the test case method */
+#define TEST_ABORTED        -1
+#define TEST_STARTED         0
+#define TEST_COMPLETED       1
+#define TEST_SKIPPED         2
+
+/* ! Definition of all the possible test results for the harness */
+#define TEST_RESULT_PASSED              0
+#define TEST_RESULT_FAILED              1
+#define TEST_RESULT_NO_ASSERT           2
+#define TEST_RESULT_SKIPPED             3
+#define TEST_RESULT_SETUP_FAILURE       4
+
+/* !< Function pointer to a test case setup function (run before every test) */
+typedef void (*SDLTest_TestCaseSetUpFp)(void *arg);
+
+/* !< Function pointer to a test case function */
+typedef int (*SDLTest_TestCaseFp)(void *arg);
+
+/* !< Function pointer to a test case teardown function (run after every test) */
+typedef void  (*SDLTest_TestCaseTearDownFp)(void *arg);
+
+/**
+ * Holds information about a single test case.
+ */
+typedef struct SDLTest_TestCaseReference {
+    /* !< Func2Stress */
+    SDLTest_TestCaseFp testCase;
+    /* !< Short name (or function name) "Func2Stress" */
+    const char *name;
+    /* !< Long name or full description "This test pushes func2() to the limit." */
+    const char *description;
+    /* !< Set to TEST_ENABLED or TEST_DISABLED (test won't be run) */
+    int enabled;
+} SDLTest_TestCaseReference;
+
+/**
+ * Holds information about a test suite (multiple test cases).
+ */
+typedef struct SDLTest_TestSuiteReference {
+    /* !< "PlatformSuite" */
+    const char *name;
+    /* !< The function that is run before each test. NULL skips. */
+    SDLTest_TestCaseSetUpFp testSetUp;
+    /* !< The test cases that are run as part of the suite. Last item should be NULL. */
+    const SDLTest_TestCaseReference **testCases;
+    /* !< The function that is run after each test. NULL skips. */
+    SDLTest_TestCaseTearDownFp testTearDown;
+} SDLTest_TestSuiteReference;
+
+
+/**
+ * \brief Generates a random run seed string for the harness. The generated seed will contain alphanumeric characters (0-9A-Z).
+ *
+ * Note: The returned string needs to be deallocated by the caller.
+ *
+ * \param length The length of the seed string to generate
+ *
+ * \returns the generated seed string
+ */
+char *SDLTest_GenerateRunSeed(const int length);
+
+/**
+ * \brief Execute a test suite using the given run seed and execution key.
+ *
+ * \param testSuites Suites containing the test case.
+ * \param userRunSeed Custom run seed provided by user, or NULL to autogenerate one.
+ * \param userExecKey Custom execution key provided by user, or 0 to autogenerate one.
+ * \param filter Filter specification. NULL disables. Case sensitive.
+ * \param testIterations Number of iterations to run each test case.
+ *
+ * \returns the test run result: 0 when all tests passed, 1 if any tests failed.
+ */
+int SDLTest_RunSuites(SDLTest_TestSuiteReference *testSuites[], const char *userRunSeed, Uint64 userExecKey, const char *filter, int testIterations);
+
+
+/* Ends C function definitions when using C++ */
+#ifdef __cplusplus
+}
+#endif
+#include "close_code.h"
+
+#endif /* SDL_test_h_arness

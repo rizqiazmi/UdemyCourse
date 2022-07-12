@@ -1,0 +1,2008 @@
+/*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+/* Simple program to test the SDL game controller routines */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "SDL.h"
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#ifndef SDL_JOYSTICK_DISABLED
+
+#define SCREEN_WIDTH    512
+#define SCREEN_HEIGHT   320
+
+/* This is indexed by SDL_GameControllerButton. */
+static const struct { int x; int y; } button_positions[] = {
+    {387, 167},  /* SDL_CONTROLLER_BUTTON_A */
+    {431, 132},  /* SDL_CONTROLLER_BUTTON_B */
+    {342, 132},  /* SDL_CONTROLLER_BUTTON_X */
+    {389, 101},  /* SDL_CONTROLLER_BUTTON_Y */
+    {174, 132},  /* SDL_CONTROLLER_BUTTON_BACK */
+    {232, 128},  /* SDL_CONTROLLER_BUTTON_GUIDE */
+    {289, 132},  /* SDL_CONTROLLER_BUTTON_START */
+    {75,  154},  /* SDL_CONTROLLER_BUTTON_LEFTSTICK */
+    {305, 230},  /* SDL_CONTROLLER_BUTTON_RIGHTSTICK */
+    {77,  40},   /* SDL_CONTROLLER_BUTTON_LEFTSHOULDER */
+    {396, 36},   /* SDL_CONTROLLER_BUTTON_RIGHTSHOULDER */
+    {154, 188},  /* SDL_CONTROLLER_BUTTON_DPAD_UP */
+    {154, 249},  /* SDL_CONTROLLER_BUTTON_DPAD_DOWN */
+    {116, 217},  /* SDL_CONTROLLER_BUTTON_DPAD_LEFT */
+    {186, 217},  /* SDL_CONTROLLER_BUTTON_DPAD_RIGHT */
+    {232, 174},  /* SDL_CONTROLLER_BUTTON_MISC1 */
+    {132, 135},  /* SDL_CONTROLLER_BUTTON_PADDLE1 */
+    {330, 135},  /* SDL_CONTROLLER_BUTTON_PADDLE2 */
+    {132, 175},  /* SDL_CONTROLLER_BUTTON_PADDLE3 */
+    {330, 175},  /* SDL_CONTROLLER_BUTTON_PADDLE4 */
+};
+
+/* This is indexed by SDL_GameControllerAxis. */
+static const struct { int x; int y; double angle; } axis_positions[] = {
+    {74,  153, 270.0},  /* LEFTX */
+    {74,  153,   0.0},  /* LEFTY */
+    {306, 231, 270.0},  /* RIGHTX */
+    {306, 231,   0.0},  /* RIGHTY */
+    {91,  -20,   0.0},  /* TRIGGERLEFT */
+    {375, -20,   0.0},  /* TRIGGERRIGHT */
+};
+
+static SDL_Window *window = NULL;
+static SDL_Renderer *screen = NULL;
+static SDL_bool retval = SDL_FALSE;
+static SDL_bool done = SDL_FALSE;
+static SDL_bool set_LED = SDL_FALSE;
+static int trigger_effect = 0;
+static SDL_Texture *background_front, *background_back, *button, *axis;
+static SDL_GameController *gamecontroller;
+static SDL_GameController **gamecontrollers;
+static int num_controllers = 0;
+
+static void UpdateWindowTitle()
+{
+    if (!window) {
+        return;
+    }
+
+    if (gamecontroller) {
+        const char *name = SDL_GameControllerName(gamecontroller);
+        const char *serial = SDL_GameControllerGetSerial(gamecontroller);
+        const char *basetitle = "Game Controller Test: ";
+        const size_t titlelen = SDL_strlen(basetitle) + SDL_strlen(name) + (serial ? 3 + SDL_strlen(serial) : 0) + 1;
+        char *title = (char *)SDL_malloc(titlelen);
+
+        retval = SDL_FALSE;
+        done = SDL_FALSE;
+
+        if (title) {
+            SDL_snprintf(title, titlelen, "%s%s", basetitle, name);
+            if (serial) {
+                SDL_strlcat(title, " (", titlelen);
+                SDL_strlcat(title, serial, titlelen);
+                SDL_strlcat(title, ")", titlelen);
+            }
+            SDL_SetWindowTitle(window, title);
+            SDL_free(title);
+        }
+    } else {
+        SDL_SetWindowTitle(window, "Waiting for controller...");
+    }
+}
+
+static int FindController(SDL_JoystickID controller_id)
+{
+    int i;
+
+    for (i = 0; i < num_controllers; ++i) {
+        if (controller_id == SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gamecontrollers[i]))) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+static void AddController(int device_index, SDL_bool verbose)
+{
+    SDL_JoystickID controller_id = SDL_JoystickGetDeviceInstanceID(device_index);
+    SDL_GameController *controller;
+    SDL_GameController **controllers;
+
+    controller_id = SDL_JoystickGetDeviceInstanceID(device_index);
+    if (controller_id < 0) {
+        SDL_Log("Couldn't get controller ID: %s\n", SDL_GetError());
+        return;
+    }
+
+    if (FindController(controller_id) >= 0) {
+        /* We already have this controller */
+        return;
+    }
+
+    controller = SDL_GameControllerOpen(device_index);
+    if (!controller) {
+        SDL_Log("Couldn't open controller: %s\n", SDL_GetError());
+        return;
+    }
+
+    controllers = (SDL_GameController **)SDL_realloc(gamecontrollers, (num_controllers + 1) * sizeof(*controllers));
+    if (!controllers) {
+        SDL_GameControllerClose(controller);
+        return;
+    }
+
+    controllers[num_controllers++] = controller;
+    gamecontrollers = controllers;
+    gamecontroller = controller;
+    trigger_effect = 0;
+
+    if (verbose) {
+        const char *name = SDL_GameControllerName(gamecontroller);
+        SDL_Log("Opened game controller %s\n", name);
+    }
+
+    if (SDL_GameControllerHasSensor(gamecontroller, SDL_SENSOR_ACCEL)) {
+        if (verbose) {
+            SDL_Log("Enabling accelerometer at %.2f Hz\n", SDL_GameControllerGetSensorDataRate(gamecontroller, SDL_SENSOR_ACCEL));
+        }
+        SDL_GameControllerSetSensorEnabled(gamecontroller, SDL_SENSOR_ACCEL, SDL_TRUE);
+    }
+
+    if (SDL_GameControllerHasSensor(gamecontroller, SDL_SENSOR_GYRO)) {
+        if (verbose) {
+            SDL_Log("Enabling gyro at %.2f Hz\n", SDL_GameControllerGetSensorDataRate(gamecontroller, SDL_SENSOR_GYRO));
+        }
+        SDL_GameControllerSetSensorEnabled(gamecontroller, SDL_SENSOR_GYRO, SDL_TRUE);
+    }
+
+    if (SDL_GameControllerHasRumble(gamecontroller)) {
+        SDL_Log("Rumble supported");
+    }
+
+    if (SDL_GameControllerHasRumbleTriggers(gamecontroller)) {
+        SDL_Log("Trigger rumble supported");
+    }
+
+    UpdateWindowTitle();
+}
+
+static void SetController(SDL_JoystickID controller)
+{
+    int i = FindController(controller);
+
+    if (i < 0) {
+        return;
+    }
+
+    if (gamecontroller != gamecontrollers[i]) {
+        gamecontroller = gamecontrollers[i];
+        UpdateWindowTitle();
+    }
+}
+
+static void DelController(SDL_JoystickID controller)
+{
+    int i = FindController(controller);
+
+    if (i < 0) {
+        return;
+    }
+
+    SDL_GameControllerClose(gamecontrollers[i]);
+
+    --num_controllers;
+    if (i < num_controllers) {
+        SDL_memcpy(&gamecontrollers[i], &gamecontrollers[i+1], (num_controllers - i) * sizeof(*gamecontrollers));
+    }
+
+    if (num_controllers > 0) {
+        gamecontroller = gamecontrollers[0];
+    } else {
+        gamecontroller = NULL;
+    }
+    UpdateWindowTitle();
+}
+
+static SDL_Texture *
+LoadTexture(SDL_Renderer *renderer, const char *file, SDL_bool transparent)
+{
+    SDL_Surface *temp = NULL;
+    SDL_Texture *texture = NULL;
+
+    temp = SDL_LoadBMP(file);
+    if (temp == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load %s: %s", file, SDL_GetError());
+    } else {
+        /* Set transparent pixel as the pixel at (0,0) */
+        if (transparent) {
+            if (temp->format->BytesPerPixel == 1) {
+                SDL_SetColorKey(temp, SDL_TRUE, *(Uint8 *)temp->pixels);
+            }
+        }
+
+        texture = SDL_CreateTextureFromSurface(renderer, temp);
+        if (!texture) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s\n", SDL_GetError());
+        }
+    }
+    if (temp) {
+        SDL_FreeSurface(temp);
+    }
+    return texture;
+}
+
+static Uint16 ConvertAxisToRumble(Sint16 axisval)
+{
+    /* Only start rumbling if the axis is past the halfway point */
+    const Sint16 half_axis = (Sint16)SDL_ceil(SDL_JOYSTICK_AXIS_MAX / 2.0f);
+    if (axisval > half_axis) {
+        return (Uint16)(axisval - half_axis) * 4;
+    } else {
+        return 0;
+    }
+}
+
+/* PS5 trigger effect documentation:
+   https://controllers.fandom.com/wiki/Sony_DualSense#FFB_Trigger_Modes
+*/
+typedef struct
+{
+    Uint8 ucEnableBits1;                /* 0 */
+    Uint8 ucEnableBits2;                /* 1 */
+    Uint8 ucRumbleRight;                /* 2 */
+    Uint8 ucRumbleLeft;                 /* 3 */
+    Uint8 ucHeadphoneVolume;            /* 4 */
+    Uint8 ucSpeakerVolume;              /* 5 */
+    Uint8 ucMicrophoneVolume;           /* 6 */
+    Uint8 ucAudioEnableBits;            /* 7 */
+    Uint8 ucMicLightMode;               /* 8 */
+    Uint8 ucAudioMuteBits;              /* 9 */
+    Uint8 rgucRightTriggerEffect[11];   /* 10 */
+    Uint8 rgucLeftTriggerEffect[11];    /* 21 */
+    Uint8 rgucUnknown1[6];              /* 32 */
+    Uint8 ucLedFlags;                   /* 38 */
+    Uint8 rgucUnknown2[2];              /* 39 */
+    Uint8 ucLedAnim;                    /* 41 */
+    Uint8 ucLedBrightness;              /* 42 */
+    Uint8 ucPadLights;                  /* 43 */
+    Uint8 ucLedRed;                     /* 44 */
+    Uint8 ucLedGreen;                   /* 45 */
+    Uint8 ucLedBlue;                    /* 46 */
+} DS5EffectsState_t;
+
+static void CyclePS5TriggerEffect()
+{
+    DS5EffectsState_t state;
+
+    Uint8 effects[3][11] =
+    {
+        /* Clear trigger effect */
+        { 0x05, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+        /* Constant resistance across entire trigger pull */
+        { 0x01, 0, 110, 0, 0, 0, 0, 0, 0, 0, 0 },
+        /* Resistance and vibration when trigger is pulled */
+        { 0x06, 15, 63, 128, 0, 0, 0, 0, 0, 0, 0 },
+    };
+
+    trigger_effect = (trigger_effect + 1) % SDL_arraysize(effects);
+
+    SDL_zero(state);
+    state.ucEnableBits1 |= (0x04 | 0x08); /* Modify right and left trigger effect respectively */
+    SDL_memcpy(state.rgucRightTriggerEffect, effects[trigger_effect], sizeof(effects[trigger_effect]));
+    SDL_memcpy(state.rgucLeftTriggerEffect, effects[trigger_effect], sizeof(effects[trigger_effect]));
+    SDL_GameControllerSendEffect(gamecontroller, &state, sizeof(state));
+}
+
+void
+loop(void *arg)
+{
+    SDL_Event event;
+    int i;
+    SDL_bool showing_front = SDL_TRUE;
+
+    /* Update to get the current event state */
+    SDL_PumpEvents();
+
+    /* Process all currently pending events */
+    while (SDL_PeepEvents(&event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT) == 1) {
+        switch (event.type) {
+        case SDL_CONTROLLERDEVICEADDED:
+            SDL_Log("Game controller device %d added.\n", (int) SDL_JoystickGetDeviceInstanceID(event.cdevice.which));
+            AddController(event.cdevice.which, SDL_TRUE);
+            break;
+
+        case SDL_CONTROLLERDEVICEREMOVED:
+            SDL_Log("Game controller device %d removed.\n", (int) event.cdevice.which);
+            DelController(event.cdevice.which);
+            break;
+
+        case SDL_CONTROLLERTOUCHPADDOWN:
+        case SDL_CONTROLLERTOUCHPADMOTION:
+        case SDL_CONTROLLERTOUCHPADUP:
+            SDL_Log("Controller %d touchpad %d finger %d %s %.2f, %.2f, %.2f\n",
+                event.ctouchpad.which,
+                event.ctouchpad.touchpad,
+                event.ctouchpad.finger,
+                (event.type == SDL_CONTROLLERTOUCHPADDOWN ? "pressed at" :
+                (event.type == SDL_CONTROLLERTOUCHPADUP ? "released at" :
+                "moved to")),
+                event.ctouchpad.x,
+                event.ctouchpad.y,
+                event.ctouchpad.pressure);
+            break;
+
+#define VERBOSE_SENSORS
+#ifdef VERBOSE_SENSORS
+        case SDL_CONTROLLERSENSORUPDATE:
+            SDL_Log("Controller %d sensor %s: %.2f, %.2f, %.2f\n",
+                event.csensor.which,
+                event.csensor.sensor == SDL_SENSOR_ACCEL ? "accelerometer" :
+                event.csensor.sensor == SDL_SENSOR_GYRO ? "gyro" : "unknown",
+                event.csensor.data[0],
+                event.csensor.data[1],
+                event.csensor.data[2]);
+            break;
+#endif /* VERBOSE_SENSORS */
+
+#define VERBOSE_AXES
+#ifdef VERBOSE_AXES
+        case SDL_CONTROLLERAXISMOTION:
+            if (event.caxis.value <= (-SDL_JOYSTICK_AXIS_MAX / 2) || event.caxis.value >= (SDL_JOYSTICK_AXIS_MAX / 2)) {
+                SetController(event.caxis.which);
+            }
+            SDL_Log("Controller %d axis %s changed to %d\n", event.caxis.which, SDL_GameControllerGetStringForAxis((SDL_GameControllerAxis)event.caxis.axis), event.caxis.value);
+            break;
+#endif /* VERBOSE_AXES */
+
+        case SDL_CONTROLLERBUTTONDOWN:
+        case SDL_CONTROLLERBUTTONUP:
+            if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+                SetController(event.cbutton.which);
+            }
+            SDL_Log("Controller %d button %s %s\n", event.cbutton.which, SDL_GameControllerGetStringForButton((SDL_GameControllerButton)event.cbutton.button), event.cbutton.state ? "pressed" : "released");
+
+            /* Cycle PS5 trigger effects when the microphone button is pressed */
+            if (event.type == SDL_CONTROLLERBUTTONDOWN &&
+                event.cbutton.button == SDL_CONTROLLER_BUTTON_MISC1 &&
+                SDL_GameControllerGetType(gamecontroller) == SDL_CONTROLLER_TYPE_PS5) {
+                CyclePS5TriggerEffect();
+            }
+            break;
+
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym >= SDLK_0 && event.key.keysym.sym <= SDLK_9) {
+                if (gamecontroller) {
+                    int player_index = (event.key.keysym.sym - SDLK_0);
+
+                    SDL_GameControllerSetPlayerIndex(gamecontroller, player_index);
+                }
+                break;
+            }
+            if (event.key.keysym.sym != SDLK_ESCAPE) {
+                break;
+            }
+            SDL_FALLTHROUGH;
+        case SDL_QUIT:
+            done = SDL_TRUE;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (gamecontroller) {
+        /* Show the back of the controller if the paddles are being held */
+        for (i = SDL_CONTROLLER_BUTTON_PADDLE1; i <= SDL_CONTROLLER_BUTTON_PADDLE4; ++i) {
+            if (SDL_GameControllerGetButton(gamecontroller, (SDL_GameControllerButton)i) == SDL_PRESSED) {
+                showing_front = SDL_FALSE;
+                break;
+            }
+        }
+    }
+
+    /* blank screen, set up for drawing this frame. */
+    SDL_SetRenderDrawColor(screen, 0xFF, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(screen);
+    SDL_RenderCopy(screen, showing_front ? background_front : background_back, NULL, NULL);
+
+    if (gamecontroller) {
+        /* Update visual controller state */
+        for (i = 0; i < SDL_CONTROLLER_BUTTON_TOUCHPAD; ++i) {
+            if (SDL_GameControllerGetButton(gamecontroller, (SDL_GameControllerButton)i) == SDL_PRESSED) {
+                SDL_bool on_front = (i < SDL_CONTROLLER_BUTTON_PADDLE1 || i > SDL_CONTROLLER_BUTTON_PADDLE4);
+                if (on_front == showing_front) {
+                    SDL_Rect dst;
+                    dst.x = button_positions[i].x;
+                    dst.y = button_positions[i].y;
+                    dst.w = 50;
+                    dst.h = 50;
+                    SDL_RenderCopyEx(screen, button, NULL, &dst, 0, NULL, SDL_FLIP_NONE);
+                }
+            }
+        }
+
+        if (showing_front) {
+            for (i = 0; i < SDL_CONTROLLER_AXIS_MAX; ++i) {
+                const Sint16 deadzone = 8000;  /* !!! FIXME: real deadzone */
+                const Sint16 value = SDL_GameControllerGetAxis(gamecontroller, (SDL_GameControllerAxis)(i));
+                if (value < -deadzone) {
+                    const double angle = axis_positions[i].angle;
+                    SDL_Rect dst;
+                    dst.x = axis_positions[i].x;
+                    dst.y = axis_positions[i].y;
+                    dst.w = 50;
+                    dst.h = 50;
+                    SDL_RenderCopyEx(screen, axis, NULL, &dst, angle, NULL, SDL_FLIP_NONE);
+                } else if (value > deadzone) {
+                    const double angle = axis_positions[i].angle + 180.0;
+                    SDL_Rect dst;
+                    dst.x = axis_positions[i].x;
+                    dst.y = axis_positions[i].y;
+                    dst.w = 50;
+                    dst.h = 50;
+                    SDL_RenderCopyEx(screen, axis, NULL, &dst, angle, NULL, SDL_FLIP_NONE);
+                }
+            }
+        }
+
+        /* Update LED based on left thumbstick position */
+        {
+            Sint16 x = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_LEFTX);
+            Sint16 y = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_LEFTY);
+
+            if (!set_LED) {
+                set_LED = (x < -8000 || x > 8000 || y > 8000);
+            }
+            if (set_LED) {
+                Uint8 r, g, b;
+
+                if (x < 0) {
+                    r = (Uint8)(((int)(~x) * 255) / 32767);
+                    b = 0;
+                } else {
+                    r = 0;
+                    b = (Uint8)(((int)(x) * 255) / 32767);
+                }
+                if (y > 0) {
+                    g = (Uint8)(((int)(y) * 255) / 32767);
+                } else {
+                    g = 0;
+                }
+
+                SDL_GameControllerSetLED(gamecontroller, r, g, b);
+            }
+        }
+
+        if (trigger_effect == 0) {
+            /* Update rumble based on trigger state */
+            {
+                Sint16 left = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+                Sint16 right = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+                Uint16 low_frequency_rumble = ConvertAxisToRumble(left);
+                Uint16 high_frequency_rumble = ConvertAxisToRumble(right);
+                SDL_GameControllerRumble(gamecontroller, low_frequency_rumble, high_frequency_rumble, 250);
+            }
+
+            /* Update trigger rumble based on thumbstick state */
+            {
+                Sint16 left = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_LEFTY);
+                Sint16 right = SDL_GameControllerGetAxis(gamecontroller, SDL_CONTROLLER_AXIS_RIGHTY);
+                Uint16 left_rumble = ConvertAxisToRumble(~left);
+                Uint16 right_rumble = ConvertAxisToRumble(~right);
+
+                SDL_GameControllerRumbleTriggers(gamecontroller, left_rumble, right_rumble, 250);
+            }
+        }
+    }
+
+    SDL_RenderPresent(screen);
+
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char *argv[])
+{
+    int i;
+    int controller_count = 0;
+    int controller_index = 0;
+    char guid[64];
+
+    SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_JOY_CONS, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_ROG_CHAKRAM, "1");
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_SetHint(SDL_HINT_LINUX_JOYSTICK_DEADZONES, "1");
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize SDL (Note: video is required to start event loop) */
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER ) < 0) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't initialize SDL: %s\n", SDL_GetError());
+        return 1;
+    }
+
+    SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+
+    /* Print information about the mappings */
+    if (argv[1] && SDL_strcmp(argv[1], "--mappings") == 0) {
+        SDL_Log("Supported mappings:\n");
+        for (i = 0; i < SDL_GameControllerNumMappings(); ++i) {
+            char *mapping = SDL_GameControllerMappingForIndex(i);
+            if (mapping) {
+                SDL_Log("\t%s\n", mapping);
+                SDL_free(mapping);
+            }
+        }
+        SDL_Log("\n");
+    }
+
+    /* Print information about the controller */
+    for (i = 0; i < SDL_NumJoysticks(); ++i) {
+        const char *name;
+        const char *description;
+
+        SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(i),
+                                  guid, sizeof (guid));
+
+        if (SDL_IsGameController(i)) {
+            controller_count++;
+            name = SDL_GameControllerNameForIndex(i);
+            switch (SDL_GameControllerTypeForIndex(i)) {
+            case SDL_CONTROLLER_TYPE_AMAZON_LUNA:
+                description = "Amazon Luna Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_GOOGLE_STADIA:
+                description = "Google Stadia Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO:
+                description = "Nintendo Switch Pro Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS3:
+                description = "PS3 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS4:
+                description = "PS4 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_PS5:
+                description = "PS5 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_XBOX360:
+                description = "XBox 360 Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_XBOXONE:
+                description = "XBox One Controller";
+                break;
+            case SDL_CONTROLLER_TYPE_VIRTUAL:
+                description = "Virtual Game Controller";
+                break;
+            default:
+                description = "Game Controller";
+                break;
+            }
+            AddController(i, SDL_FALSE);
+        } else {
+            name = SDL_JoystickNameForIndex(i);
+            description = "Joystick";
+        }
+        SDL_Log("%s %d: %s (guid %s, VID 0x%.4x, PID 0x%.4x, player index = %d)\n",
+            description, i, name ? name : "Unknown", guid,
+            SDL_JoystickGetDeviceVendor(i), SDL_JoystickGetDeviceProduct(i), SDL_JoystickGetDevicePlayerIndex(i));
+    }
+    SDL_Log("There are %d game controller(s) attached (%d joystick(s))\n", controller_count, SDL_NumJoysticks());
+
+    /* Create a window to display controller state */
+    window = SDL_CreateWindow("Game Controller Test", SDL_WINDOWPOS_CENTERED,
+                              SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH,
+                              SCREEN_HEIGHT, 0);
+    if (window == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create window: %s\n", SDL_GetError());
+        return 2;
+    }
+
+    screen = SDL_CreateRenderer(window, -1, 0);
+    if (screen == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create renderer: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        return 2;
+    }
+
+    SDL_SetRenderDrawColor(screen, 0x00, 0x00, 0x00, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(screen);
+    SDL_RenderPresent(screen);
+
+    /* scale for platforms that don't give you the window size you asked for. */
+    SDL_RenderSetLogicalSize(screen, SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    background_front = LoadTexture(screen, "controllermap.bmp", SDL_FALSE);
+    background_back = LoadTexture(screen, "controllermap_back.bmp", SDL_FALSE);
+    button = LoadTexture(screen, "button.bmp", SDL_TRUE);
+    axis = LoadTexture(screen, "axis.bmp", SDL_TRUE);
+
+    if (!background_front || !background_back || !button || !axis) {
+        SDL_DestroyRenderer(screen);
+        SDL_DestroyWindow(window);
+        return 2;
+    }
+    SDL_SetTextureColorMod(button, 10, 255, 21);
+    SDL_SetTextureColorMod(axis, 10, 255, 21);
+
+    /* !!! FIXME: */
+    /*SDL_RenderSetLogicalSize(screen, background->w, background->h);*/
+
+    if (argv[1] && *argv[1] != '-') {
+        controller_index = SDL_atoi(argv[1]);
+    }
+    if (controller_index < num_controllers) {
+        gamecontroller = gamecontrollers[controller_index];
+    } else {
+        gamecontroller = NULL;
+    }
+    UpdateWindowTitle();
+
+    /* Loop, getting controller events! */
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg(loop, NULL, 0, 1);
+#else
+    while (!done) {
+        loop(NULL);
+    }
+#endif
+
+    /* Reset trigger state */
+    if (trigger_effect != 0) {
+        trigger_effect = -1;
+        CyclePS5TriggerEffect();
+    }
+
+    SDL_DestroyRenderer(screen);
+    SDL_DestroyWindow(window);
+    SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER);
+
+    return 0;
+}
+
+#else
+
+int
+main(int argc, char *argv[])
+{
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL compiled without Joystick support.\n");
+    return 1;
+}
+
+#endif
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+/* Simple program:  draw a RGB triangle, with texture  */
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL_test_common.h"
+
+static SDLTest_CommonState *state;
+static SDL_bool use_texture = SDL_FALSE;
+static SDL_Texture **sprites;
+static SDL_BlendMode blendMode = SDL_BLENDMODE_NONE;
+static double angle = 0.0;
+static int sprite_w, sprite_h;
+
+int done;
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    SDL_free(sprites);
+    SDLTest_CommonQuit(state);
+    exit(rc);
+}
+
+int
+LoadSprite(const char *file)
+{
+    int i;
+    SDL_Surface *temp;
+
+    /* Load the sprite image */
+    temp = SDL_LoadBMP(file);
+    if (temp == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't load %s: %s", file, SDL_GetError());
+        return (-1);
+    }
+    sprite_w = temp->w;
+    sprite_h = temp->h;
+
+    /* Set transparent pixel as the pixel at (0,0) */
+    if (temp->format->palette) {
+        SDL_SetColorKey(temp, 1, *(Uint8 *) temp->pixels);
+    } else {
+        switch (temp->format->BitsPerPixel) {
+        case 15:
+            SDL_SetColorKey(temp, 1, (*(Uint16 *) temp->pixels) & 0x00007FFF);
+            break;
+        case 16:
+            SDL_SetColorKey(temp, 1, *(Uint16 *) temp->pixels);
+            break;
+        case 24:
+            SDL_SetColorKey(temp, 1, (*(Uint32 *) temp->pixels) & 0x00FFFFFF);
+            break;
+        case 32:
+            SDL_SetColorKey(temp, 1, *(Uint32 *) temp->pixels);
+            break;
+        }
+    }
+
+    /* Create textures from the image */
+    for (i = 0; i < state->num_windows; ++i) {
+        SDL_Renderer *renderer = state->renderers[i];
+        sprites[i] = SDL_CreateTextureFromSurface(renderer, temp);
+        if (!sprites[i]) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't create texture: %s\n", SDL_GetError());
+            SDL_FreeSurface(temp);
+            return (-1);
+        }
+        if (SDL_SetTextureBlendMode(sprites[i], blendMode) < 0) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't set blend mode: %s\n", SDL_GetError());
+            SDL_FreeSurface(temp);
+            SDL_DestroyTexture(sprites[i]);
+            return (-1);
+        }
+    }
+    SDL_FreeSurface(temp);
+
+    /* We're ready to roll. :) */
+    return (0);
+}
+
+
+void
+loop()
+{
+    int i;
+    SDL_Event event;
+
+    /* Check for events */
+    while (SDL_PollEvent(&event)) {
+
+        if (event.type == SDL_MOUSEMOTION) {
+            if (event.motion.state) {
+                int xrel, yrel;
+                int window_w, window_h;
+                SDL_Window *window = SDL_GetWindowFromID(event.motion.windowID);
+                SDL_GetWindowSize(window, &window_w, &window_h);
+                xrel = event.motion.xrel;
+                yrel = event.motion.yrel;
+                if (event.motion.y < window_h / 2) {
+                    angle += xrel;
+                } else {
+                    angle -= xrel;
+                }
+                if (event.motion.x < window_w / 2) {
+                    angle -= yrel;
+                } else {
+                    angle += yrel;
+                }
+            }
+        } else {
+            SDLTest_CommonEvent(state, &event, &done);
+        }
+    }
+
+    for (i = 0; i < state->num_windows; ++i) {
+        SDL_Renderer *renderer = state->renderers[i];
+        if (state->windows[i] == NULL)
+            continue;
+        SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
+        SDL_RenderClear(renderer);
+
+        {
+            SDL_Rect viewport;
+            SDL_Vertex verts[3];
+            double a;
+            double d;
+            int cx, cy;
+
+            /* Query the sizes */
+            SDL_RenderGetViewport(renderer, &viewport);
+            SDL_zeroa(verts);
+            cx = viewport.x + viewport.w / 2;
+            cy = viewport.y + viewport.h / 2;
+            d = (viewport.w + viewport.h) / 5;
+
+            a = (angle * 3.1415) / 180.0; 
+            verts[0].position.x = cx + d * SDL_cos(a);
+            verts[0].position.y = cy + d * SDL_sin(a);
+            verts[0].color.r = 0xFF;
+            verts[0].color.g = 0;
+            verts[0].color.b = 0;
+            verts[0].color.a = 0xFF;
+
+            a = ((angle + 120) * 3.1415) / 180.0; 
+            verts[1].position.x = cx + d * SDL_cos(a);
+            verts[1].position.y = cy + d * SDL_sin(a);
+            verts[1].color.r = 0;
+            verts[1].color.g = 0xFF;
+            verts[1].color.b = 0;
+            verts[1].color.a = 0xFF;
+
+            a = ((angle + 240) * 3.1415) / 180.0; 
+            verts[2].position.x = cx + d * SDL_cos(a);
+            verts[2].position.y = cy + d * SDL_sin(a);
+            verts[2].color.r = 0;
+            verts[2].color.g = 0;
+            verts[2].color.b = 0xFF;
+            verts[2].color.a = 0xFF;
+
+            if (use_texture) {
+                verts[0].tex_coord.x = 0.5;
+                verts[0].tex_coord.y = 0.0;
+                verts[1].tex_coord.x = 1.0;
+                verts[1].tex_coord.y = 1.0;
+                verts[2].tex_coord.x = 0.0;
+                verts[2].tex_coord.y = 1.0;
+            }
+
+            SDL_RenderGeometry(renderer, sprites[i], verts, 3, NULL, 0);
+        }
+
+        SDL_RenderPresent(renderer);
+    }
+#ifdef __EMSCRIPTEN__
+    if (done) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int
+main(int argc, char *argv[])
+{
+    int i;
+    const char *icon = "icon.bmp";
+    Uint32 then, now, frames;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize test framework */
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+    for (i = 1; i < argc;) {
+        int consumed;
+
+        consumed = SDLTest_CommonArg(state, i);
+        if (consumed == 0) {
+            consumed = -1;
+            if (SDL_strcasecmp(argv[i], "--blend") == 0) {
+                if (argv[i + 1]) {
+                    if (SDL_strcasecmp(argv[i + 1], "none") == 0) {
+                        blendMode = SDL_BLENDMODE_NONE;
+                        consumed = 2;
+                    } else if (SDL_strcasecmp(argv[i + 1], "blend") == 0) {
+                        blendMode = SDL_BLENDMODE_BLEND;
+                        consumed = 2;
+                    } else if (SDL_strcasecmp(argv[i + 1], "add") == 0) {
+                        blendMode = SDL_BLENDMODE_ADD;
+                        consumed = 2;
+                    } else if (SDL_strcasecmp(argv[i + 1], "mod") == 0) {
+                        blendMode = SDL_BLENDMODE_MOD;
+                        consumed = 2;
+                    }
+                }
+            } else if (SDL_strcasecmp(argv[i], "--use-texture") == 0) {
+                use_texture = SDL_TRUE;
+                consumed = 1;
+            }
+        }
+        if (consumed < 0) {
+            static const char *options[] = { "[--blend none|blend|add|mod]", "[--use-texture]", NULL };
+            SDLTest_CommonLogUsage(state, argv[0], options);
+            return 1;
+        }
+        i += consumed;
+    }
+    if (!SDLTest_CommonInit(state)) {
+        return 2;
+    }
+
+    /* Create the windows, initialize the renderers, and load the textures */
+    sprites =
+        (SDL_Texture **) SDL_malloc(state->num_windows * sizeof(*sprites));
+    if (!sprites) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory!\n");
+        quit(2);
+    }
+    /* Create the windows and initialize the renderers */
+    for (i = 0; i < state->num_windows; ++i) {
+        SDL_Renderer *renderer = state->renderers[i];
+        SDL_SetRenderDrawBlendMode(renderer, blendMode);
+        SDL_SetRenderDrawColor(renderer, 0xA0, 0xA0, 0xA0, 0xFF);
+        SDL_RenderClear(renderer);
+        sprites[i] = NULL;
+    }
+    if (use_texture) {
+        if (LoadSprite(icon) < 0) {
+            quit(2);
+        }
+    }
+
+
+    srand((unsigned int)time(NULL));
+
+    /* Main render loop */
+    frames = 0;
+    then = SDL_GetTicks();
+    done = 0;
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(loop, 0, 1);
+#else
+    while (!done) {
+        ++frames;
+        loop();
+        }
+#endif
+
+    /* Print out some timing information */
+    now = SDL_GetTicks();
+    if (now > then) {
+        double fps = ((double) frames * 1000) / (now - then);
+        SDL_Log("%2.2f frames per second\n", fps);
+    }
+    
+    quit(0);
+
+    return 0;
+}
+
+/* vi: set ts=4 sw=4 expandtab: */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+
+/*  Usage:
+ *  Spacebar to begin recording a gesture on all touches.
+ *  s to save all touches into "./gestureSave"
+ *  l to load all touches from "./gestureSave"
+ */
+
+#include "SDL.h"
+#include <stdlib.h> /* for exit() */
+
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
+
+#include "SDL_test.h"
+#include "SDL_test_common.h"
+
+#define WIDTH 640
+#define HEIGHT 480
+#define BPP 4
+
+/* MUST BE A POWER OF 2! */
+#define EVENT_BUF_SIZE 256
+
+#define VERBOSE 0
+
+static SDLTest_CommonState *state;
+static SDL_Event events[EVENT_BUF_SIZE];
+static int eventWrite;
+static int colors[7] = {0xFF,0xFF00,0xFF0000,0xFFFF00,0x00FFFF,0xFF00FF,0xFFFFFF};
+static int quitting = 0;
+
+typedef struct
+{
+    float x, y;
+} Point;
+
+typedef struct
+{
+    float ang, r;
+    Point p;
+} Knob;
+
+static Knob knob = { 0.0f, 0.1f, { 0.0f, 0.0f } };
+
+
+static void
+setpix(SDL_Surface *screen, float _x, float _y, unsigned int col)
+{
+    Uint32 *pixmem32;
+    Uint32 colour;
+    Uint8 r, g, b;
+    const int x = (int)_x;
+    const int y = (int)_y;
+    float a;
+
+    if ( (x < 0) || (x >= screen->w) || (y < 0) || (y >= screen->h) ) {
+        return;
+    }
+
+    pixmem32 = (Uint32 *) screen->pixels + y * screen->pitch / BPP + x;
+
+    SDL_memcpy(&colour, pixmem32, screen->format->BytesPerPixel);
+
+    SDL_GetRGB(colour,screen->format,&r,&g,&b);
+
+    /* r = 0;g = 0; b = 0; */
+    a = (float) ((col >> 24) & 0xFF);
+    if (a == 0) {
+        a = 0xFF; /* Hack, to make things easier. */
+    }
+
+    a = (a == 0.0f) ? 1 : (a / 255.0f);
+    r = (Uint8) (r * (1 - a) + ((col >> 16) & 0xFF) * a);
+    g = (Uint8) (g * (1 - a) + ((col >> 8) & 0xFF) * a);
+    b = (Uint8) (b * (1 - a) + ((col >> 0) & 0xFF) * a);
+    colour = SDL_MapRGB(screen->format, r, g, b);
+
+    *pixmem32 = colour;
+}
+
+#if 0 /* unused */
+static void
+drawLine(SDL_Surface *screen, float x0, float y0, float x1, float y1, unsigned int col)
+{
+    float t;
+    for (t = 0; t < 1; t += (float) (1.0f / SDL_max(SDL_fabs(x0 - x1), SDL_fabs(y0 - y1)))) {
+        setpix(screen, x1 + t * (x0 - x1), y1 + t * (y0 - y1), col);
+    }
+}
+#endif
+
+static void
+drawCircle(SDL_Surface *screen, float x, float y, float r, unsigned int c)
+{
+    float tx,ty, xr;
+    for (ty = (float) -SDL_fabs(r); ty <= (float) SDL_fabs((int) r); ty++) {
+        xr = (float) SDL_sqrt(r * r - ty * ty);
+        if (r > 0) { /* r > 0 ==> filled circle */
+            for(tx = -xr + 0.5f; tx <= xr - 0.5f; tx++) {
+                setpix(screen, x + tx, y + ty, c);
+            }
+        } else {
+            setpix(screen, x - xr + 0.5f, y + ty, c);
+            setpix(screen, x + xr - 0.5f, y + ty, c);
+        }
+    }
+}
+
+static void
+drawKnob(SDL_Surface *screen, const Knob *k)
+{
+    drawCircle(screen, k->p.x * screen->w, k->p.y * screen->h, k->r * screen->w, 0xFFFFFF);
+    drawCircle(screen, (k->p.x + k->r / 2 * SDL_cosf(k->ang)) * screen->w,
+               (k->p.y + k->r / 2 * SDL_sinf(k->ang)) * screen->h, k->r / 4 * screen->w, 0);
+}
+
+static void
+DrawScreen(SDL_Window *window)
+{
+    SDL_Surface *screen = SDL_GetWindowSurface(window);
+    int i;
+
+    if (!screen) {
+        return;
+    }
+
+    SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 75, 75, 75));
+
+    /* draw Touch History */
+    for (i = eventWrite; i < eventWrite + EVENT_BUF_SIZE; ++i) {
+        const SDL_Event *event = &events[i & (EVENT_BUF_SIZE - 1)];
+        const float age = (float)(i - eventWrite) / EVENT_BUF_SIZE;
+        float x, y;
+        unsigned int c, col;
+
+        if ( (event->type == SDL_FINGERMOTION) ||
+             (event->type == SDL_FINGERDOWN) ||
+             (event->type == SDL_FINGERUP) ) {
+            x = event->tfinger.x;
+            y = event->tfinger.y;
+
+            /* draw the touch: */
+            c = colors[event->tfinger.fingerId % 7];
+            col = ((unsigned int) (c * (0.1f + 0.85f))) | (unsigned int) (0xFF * age) << 24;
+
+            if (event->type == SDL_FINGERMOTION) {
+                drawCircle(screen, x * screen->w, y * screen->h, 5, col);
+            } else if (event->type == SDL_FINGERDOWN) {
+                drawCircle(screen, x * screen->w, y * screen->h, -10, col);
+            }
+        }
+    }
+
+    if (knob.p.x > 0) {
+        drawKnob(screen, &knob);
+    }
+
+    SDL_UpdateWindowSurface(window);
+}
+
+static void
+loop(void)
+{
+    SDL_Event event;
+    SDL_RWops *stream;
+    int i;
+
+    while (SDL_PollEvent(&event)) {
+        SDLTest_CommonEvent(state, &event, &quitting);
+
+        /* Record _all_ events */
+        events[eventWrite & (EVENT_BUF_SIZE-1)] = event;
+        eventWrite++;
+
+        switch (event.type) {
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.sym) {
+                    case SDLK_i: {
+                        for (i = 0; i < SDL_GetNumTouchDevices(); ++i) {
+                            const SDL_TouchID id = SDL_GetTouchDevice(i);
+                            const char *name = SDL_GetTouchName(i);
+                            SDL_Log("Fingers Down on device %"SDL_PRIs64" (%s): %d", id, name, SDL_GetNumTouchFingers(id));
+                        }
+                        break;
+                    }
+
+                    case SDLK_SPACE:
+                        SDL_RecordGesture(-1);
+                        break;
+
+                    case SDLK_s:
+                        stream = SDL_RWFromFile("gestureSave", "w");
+                        SDL_Log("Wrote %i templates", SDL_SaveAllDollarTemplates(stream));
+                        SDL_RWclose(stream);
+                        break;
+
+                    case SDLK_l:
+                        stream = SDL_RWFromFile("gestureSave", "r");
+                        SDL_Log("Loaded: %i", SDL_LoadDollarTemplates(-1, stream));
+                        SDL_RWclose(stream);
+                        break;
+                }
+                break;
+
+#if VERBOSE
+            case SDL_FINGERMOTION:
+                SDL_Log("Finger: %"SDL_PRIs64", x: %f, y: %f",event.tfinger.fingerId,
+                        event.tfinger.x,event.tfinger.y);
+                break;
+
+            case SDL_FINGERDOWN:
+                SDL_Log("Finger: %"SDL_PRIs64" down - x: %f, y: %f",
+                        event.tfinger.fingerId,event.tfinger.x,event.tfinger.y);
+                break;
+
+            case SDL_FINGERUP:
+                SDL_Log("Finger: %"SDL_PRIs64" up - x: %f, y: %f",
+                        event.tfinger.fingerId,event.tfinger.x,event.tfinger.y);
+                break;
+#endif
+
+            case SDL_MULTIGESTURE:
+#if VERBOSE
+                SDL_Log("Multi Gesture: x = %f, y = %f, dAng = %f, dR = %f",
+                        event.mgesture.x, event.mgesture.y,
+                        event.mgesture.dTheta, event.mgesture.dDist);
+                SDL_Log("MG: numDownTouch = %i",event.mgesture.numFingers);
+#endif
+
+                knob.p.x = event.mgesture.x;
+                knob.p.y = event.mgesture.y;
+                knob.ang += event.mgesture.dTheta;
+                knob.r += event.mgesture.dDist;
+                break;
+
+            case SDL_DOLLARGESTURE:
+                SDL_Log("Gesture %"SDL_PRIs64" performed, error: %f",
+                        event.dgesture.gestureId, event.dgesture.error);
+                break;
+
+            case SDL_DOLLARRECORD:
+                SDL_Log("Recorded gesture: %"SDL_PRIs64"",event.dgesture.gestureId);
+                break;
+        }
+    }
+
+    for (i = 0; i < state->num_windows; ++i) {
+        if (state->windows[i]) {
+            DrawScreen(state->windows[i]);
+        }
+    }
+
+#ifdef __EMSCRIPTEN__
+    if (quitting) {
+        emscripten_cancel_main_loop();
+    }
+#endif
+}
+
+int main(int argc, char* argv[])
+{
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+
+    state->window_title = "Gesture Test";
+    state->window_w = WIDTH;
+    state->window_h = HEIGHT;
+    state->skip_renderer = SDL_TRUE;
+
+    if (!SDLTest_CommonDefaultArgs(state, argc, argv) || !SDLTest_CommonInit(state)) {
+        SDLTest_CommonQuit(state);
+        return 1;
+    }
+
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop(loop, 0, 1);
+#else
+    while (!quitting) {
+        loop();
+    }
+#endif
+
+    SDLTest_CommonQuit(state);
+    return 0;
+}
+
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+#include "SDL_test_common.h"
+
+#ifdef __MACOS__
+#define HAVE_OPENGL
+#endif
+
+#ifdef HAVE_OPENGL
+
+#include "SDL_opengl.h"
+
+typedef struct GL_Context
+{
+#define SDL_PROC(ret,func,params) ret (APIENTRY *func) params;
+#include "../src/render/opengl/SDL_glfuncs.h"
+#undef SDL_PROC
+} GL_Context;
+
+
+/* Undefine this if you want a flat cube instead of a rainbow cube */
+#define SHADED_CUBE
+
+static SDLTest_CommonState *state;
+static SDL_GLContext context;
+static GL_Context ctx;
+
+static int LoadContext(GL_Context * data)
+{
+#if SDL_VIDEO_DRIVER_UIKIT
+#define __SDL_NOGETPROCADDR__
+#elif SDL_VIDEO_DRIVER_ANDROID
+#define __SDL_NOGETPROCADDR__
+#elif SDL_VIDEO_DRIVER_PANDORA
+#define __SDL_NOGETPROCADDR__
+#endif
+
+#if defined __SDL_NOGETPROCADDR__
+#define SDL_PROC(ret,func,params) data->func=func;
+#else
+#define SDL_PROC(ret,func,params) \
+    do { \
+        data->func = SDL_GL_GetProcAddress(#func); \
+        if ( ! data->func ) { \
+            return SDL_SetError("Couldn't load GL function %s: %s", #func, SDL_GetError()); \
+        } \
+    } while ( 0 );
+#endif /* __SDL_NOGETPROCADDR__ */
+
+#include "../src/render/opengl/SDL_glfuncs.h"
+#undef SDL_PROC
+    return 0;
+}
+
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    if (context) {
+        /* SDL_GL_MakeCurrent(0, NULL); *//* doesn't do anything */
+        SDL_GL_DeleteContext(context);
+    }
+    SDLTest_CommonQuit(state);
+    exit(rc);
+}
+
+static void
+Render()
+{
+    static float color[8][3] = {
+        {1.0, 1.0, 0.0},
+        {1.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0},
+        {0.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0},
+        {1.0, 0.0, 1.0},
+        {0.0, 0.0, 1.0}
+    };
+    static float cube[8][3] = {
+        {0.5, 0.5, -0.5},
+        {0.5, -0.5, -0.5},
+        {-0.5, -0.5, -0.5},
+        {-0.5, 0.5, -0.5},
+        {-0.5, 0.5, 0.5},
+        {0.5, 0.5, 0.5},
+        {0.5, -0.5, 0.5},
+        {-0.5, -0.5, 0.5}
+    };
+
+    /* Do our drawing, too. */
+    ctx.glClearColor(0.0, 0.0, 0.0, 1.0);
+    ctx.glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    ctx.glBegin(GL_QUADS);
+
+#ifdef SHADED_CUBE
+    ctx.glColor3fv(color[0]);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glColor3fv(color[1]);
+    ctx.glVertex3fv(cube[1]);
+    ctx.glColor3fv(color[2]);
+    ctx.glVertex3fv(cube[2]);
+    ctx.glColor3fv(color[3]);
+    ctx.glVertex3fv(cube[3]);
+
+    ctx.glColor3fv(color[3]);
+    ctx.glVertex3fv(cube[3]);
+    ctx.glColor3fv(color[4]);
+    ctx.glVertex3fv(cube[4]);
+    ctx.glColor3fv(color[7]);
+    ctx.glVertex3fv(cube[7]);
+    ctx.glColor3fv(color[2]);
+    ctx.glVertex3fv(cube[2]);
+
+    ctx.glColor3fv(color[0]);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glColor3fv(color[5]);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glColor3fv(color[6]);
+    ctx.glVertex3fv(cube[6]);
+    ctx.glColor3fv(color[1]);
+    ctx.glVertex3fv(cube[1]);
+
+    ctx.glColor3fv(color[5]);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glColor3fv(color[4]);
+    ctx.glVertex3fv(cube[4]);
+    ctx.glColor3fv(color[7]);
+    ctx.glVertex3fv(cube[7]);
+    ctx.glColor3fv(color[6]);
+    ctx.glVertex3fv(cube[6]);
+
+    ctx.glColor3fv(color[5]);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glColor3fv(color[0]);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glColor3fv(color[3]);
+    ctx.glVertex3fv(cube[3]);
+    ctx.glColor3fv(color[4]);
+    ctx.glVertex3fv(cube[4]);
+
+    ctx.glColor3fv(color[6]);
+    ctx.glVertex3fv(cube[6]);
+    ctx.glColor3fv(color[1]);
+    ctx.glVertex3fv(cube[1]);
+    ctx.glColor3fv(color[2]);
+    ctx.glVertex3fv(cube[2]);
+    ctx.glColor3fv(color[7]);
+    ctx.glVertex3fv(cube[7]);
+#else /* flat cube */
+    ctx.glColor3f(1.0, 0.0, 0.0);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glVertex3fv(cube[1]);
+    ctx.glVertex3fv(cube[2]);
+    ctx.glVertex3fv(cube[3]);
+
+    ctx.glColor3f(0.0, 1.0, 0.0);
+    ctx.glVertex3fv(cube[3]);
+    ctx.glVertex3fv(cube[4]);
+    ctx.glVertex3fv(cube[7]);
+    ctx.glVertex3fv(cube[2]);
+
+    ctx.glColor3f(0.0, 0.0, 1.0);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glVertex3fv(cube[6]);
+    ctx.glVertex3fv(cube[1]);
+
+    ctx.glColor3f(0.0, 1.0, 1.0);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glVertex3fv(cube[4]);
+    ctx.glVertex3fv(cube[7]);
+    ctx.glVertex3fv(cube[6]);
+
+    ctx.glColor3f(1.0, 1.0, 0.0);
+    ctx.glVertex3fv(cube[5]);
+    ctx.glVertex3fv(cube[0]);
+    ctx.glVertex3fv(cube[3]);
+    ctx.glVertex3fv(cube[4]);
+
+    ctx.glColor3f(1.0, 0.0, 1.0);
+    ctx.glVertex3fv(cube[6]);
+    ctx.glVertex3fv(cube[1]);
+    ctx.glVertex3fv(cube[2]);
+    ctx.glVertex3fv(cube[7]);
+#endif /* SHADED_CUBE */
+
+    ctx.glEnd();
+
+    ctx.glMatrixMode(GL_MODELVIEW);
+    ctx.glRotatef(5.0, 1.0, 1.0, 1.0);
+}
+
+int
+main(int argc, char *argv[])
+{
+    int fsaa, accel;
+    int value;
+    int i, done;
+    SDL_DisplayMode mode;
+    SDL_Event event;
+    Uint32 then, now, frames;
+    int status;
+    int dw, dh;
+    int swap_interval = 0;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize parameters */
+    fsaa = 0;
+    accel = -1;
+
+    /* Initialize test framework */
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+    for (i = 1; i < argc;) {
+        int consumed;
+
+        consumed = SDLTest_CommonArg(state, i);
+        if (consumed == 0) {
+            if (SDL_strcasecmp(argv[i], "--fsaa") == 0 && i+1 < argc) {
+                fsaa = SDL_atoi(argv[i+1]);
+                consumed = 2;
+            } else if (SDL_strcasecmp(argv[i], "--accel") == 0 && i+1 < argc) {
+                accel = SDL_atoi(argv[i+1]);
+                consumed = 2;
+            } else {
+                consumed = -1;
+            }
+        }
+        if (consumed < 0) {
+            static const char *options[] = { "[--fsaa n]", "[--accel n]", NULL };
+            SDLTest_CommonLogUsage(state, argv[0], options);
+            quit(1);
+        }
+        i += consumed;
+    }
+
+    /* Set OpenGL parameters */
+    state->window_flags |= SDL_WINDOW_OPENGL;
+    state->gl_red_size = 5;
+    state->gl_green_size = 5;
+    state->gl_blue_size = 5;
+    state->gl_depth_size = 16;
+    state->gl_double_buffer = 1;
+    if (fsaa) {
+        state->gl_multisamplebuffers = 1;
+        state->gl_multisamplesamples = fsaa;
+    }
+    if (accel >= 0) {
+        state->gl_accelerated = accel;
+    }
+
+    if (!SDLTest_CommonInit(state)) {
+        quit(2);
+    }
+
+    /* Create OpenGL context */
+    context = SDL_GL_CreateContext(state->windows[0]);
+    if (!context) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
+        quit(2);
+    }
+    
+    /* Important: call this *after* creating the context */
+    if (LoadContext(&ctx) < 0) {
+        SDL_Log("Could not load GL functions\n");
+        quit(2);
+        return 0;
+    }
+
+    if (state->render_flags & SDL_RENDERER_PRESENTVSYNC) {
+        /* try late-swap-tearing first. If not supported, try normal vsync. */
+        if (SDL_GL_SetSwapInterval(-1) == 0) {
+            swap_interval = -1;
+        } else {
+            SDL_GL_SetSwapInterval(1);
+            swap_interval = 1;
+        }
+    } else {
+        SDL_GL_SetSwapInterval(0);  /* disable vsync. */
+        swap_interval = 0;
+    }
+
+    SDL_GetCurrentDisplayMode(0, &mode);
+    SDL_Log("Screen BPP    : %d\n", SDL_BITSPERPIXEL(mode.format));
+    SDL_Log("Swap Interval : %d\n", SDL_GL_GetSwapInterval());
+    SDL_GetWindowSize(state->windows[0], &dw, &dh);
+    SDL_Log("Window Size   : %d,%d\n", dw, dh);
+    SDL_GL_GetDrawableSize(state->windows[0], &dw, &dh);
+    SDL_Log("Draw Size     : %d,%d\n", dw, dh);
+    SDL_Log("\n");
+    SDL_Log("Vendor        : %s\n", ctx.glGetString(GL_VENDOR));
+    SDL_Log("Renderer      : %s\n", ctx.glGetString(GL_RENDERER));
+    SDL_Log("Version       : %s\n", ctx.glGetString(GL_VERSION));
+    SDL_Log("Extensions    : %s\n", ctx.glGetString(GL_EXTENSIONS));
+    SDL_Log("\n");
+
+    status = SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_RED_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_RED_SIZE: %s\n", SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_GREEN_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_GREEN_SIZE: %s\n", SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_BLUE_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_BLUE_SIZE: %s\n", SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_DEPTH_SIZE: requested %d, got %d\n", 16, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_DEPTH_SIZE: %s\n", SDL_GetError());
+    }
+    if (fsaa) {
+        status = SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_MULTISAMPLEBUFFERS: requested 1, got %d\n", value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_MULTISAMPLEBUFFERS: %s\n",
+                   SDL_GetError());
+        }
+        status = SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_MULTISAMPLESAMPLES: requested %d, got %d\n", fsaa,
+                   value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_MULTISAMPLESAMPLES: %s\n",
+                   SDL_GetError());
+        }
+    }
+    if (accel >= 0) {
+        status = SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_ACCELERATED_VISUAL: requested %d, got %d\n", accel,
+                   value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_ACCELERATED_VISUAL: %s\n",
+                   SDL_GetError());
+        }
+    }
+
+    /* Set rendering settings */
+    ctx.glMatrixMode(GL_PROJECTION);
+    ctx.glLoadIdentity();
+    ctx.glOrtho(-2.0, 2.0, -2.0, 2.0, -20.0, 20.0);
+    ctx.glMatrixMode(GL_MODELVIEW);
+    ctx.glLoadIdentity();
+    ctx.glEnable(GL_DEPTH_TEST);
+    ctx.glDepthFunc(GL_LESS);
+    ctx.glShadeModel(GL_SMOOTH);
+    
+    /* Main render loop */
+    frames = 0;
+    then = SDL_GetTicks();
+    done = 0;
+    while (!done) {
+        SDL_bool update_swap_interval = SDL_FALSE;
+
+        /* Check for events */
+        ++frames;
+        while (SDL_PollEvent(&event)) {
+            SDLTest_CommonEvent(state, &event, &done);
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_o) {
+                    swap_interval--;
+                    update_swap_interval = SDL_TRUE;
+                } else if (event.key.keysym.sym == SDLK_p) {
+                    swap_interval++;
+                    update_swap_interval = SDL_TRUE;
+                }
+            }
+        }
+
+        if (update_swap_interval) {
+            SDL_Log("Swap interval to be set to %d\n", swap_interval);
+        }
+
+        for (i = 0; i < state->num_windows; ++i) {
+            int w, h;
+            if (state->windows[i] == NULL)
+                continue;
+            SDL_GL_MakeCurrent(state->windows[i], context);
+            if (update_swap_interval) {
+                SDL_GL_SetSwapInterval(swap_interval);
+            }
+            SDL_GL_GetDrawableSize(state->windows[i], &w, &h);
+            ctx.glViewport(0, 0, w, h);
+            Render();
+            SDL_GL_SwapWindow(state->windows[i]);
+        }
+    }
+
+    /* Print out some timing information */
+    now = SDL_GetTicks();
+    if (now > then) {
+        SDL_Log("%2.2f frames per second\n",
+               ((double) frames * 1000) / (now - then));
+    }
+    quit(0);
+    return 0;
+}
+
+#else /* HAVE_OPENGL */
+
+int
+main(int argc, char *argv[])
+{
+    SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "No OpenGL support on this system\n");
+    return 1;
+}
+
+#endif /* HAVE_OPENGL */
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     /*
+  Copyright (C) 1997-2022 Sam Lantinga <slouken@libsdl.org>
+
+  This software is provided 'as-is', without any express or implied
+  warranty.  In no event will the authors be held liable for any damages
+  arising from the use of this software.
+
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely.
+*/
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+
+#include "SDL_test_common.h"
+
+#if defined(__IPHONEOS__) || defined(__ANDROID__)
+#define HAVE_OPENGLES
+#endif
+
+#ifdef HAVE_OPENGLES
+
+#include "SDL_opengles.h"
+
+static SDLTest_CommonState *state;
+static SDL_GLContext *context = NULL;
+static int depth = 16;
+
+/* Call this instead of exit(), so we can clean up SDL: atexit() is evil. */
+static void
+quit(int rc)
+{
+    int i;
+
+    if (context != NULL) {
+        for (i = 0; i < state->num_windows; i++) {
+            if (context[i]) {
+                SDL_GL_DeleteContext(context[i]);
+            }
+        }
+
+        SDL_free(context);
+    }
+
+    SDLTest_CommonQuit(state);
+    exit(rc);
+}
+
+static void
+Render()
+{
+    static GLubyte color[8][4] = { {255, 0, 0, 0},
+    {255, 0, 0, 255},
+    {0, 255, 0, 255},
+    {0, 255, 0, 255},
+    {0, 255, 0, 255},
+    {255, 255, 255, 255},
+    {255, 0, 255, 255},
+    {0, 0, 255, 255}
+    };
+    static GLfloat cube[8][3] = { {0.5, 0.5, -0.5},
+    {0.5f, -0.5f, -0.5f},
+    {-0.5f, -0.5f, -0.5f},
+    {-0.5f, 0.5f, -0.5f},
+    {-0.5f, 0.5f, 0.5f},
+    {0.5f, 0.5f, 0.5f},
+    {0.5f, -0.5f, 0.5f},
+    {-0.5f, -0.5f, 0.5f}
+    };
+    static GLubyte indices[36] = { 0, 3, 4,
+        4, 5, 0,
+        0, 5, 6,
+        6, 1, 0,
+        6, 7, 2,
+        2, 1, 6,
+        7, 4, 3,
+        3, 2, 7,
+        5, 4, 7,
+        7, 6, 5,
+        2, 3, 1,
+        3, 0, 1
+    };
+
+
+    /* Do our drawing, too. */
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    /* Draw the cube */
+    glColorPointer(4, GL_UNSIGNED_BYTE, 0, color);
+    glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(3, GL_FLOAT, 0, cube);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, indices);
+
+    glMatrixMode(GL_MODELVIEW);
+    glRotatef(5.0, 1.0, 1.0, 1.0);
+}
+
+int
+main(int argc, char *argv[])
+{
+    int fsaa, accel;
+    int value;
+    int i, done;
+    SDL_DisplayMode mode;
+    SDL_Event event;
+    Uint32 then, now, frames;
+    int status;
+
+    /* Enable standard application logging */
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_INFO);
+
+    /* Initialize parameters */
+    fsaa = 0;
+    accel = 0;
+
+    /* Initialize test framework */
+    state = SDLTest_CommonCreateState(argv, SDL_INIT_VIDEO);
+    if (!state) {
+        return 1;
+    }
+    for (i = 1; i < argc;) {
+        int consumed;
+
+        consumed = SDLTest_CommonArg(state, i);
+        if (consumed == 0) {
+            if (SDL_strcasecmp(argv[i], "--fsaa") == 0) {
+                ++fsaa;
+                consumed = 1;
+            } else if (SDL_strcasecmp(argv[i], "--accel") == 0) {
+                ++accel;
+                consumed = 1;
+            } else if (SDL_strcasecmp(argv[i], "--zdepth") == 0) {
+                i++;
+                if (!argv[i]) {
+                    consumed = -1;
+                } else {
+                    depth = SDL_atoi(argv[i]);
+                    consumed = 1;
+                }
+            } else {
+                consumed = -1;
+            }
+        }
+        if (consumed < 0) {
+            static const char *options[] = { "[--fsaa]", "[--accel]", "[--zdepth %d]", NULL };
+            SDLTest_CommonLogUsage(state, argv[0], options);
+            quit(1);
+        }
+        i += consumed;
+    }
+
+    /* Set OpenGL parameters */
+    state->window_flags |= SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_BORDERLESS;
+    state->gl_red_size = 5;
+    state->gl_green_size = 5;
+    state->gl_blue_size = 5;
+    state->gl_depth_size = depth;
+    state->gl_major_version = 1;
+    state->gl_minor_version = 1;
+    state->gl_profile_mask = SDL_GL_CONTEXT_PROFILE_ES;
+    if (fsaa) {
+        state->gl_multisamplebuffers=1;
+        state->gl_multisamplesamples=fsaa;
+    }
+    if (accel) {
+        state->gl_accelerated=1;
+    }
+    if (!SDLTest_CommonInit(state)) {
+        quit(2);
+    }
+
+    context = (SDL_GLContext *)SDL_calloc(state->num_windows, sizeof(context));
+    if (context == NULL) {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Out of memory!\n");
+        quit(2);
+    }
+
+    /* Create OpenGL ES contexts */
+    for (i = 0; i < state->num_windows; i++) {
+        context[i] = SDL_GL_CreateContext(state->windows[i]);
+        if (!context[i]) {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "SDL_GL_CreateContext(): %s\n", SDL_GetError());
+            quit(2);
+        }
+    }
+
+    if (state->render_flags & SDL_RENDERER_PRESENTVSYNC) {
+        SDL_GL_SetSwapInterval(1);
+    } else {
+        SDL_GL_SetSwapInterval(0);
+    }
+
+    SDL_GetCurrentDisplayMode(0, &mode);
+    SDL_Log("Screen bpp: %d\n", SDL_BITSPERPIXEL(mode.format));
+    SDL_Log("\n");
+    SDL_Log("Vendor     : %s\n", glGetString(GL_VENDOR));
+    SDL_Log("Renderer   : %s\n", glGetString(GL_RENDERER));
+    SDL_Log("Version    : %s\n", glGetString(GL_VERSION));
+    SDL_Log("Extensions : %s\n", glGetString(GL_EXTENSIONS));
+    SDL_Log("\n");
+
+    status = SDL_GL_GetAttribute(SDL_GL_RED_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_RED_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_RED_SIZE: %s\n",
+                SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_GREEN_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_GREEN_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_GREEN_SIZE: %s\n",
+                SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_BLUE_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_BLUE_SIZE: requested %d, got %d\n", 5, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_BLUE_SIZE: %s\n",
+                SDL_GetError());
+    }
+    status = SDL_GL_GetAttribute(SDL_GL_DEPTH_SIZE, &value);
+    if (!status) {
+        SDL_Log("SDL_GL_DEPTH_SIZE: requested %d, got %d\n", depth, value);
+    } else {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_DEPTH_SIZE: %s\n",
+                SDL_GetError());
+    }
+    if (fsaa) {
+        status = SDL_GL_GetAttribute(SDL_GL_MULTISAMPLEBUFFERS, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_MULTISAMPLEBUFFERS: requested 1, got %d\n", value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_MULTISAMPLEBUFFERS: %s\n",
+                    SDL_GetError());
+        }
+        status = SDL_GL_GetAttribute(SDL_GL_MULTISAMPLESAMPLES, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_MULTISAMPLESAMPLES: requested %d, got %d\n", fsaa,
+                   value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_MULTISAMPLESAMPLES: %s\n",
+                    SDL_GetError());
+        }
+    }
+    if (accel) {
+        status = SDL_GL_GetAttribute(SDL_GL_ACCELERATED_VISUAL, &value);
+        if (!status) {
+            SDL_Log("SDL_GL_ACCELERATED_VISUAL: requested 1, got %d\n", value);
+        } else {
+            SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Failed to get SDL_GL_ACCELERATED_VISUAL: %s\n",
+                    SDL_GetError());
+        }
+    }
+
+    /* Set rendering settings for each context */
+    for (i = 0; i < state->num_windows; ++i) {
+        float aspectAdjust;
+
+        status = SDL_GL_MakeCurrent(state->windows[i], context[i]);
+        if (status) {
+            SDL_Log("SDL_GL_MakeCurrent(): %s\n", SDL_GetError());
+
+           
