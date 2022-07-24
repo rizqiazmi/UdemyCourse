@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1658321223 source:c:\users\rizqi\desktop\c++\vedinesh academy\project - atm system\main.cpp
+	<conio.h>
+	<iostream>
+	<string>
+
